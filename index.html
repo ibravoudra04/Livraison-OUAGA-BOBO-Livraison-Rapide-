@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Livraison Rapide - Mettez-vous en contact instantanément avec des livreurs indépendants à Ouagadougou et Bobo-Dioulasso. Simple, rapide et épuré.">
+    <meta name="keywords" content="livraison, livraison rapide, ouagadougou, bobo-dioulasso, burkina faso, moto, mobile money, orange money, moov money">
+    <title>Livraison Rapide — Trouvez un livreur instantanément à Ouaga & Bobo</title>
+    
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Minimaliste -->
+    <header>
+        <a href="#" class="logo-container" id="logo-home">
+            <div class="logo-icon">
+                <!-- Moto Icon SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+            </div>
+            <h1 class="logo-text">Livraison<span>Rapide</span></h1>
+        </a>
+        <nav class="nav-buttons">
+            <button class="btn btn-secondary hidden" id="btn-nav-find">Trouver un livreur</button>
+            <button class="btn btn-primary" id="btn-nav-register">Devenir livreur</button>
+        </nav>
+    </header>
+
+    <!-- Zone principale -->
+    <main>
+        
+        <!-- Écran d'accueil / Portail de choix (Wave-inspired + African style) -->
+        <div class="welcome-portal" id="welcome-portal">
+            <div class="portal-card-container">
+                <div class="portal-hero">
+                    <!-- Burkina Faso Map Accent Badge -->
+                    <img src="burkina_map.png" alt="Carte du Burkina Faso" class="burkina-map-badge">
+                    <h2>Recherchez un livreur près de chez vous</h2>
+                    <p>Mise en relation instantanée avec des livreurs indépendants à Ouagadougou et Bobo-Dioulasso. Épuré, transparent et immédiat.</p>
+                </div>
+                
+                <div class="portal-options-single">
+                    <!-- Option Principale : Rechercher un livreur -->
+                    <div class="portal-option-card-large" id="portal-btn-find">
+                        <div class="portal-option-icon-large">
+                            <!-- Location Pin SVG -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        </div>
+                        <h3>Lancer la recherche</h3>
+                        <p>Visualisez les livreurs à moto, tricycle ou voiture actifs autour de vous sur la carte en temps réel et contactez-les directement.</p>
+                        <button class="btn btn-primary btn-portal-action">
+                            Trouver un livreur disponible
+                        </button>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+        
+        <!-- Switcher de ville (Ouaga / Bobo) -->
+        <div class="city-switcher hidden" id="city-selector">
+            <button class="city-btn active" id="city-ouaga" data-city="ouaga">Ouagadougou</button>
+            <button class="city-btn" id="city-bobo" data-city="bobo">Bobo-Dioulasso</button>
+        </div>
+
+        <!-- Indicateur de livreurs en ligne -->
+        <div class="map-info-badge hidden" id="online-counter-badge">
+            <div class="pulse-dot"></div>
+            <span id="online-counter-text">14 livreurs disponibles</span>
+        </div>
+
+        <!-- Conteneur Carte Leaflet -->
+        <div id="map"></div>
+
+        <!-- Bottom Sheet : Détails du livreur sélectionné -->
+        <div class="bottom-sheet" id="rider-sheet">
+            <div class="sheet-handle"></div>
+            <button class="btn-close-sheet" id="btn-close-sheet" aria-label="Fermer la fiche">×</button>
+            
+            <div class="sheet-content">
+                <div class="sheet-header">
+                    <div class="rider-profile">
+                        <div class="rider-avatar" id="sheet-rider-avatar">👤</div>
+                        <div class="rider-identity">
+                            <h3 id="sheet-rider-name">Marc Diallo</h3>
+                            <div class="rider-vehicle">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                                <span id="sheet-rider-vehicle">Moto 135cc</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="rider-status">Disponible</span>
+                </div>
+
+                <div class="sheet-info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Distance</div>
+                        <div class="info-value" id="sheet-rider-distance">À 1.2 km</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Téléphone</div>
+                        <div class="info-value phone-masked" id="sheet-rider-phone-masked">+226 76 •• •• ••</div>
+                    </div>
+                </div>
+
+                <!-- Actions de contact / paiement -->
+                <div class="sheet-actions">
+                    <button class="btn-unlock" id="btn-unlock-contact">
+                        <!-- Wallet SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        Utiliser le service (200 FCFA)
+                    </button>
+                    
+                    <div class="sheet-unlocked-actions" style="display: flex; gap: 8px; width: 100%;">
+                        <a href="#" class="btn-call hidden" id="btn-call-rider" style="flex: 1;">
+                            <!-- Phone Call SVG -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            Appeler
+                        </a>
+                        <button class="btn-chat hidden" id="btn-chat-rider" style="flex: 1; padding: 14px; border: none; border-radius: 16px; font-weight: 600; color: white; background-color: var(--color-primary-brown); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-family: var(--font-sans); transition: var(--transition-smooth);">
+                            <!-- Message Square SVG -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            Discuter (Chat)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modale de Paiement Mobile Money -->
+        <div class="modal-overlay" id="payment-modal">
+            <div class="payment-card">
+                
+                <div class="payment-header">
+                    <h3>Paiement Mobile Money</h3>
+                    <button class="btn-close-modal" id="btn-close-payment-modal" aria-label="Fermer">&times;</button>
+                </div>
+
+                <div class="payment-body">
+                    
+                    <!-- Etape 1: Saisie d'informations de paiement -->
+                    <div id="payment-form-step">
+                        <div class="payment-summary">
+                            <span class="payment-title">Déverrouillage Contact Livreur</span>
+                            <span class="payment-amount">200 FCFA</span>
+                        </div>
+
+                        <!-- Choix de l'opérateur -->
+                        <label class="form-label">Sélectionnez votre réseau :</label>
+                        <div class="payment-methods">
+                            <div class="method-option selected" id="method-orange" data-provider="Orange Money">
+                                <!-- Orange logo simulated via standard colors/text in styled format or image -->
+                                <div class="method-logo-sim" style="background:#FF6600; color:white; font-weight:800; padding:6px 12px; border-radius:6px; font-size: 0.8rem;">Orange</div>
+                                <span class="method-name">Orange Money</span>
+                            </div>
+                            <div class="method-option" id="method-moov" data-provider="Moov Money">
+                                <div class="method-logo-sim" style="background:#0F3A8C; color:white; font-weight:800; padding:6px 12px; border-radius:6px; font-size: 0.8rem;">Moov</div>
+                                <span class="method-name">Moov Money</span>
+                            </div>
+                        </div>
+
+                        <!-- Saisie du numéro -->
+                        <div class="form-group">
+                            <label for="momo-phone" class="form-label">Votre numéro Mobile Money :</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">+226</span>
+                                <input type="tel" id="momo-phone" class="form-input form-input-prefix" placeholder="76 00 00 00" maxlength="11">
+                            </div>
+                        </div>
+
+                        <button class="btn-unlock" id="btn-submit-momo" style="width:100%;">
+                            Lancer le paiement
+                        </button>
+                        
+                        <p class="payment-disclaimer">
+                            En cliquant sur le bouton, vous recevrez une demande de validation USSD (Push Mobile Money) sur votre téléphone.
+                        </p>
+                    </div>
+
+                    <!-- Etape 2: Simulation de l'USSD Push -->
+                    <div class="ussd-simulation" id="payment-ussd-step">
+                        <div class="phone-mockup">
+                            <div class="phone-screen">
+                                <div class="ussd-screen-content">
+                                    <div class="ussd-title" id="ussd-provider-title">ORANGE MONEY PUSH</div>
+                                    <div class="ussd-msg" id="ussd-message-text">
+                                        Paiement de 200 FCFA à Livraison Rapide.<br>
+                                        Veuillez confirmer en saisissant votre PIN :
+                                    </div>
+                                    <input type="password" id="ussd-pin" class="ussd-input" placeholder="••••" maxlength="4" autofocus readonly>
+                                </div>
+                                <div class="ussd-buttons">
+                                    <button class="ussd-btn" id="btn-ussd-cancel">Annuler</button>
+                                    <button class="ussd-btn ussd-btn-confirm" id="btn-ussd-confirm">Valider</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="loader-ussd hidden" id="ussd-loader"></div>
+                        <p class="form-label" style="text-align:center;" id="ussd-action-hint">
+                            Veuillez interagir avec l'écran du téléphone simulé ci-dessus.
+                        </p>
+                    </div>
+
+                    <!-- Etape 3: Succès de paiement -->
+                    <div class="success-checkout" id="payment-success-step">
+                        <div class="success-icon-anim">✓</div>
+                        <h4 style="font-size:1.2rem; font-weight:700; margin-bottom:8px;">Paiement Effectué !</h4>
+                        <p style="font-size:0.9rem; color:var(--color-charcoal-light); margin-bottom:20px;">
+                            Le paiement de 200 FCFA a été validé avec succès. Le contact du livreur est désormais déverrouillé.
+                        </p>
+                        <button class="btn btn-primary" id="btn-view-unlocked-rider" style="width:100%; padding:14px; border-radius:16px;">
+                            Voir les coordonnées
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Drawer d'inscription Livreur -->
+        <div class="driver-drawer" id="driver-drawer">
+            <div class="drawer-header">
+                <h2>Rejoindre l'équipe</h2>
+                <button class="btn-close-drawer" id="btn-close-drawer" aria-label="Fermer le formulaire">&times;</button>
+            </div>
+
+            <div class="drawer-body">
+                
+                <!-- Formulaire principal -->
+                <form id="driver-register-form">
+                    <p class="form-subtitle">
+                        Inscrivez-vous gratuitement pour commencer à recevoir des courses dans votre zone.
+                    </p>
+
+                    <div class="driver-info-badge">
+                        <span class="info-badge-icon">ℹ️</span>
+                        <span>L'inscription est gratuite. Les 4 premières mises en relation clients sont offertes. À partir du 5ème client vous contactant, un abonnement de <strong>500 FCFA par 7 jours</strong> sera requis pour rester visible sur la plateforme.</span>
+                    </div>
+
+                    <!-- Nom complet -->
+                    <div class="form-group">
+                        <label for="driver-name" class="form-label">Nom complet *</label>
+                        <input type="text" id="driver-name" class="form-input" placeholder="Ex: Souleymane Barry" required>
+                    </div>
+
+                    <!-- Téléphone -->
+                    <div class="form-group">
+                        <label for="driver-phone" class="form-label">Numéro de téléphone *</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">+226</span>
+                            <input type="tel" id="driver-phone" class="form-input form-input-prefix" placeholder="70 00 00 00" maxlength="11" required>
+                        </div>
+                    </div>
+
+                    <!-- Type de transport / Moto, Tricycle, Voiture -->
+                    <div class="form-group">
+                        <label class="form-label">Moyen de transport *</label>
+                        <div class="vehicle-selector">
+                            <div class="vehicle-option selected" data-vehicle="Moto">
+                                <span class="vehicle-icon">🏍️</span>
+                                <span class="vehicle-label">Moto</span>
+                            </div>
+                            <div class="vehicle-option" data-vehicle="Tricycle">
+                                <span class="vehicle-icon">🛺</span>
+                                <span class="vehicle-label">Tricycle</span>
+                            </div>
+                            <div class="vehicle-option" data-vehicle="Voiture">
+                                <span class="vehicle-icon">🚗</span>
+                                <span class="vehicle-label">Voiture</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Position GPS sur la carte -->
+                    <div class="form-group">
+                        <label class="form-label">Localisation GPS (Point d'attente) *</label>
+                        <div class="map-picker-container">
+                            <div class="map-picker-header">
+                                <span>Sélectionnez votre position</span>
+                                <span style="color:var(--color-primary-red);" id="lbl-picker-city">Ouagadougou</span>
+                            </div>
+                            <div id="map-picker"></div>
+                        </div>
+                        <div class="gps-hint">
+                            <span>📍</span>
+                            <span id="gps-status-desc">Faites glisser la carte et cliquez pour positionner votre repère.</span>
+                        </div>
+                    </div>
+
+                    <!-- Uploads d'identités -->
+                    <div class="form-group">
+                        <label class="form-label">Documents de vérification *</label>
+                        <div class="file-upload-grid">
+                            
+                            <!-- Upload CNI -->
+                            <div class="upload-box" id="box-upload-cni">
+                                <input type="file" id="upload-cni" accept="image/*" required>
+                                <span class="upload-icon">🪪</span>
+                                <span class="upload-text">Photo CNI</span>
+                                <img src="" alt="Aperçu CNI" class="upload-preview" id="preview-cni">
+                                <button type="button" class="upload-remove" id="btn-remove-cni">&times;</button>
+                            </div>
+
+                            <!-- Upload Selfie -->
+                            <div class="upload-box" id="box-upload-selfie">
+                                <input type="file" id="upload-selfie" accept="image/*" required>
+                                <span class="upload-icon">📸</span>
+                                <span class="upload-text">Photo Selfie</span>
+                                <img src="" alt="Aperçu Selfie" class="upload-preview" id="preview-selfie">
+                                <button type="button" class="upload-remove" id="btn-remove-selfie">&times;</button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width:100%; padding:14px; border-radius:16px; font-size:1rem; margin-top:10px;">
+                        Soumettre mon inscription
+                    </button>
+                </form>
+
+                <!-- Écran de confirmation de soumission -->
+                <div class="registration-success" id="driver-success-panel">
+                    <div class="success-icon-anim">✓</div>
+                    <h3>Inscription Envoyée !</h3>
+                    <p>
+                        Votre dossier est en cours de vérification. Vous serez contacté sous 24h.
+                    </p>
+                    <button class="btn btn-secondary" id="btn-return-map" style="width:100%; padding:12px;">
+                        Retourner à la carte
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Drawer de Chat en Direct avec Livreur -->
+        <div class="chat-drawer" id="chat-drawer">
+            <div class="drawer-header">
+                <div class="chat-header-identity">
+                    <div class="chat-header-avatar" id="chat-driver-avatar">👤</div>
+                    <div>
+                        <h3 id="chat-driver-name">Marc Diallo</h3>
+                        <span class="chat-header-status"><span class="chat-status-dot"></span>En ligne</span>
+                    </div>
+                </div>
+                <button class="btn-close-drawer" id="btn-close-chat" aria-label="Fermer la discussion">&times;</button>
+            </div>
+
+            <div class="chat-body" id="chat-messages">
+                <!-- Les messages s'insèrent ici dynamiquement -->
+                <div class="chat-message message-system">
+                    Début de votre discussion sécurisée avec <span id="chat-driver-name-system">Marc Diallo</span>.
+                </div>
+            </div>
+            
+            <div class="chat-typing-indicator hidden" id="chat-typing-indicator">
+                <span id="chat-typing-driver-name">Marc</span> est en train d'écrire<span class="typing-dots">...</span>
+            </div>
+
+            <div class="chat-footer">
+                <form id="chat-send-form">
+                    <input type="text" id="chat-input" placeholder="Écrivez votre message ici..." autocomplete="off" required>
+                    <button type="submit" id="btn-send-message" aria-label="Envoyer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modale de Suivi Admin (Dashboard d'Administration) -->
+        <div class="modal-overlay" id="admin-modal">
+            <div class="admin-card">
+                <div class="payment-header" style="background: var(--color-primary-brown-dark); color: white;">
+                    <h3>🔑 Espace Administration & Suivi</h3>
+                    <button class="btn-close-modal" id="btn-close-admin" style="color: white;" aria-label="Fermer">&times;</button>
+                </div>
+                
+                <div class="admin-body">
+                    <p class="admin-subtitle">
+                        Suivi en temps réel des discussions et échanges en cours sur la plateforme (session active).
+                    </p>
+                    
+                    <div class="admin-tabs">
+                        <button class="admin-tab active" id="tab-chats">Discussions en Cours</button>
+                        <button class="admin-tab" id="tab-drivers">Livreurs & Abonnements</button>
+                        <button class="admin-tab" id="tab-stats">Statistiques Plateforme</button>
+                    </div>
+
+                    <!-- Liste des discussions actives -->
+                    <div class="admin-content-section" id="admin-chats-section">
+                        <div class="chat-sessions-list" id="admin-chat-sessions">
+                            <!-- Les sessions de chat s'affichent ici dynamiquement -->
+                            <div class="no-session-placeholder">
+                                Aucun échange de chat enregistré pour le moment dans cette session.
+                            </div>
+                        </div>
+                        
+                        <!-- Inspecteur de conversation en direct -->
+                        <div class="admin-conversation-inspector hidden" id="admin-inspector">
+                            <div class="inspector-header">
+                                <button class="btn-inspector-back" id="btn-inspector-back">&larr; Retour</button>
+                                <h4 id="inspector-title">Discussion avec Marc Diallo</h4>
+                            </div>
+                            <div class="inspector-messages" id="inspector-messages-list">
+                                <!-- Messages de la session sélectionnée -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Liste des livreurs et abonnements -->
+                    <div class="admin-content-section hidden" id="admin-drivers-section">
+                        <div class="admin-drivers-list" id="admin-drivers-list">
+                            <!-- Rempli dynamiquement en JS -->
+                        </div>
+                    </div>
+
+                    <!-- Statistiques de la plateforme -->
+                    <div class="admin-content-section hidden" id="admin-stats-section">
+                        <div class="admin-stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">Déblocages payés</div>
+                                <div class="stat-value" id="stat-total-unlocks" style="color: var(--color-green-soft)">0</div>
+                                <div class="stat-desc">Frais à 200 FCFA</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Revenus simulés</div>
+                                <div class="stat-value" id="stat-total-revenue" style="color: var(--color-primary-yellow)">0 FCFA</div>
+                                <div class="stat-desc">Frais de mise en relation</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Livreurs enregistrés</div>
+                                <div class="stat-value" id="stat-total-drivers">14</div>
+                                <div class="stat-desc">Ouaga & Bobo</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Messages échangés</div>
+                                <div class="stat-value" id="stat-total-messages" style="color: var(--color-primary-red)">0</div>
+                                <div class="stat-desc">Échanges de chat</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modale/Overlay de Sélection de Localisation (Villes & Quartiers) -->
+        <div class="location-portal-overlay" id="location-portal">
+            <div class="location-portal-card">
+                <button class="btn-close-modal" id="btn-close-location-portal" aria-label="Fermer">&times;</button>
+                
+                <!-- Étape 1 : Choix de la ville -->
+                <div id="loc-step-city">
+                    <div class="loc-header">
+                        <img src="burkina_map.png" alt="Carte du Burkina Faso" class="burkina-map-badge">
+                        <h3>Dans quelle ville êtes-vous ?</h3>
+                        <p>Choisissez votre ville pour localiser les livreurs disponibles autour de vous.</p>
+                    </div>
+                    
+                    <div class="loc-city-grid">
+                        <div class="loc-city-card" id="loc-city-ouaga" data-city="ouaga">
+                            <img src="ouaga_monument.png" alt="Ouagadougou Place des Cinéastes" class="city-card-img">
+                            <h4>Ouagadougou</h4>
+                            <span class="city-desc">8 livreurs actifs</span>
+                        </div>
+                        <div class="loc-city-card" id="loc-city-bobo" data-city="bobo">
+                            <img src="bobo_mosque.png" alt="Bobo-Dioulasso Grande Mosquée" class="city-card-img">
+                            <h4>Bobo-Dioulasso</h4>
+                            <span class="city-desc">6 livreurs actifs</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Étape 2 : Mode d'accès (Carte vs Quartiers) -->
+                <div class="hidden" id="loc-step-options">
+                    <div class="loc-header">
+                        <h3 id="loc-city-title">Ouagadougou</h3>
+                        <p>Comment souhaitez-vous trouver votre livreur ?</p>
+                    </div>
+                    
+                    <div class="loc-options-grid">
+                        <div class="loc-option-btn-card" id="loc-btn-map">
+                            <div class="loc-option-icon">📍</div>
+                            <div>
+                                <h4>Voir la carte en direct</h4>
+                                <p>Découvrez tous les livreurs dispos autour de vous en temps réel.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="loc-option-btn-card" id="loc-btn-sectors">
+                            <div class="loc-option-icon">🏘️</div>
+                            <div>
+                                <h4>Choisir mon quartier / secteur</h4>
+                                <p>Sélectionnez directement votre quartier pour localiser les livreurs.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-loc-back" id="btn-loc-back-city">&larr; Retour au choix de la ville</button>
+                </div>
+                
+                <!-- Étape 3 : Liste des quartiers/secteurs -->
+                <div class="hidden" id="loc-step-sectors">
+                    <div class="loc-header">
+                        <h3>Sélectionnez votre quartier</h3>
+                        <p id="loc-sectors-desc">Quartiers disponibles à Ouagadougou</p>
+                    </div>
+                    
+                    <div class="sectors-search-wrapper">
+                        <input type="text" id="sectors-search-input" placeholder="Rechercher un quartier (ex: Wemtenga)..." autocomplete="off">
+                    </div>
+                    
+                    <div class="loc-sectors-grid" id="loc-sectors-list">
+                        <!-- Rempli dynamiquement en JS -->
+                    </div>
+                    
+                    <button class="btn-loc-back" id="btn-loc-back-options">&larr; Retour aux options</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast indicateur de quartier actif -->
+        <div class="sector-active-toast" id="sector-active-toast">
+            <span class="sector-toast-text" id="sector-toast-text">📍 Zone active : Patte d'Oie</span>
+            <button class="sector-toast-close" id="btn-close-sector-toast" aria-label="Fermer">&times;</button>
+        </div>
+
+    </main>
+
+    <!-- Footer Minimal -->
+    <footer>
+        <div class="footer-contacts">
+            <a href="https://wa.me/22600000000" class="footer-link" target="_blank" rel="noopener">
+                <!-- Whatsapp SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                WhatsApp Support
+            </a>
+            <a href="tel:+22600000000" class="footer-link">
+                <!-- Phone SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                Support Téléphonique
+            </a>
+        </div>
+        <div>&copy; 2026 Livraison Rapide BF. Fait avec passion pour Ouaga et Bobo.</div>
+    </footer>
+
+    <!-- Bouton Flottant d'Administration / Suivi des Chats (Admin Control Key) -->
+    <button class="btn-admin-floating" id="btn-admin-floating" title="Espace d'Administration & Suivi">
+        <span>🔑 Admin</span>
+        <div class="admin-notification-badge hidden" id="admin-chat-badge">0</div>
+    </button>
+
+    <!-- Leaflet Map JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Main JS Application Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
