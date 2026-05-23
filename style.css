@@ -140,6 +140,16 @@ header {
     transform: translateY(-1px);
 }
 
+#btn-nav-register {
+    background-color: var(--color-primary-green);
+    color: var(--color-card-white);
+}
+
+#btn-nav-register:hover {
+    background-color: var(--color-primary-green-hover);
+    transform: translateY(-1px);
+}
+
 .btn-secondary {
     background-color: var(--color-bg-warm);
     color: var(--color-charcoal);
@@ -909,12 +919,96 @@ main {
     gap: 6px;
 }
 
+/* Geolocation Status Card Styles */
+.geo-status-card {
+    background-color: var(--color-primary-brown-light);
+    border: 1.5px dashed var(--color-primary-brown);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+    transition: var(--transition-smooth);
+}
+
+.geo-status-card:hover {
+    background-color: rgba(141, 85, 55, 0.08);
+}
+
+.geo-status-card.success-style {
+    background-color: var(--color-primary-green-light);
+    border-color: var(--color-primary-green);
+    border-style: solid;
+}
+
+.geo-status-card.error-style {
+    background-color: var(--color-primary-red-light);
+    border-color: var(--color-primary-red);
+    border-style: solid;
+}
+
+.geo-status-icon {
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.geo-status-details {
+    flex: 1;
+}
+
+.geo-status-details h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--color-charcoal);
+}
+
+.geo-status-details p {
+    font-size: 0.75rem;
+    margin: 0;
+    color: var(--color-charcoal-light);
+    line-height: 1.4;
+}
+
+/* Spinner during Geolocation active fetch */
+.geo-loader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.geo-spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary-red);
+    border-radius: 50%;
+    animation: geo-spin 0.8s linear infinite;
+}
+
+@keyframes geo-spin {
+    to { transform: rotate(360deg); }
+}
+
+.geo-status-card.success-style .geo-spinner {
+    border-top-color: var(--color-primary-green);
+}
+
 /* File Upload Styles */
 .file-upload-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin-bottom: 20px;
+}
+
+.file-upload-grid .upload-box:last-child {
+    grid-column: span 2;
 }
 
 .upload-box {
@@ -1102,46 +1196,59 @@ footer {
 .welcome-portal {
     width: 100%;
     height: 100%;
-    background-color: var(--color-primary-brown-dark); /* Rich clay brown soil background */
+    background: rgba(250, 246, 242, 0.25); /* Premium warm beige-sand translucent overlay */
+    backdrop-filter: blur(20px); /* Frosted glass effect showing active map behind */
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 20px;
     z-index: 1000;
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    overflow-y: auto;
+    overflow: hidden; /* Prevent scrolling inside portal overlay */
     transition: var(--transition-smooth);
 }
 
 .welcome-portal.hidden {
     opacity: 0;
     pointer-events: none;
-    transform: translateY(-20px);
+    transform: scale(1.05); /* Modern scale-out transition */
 }
 
 .portal-card-container {
     width: 100%;
-    max-width: 780px;
+    max-width: 480px;
     margin: auto;
     display: flex;
     flex-direction: column;
-    gap: 32px;
-    padding: 20px 0;
+    align-items: center;
+    gap: 28px;
+    padding: 36px 28px;
+    background: rgba(255, 255, 255, 0.75); /* High-end clay glass reflection */
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 28px;
+    box-shadow: 
+        0 20px 40px rgba(54, 42, 33, 0.12),
+        0 4px 12px rgba(54, 42, 33, 0.04),
+        inset 0 1px 2px rgba(255, 255, 255, 0.9); /* Inset white glow for premium rim highlight */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     animation: portalFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    text-align: center;
 }
 
 @keyframes portalFadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(15px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .portal-hero {
     text-align: center;
-    max-width: 580px;
+    max-width: 420px;
     margin: 0 auto;
 }
 
@@ -1159,18 +1266,12 @@ footer {
 }
 
 .portal-hero h2 {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: 800;
-    color: #FFFFFF; /* High-contrast white on dark clay background */
+    color: var(--color-charcoal); /* Premium high-contrast charcoal clay brown */
     margin-bottom: 12px;
     letter-spacing: -0.5px;
-    line-height: 1.3;
-}
-
-.portal-hero p {
-    font-size: 1rem;
-    color: #EFE9E2; /* Sandy warm cream color for maximum readability and prestige */
-    line-height: 1.5;
+    line-height: 1.35;
 }
 
 /* Burkina Faso CSS Flag Badge Styling */
@@ -1189,15 +1290,15 @@ footer {
 
 .burkina-map-badge {
     display: block;
-    width: 80px;
+    width: 76px;
     height: auto;
-    margin: 0 auto 24px auto;
-    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25));
+    margin: 0 auto 16px auto;
+    filter: drop-shadow(0 6px 12px rgba(54, 42, 33, 0.16));
     transition: var(--transition-smooth);
 }
 
 .burkina-map-badge:hover {
-    transform: scale(1.08) rotate(1deg);
+    transform: scale(1.06) rotate(1deg);
 }
 
 .flag-half {
@@ -1233,77 +1334,226 @@ footer {
     justify-content: center;
 }
 
-.portal-option-card-large {
-    background-color: #FFFDFB;
-    border: 1px solid var(--color-border);
-    border-radius: 28px;
-    padding: 36px;
-    cursor: pointer;
-    transition: var(--transition-smooth);
+/* Big Magnifying Glass Search Button */
+.portal-search-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-    box-shadow: var(--shadow-hard);
-    text-align: center;
-    max-width: 500px;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-    border-top: 5px solid var(--color-primary-red);
+    gap: 12px;
+    cursor: pointer;
 }
 
-.portal-option-card-large:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 24px 60px rgba(54, 42, 33, 0.25);
-    border-color: rgba(232, 92, 74, 0.3);
-}
-
-.portal-option-icon-large {
-    width: 72px;
-    height: 72px;
-    border-radius: 20px;
-    background: var(--color-primary-red-light);
-    color: var(--color-primary-red);
+.btn-portal-search-magnifier {
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #E85C4A, #F77D6D); /* Precise gradient from screenshot */
+    color: white;
+    border: 6px solid #FFFFFF; /* High-contrast white border */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 4px;
+    box-shadow: 
+        inset 0 2px 4px rgba(255, 255, 255, 0.35), /* Inner glow reflection */
+        0 12px 28px rgba(232, 92, 74, 0.35), /* Deep warm button drop shadow */
+        0 0 0 0px rgba(232, 92, 74, 0.25);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    animation: searchPulse 2s infinite;
+}
+
+.btn-portal-search-magnifier svg {
+    transition: var(--transition-smooth);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+}
+
+.portal-search-container:hover .btn-portal-search-magnifier {
+    transform: scale(1.06) rotate(5deg);
+    box-shadow: 
+        inset 0 2px 4px rgba(255, 255, 255, 0.4),
+        0 16px 36px rgba(232, 92, 74, 0.45),
+        0 0 0 4px rgba(232, 92, 74, 0.15);
+}
+
+.portal-search-container:active .btn-portal-search-magnifier {
+    transform: scale(0.96);
+    box-shadow: 
+        inset 0 1px 2px rgba(0, 0, 0, 0.2),
+        0 6px 16px rgba(232, 92, 74, 0.3);
+}
+
+.portal-search-caption {
+    color: var(--color-charcoal-light);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
     transition: var(--transition-smooth);
 }
 
-.portal-option-card-large:hover .portal-option-icon-large {
-    transform: scale(1.1) rotate(5deg);
-    background: var(--color-primary-red);
-    color: white;
+.portal-search-container:hover .portal-search-caption {
+    color: var(--color-primary-red);
 }
 
-.portal-option-card-large h3 {
-    font-size: 1.4rem;
+@keyframes searchPulse {
+    0% {
+        box-shadow: 
+            inset 0 2px 4px rgba(255, 255, 255, 0.35),
+            0 12px 28px rgba(232, 92, 74, 0.35),
+            0 0 0 0px rgba(232, 92, 74, 0.3);
+    }
+    70% {
+        box-shadow: 
+            inset 0 2px 4px rgba(255, 255, 255, 0.35),
+            0 12px 28px rgba(232, 92, 74, 0.2),
+            0 0 0 18px rgba(232, 92, 74, 0);
+    }
+    100% {
+        box-shadow: 
+            inset 0 2px 4px rgba(255, 255, 255, 0.35),
+            0 12px 28px rgba(232, 92, 74, 0.35),
+            0 0 0 0px rgba(232, 92, 74, 0);
+    }
+}
+
+/* Clickable Rating row in Bottom Sheet */
+.sheet-rider-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    margin-top: 5px;
+    padding: 2px 0;
+    width: fit-content;
+    transition: var(--transition-smooth);
+}
+
+.sheet-rider-rating:hover {
+    opacity: 0.85;
+    transform: translateX(2px);
+}
+
+.rating-stars {
+    color: var(--color-primary-yellow);
     font-weight: 700;
-    color: var(--color-charcoal);
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
 }
 
-.portal-option-card-large p {
-    font-size: 0.95rem;
+.rating-val {
     color: var(--color-charcoal-light);
-    line-height: 1.6;
-}
-
-.btn-portal-action {
-    width: 100%;
-    padding: 14px 28px;
-    font-size: 1rem;
-    border-radius: 16px;
     font-weight: 700;
-    box-shadow: 0 4px 15px rgba(232, 92, 74, 0.25);
+}
+
+.reviews-count {
+    color: var(--color-charcoal-muted);
+    text-decoration: underline;
+    font-size: 0.7rem;
+}
+
+/* Reviews Modal Explored Card Styles */
+.review-entry-card {
+    background-color: var(--color-primary-brown-light);
+    border: 1px solid rgba(141, 85, 55, 0.08);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 6px rgba(54, 42, 33, 0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: var(--transition-smooth);
+}
+
+.review-entry-card:hover {
+    background-color: white;
+    border-color: var(--color-border);
+    box-shadow: 0 4px 12px rgba(54, 42, 33, 0.05);
 }
 
 
+
+/* pulsing blue beacon for client position on main map */
+.client-location-beacon-container {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.client-beacon-core {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #2D9CDB; /* Sleek wave blue */
+    border: 2px solid white;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.client-beacon-pulse {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgba(45, 156, 219, 0.4);
+    animation: beaconPulse 1.8s infinite ease-out;
+    z-index: 5;
+}
+
+@keyframes beaconPulse {
+    0% {
+        transform: scale(0.6);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(2.4);
+        opacity: 0;
+    }
+}
 
 /* Utilities */
 .hidden {
     display: none !important;
+}
+
+/* Mobile Header Fluid Optimization (avoids wrapping / overlaps) */
+@media (max-width: 480px) {
+    header {
+        padding: 8px 12px;
+        height: 56px;
+    }
+    .logo-container {
+        gap: 6px;
+    }
+    .logo-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+    }
+    .logo-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+    .logo-text {
+        font-size: 0.95rem;
+    }
+    .nav-buttons {
+        gap: 6px;
+    }
+    .btn {
+        font-size: 0.75rem;
+        padding: 6px 10px;
+    }
+}
+
+@media (max-width: 375px) {
+    .logo-text span {
+        display: none; /* Hides "Rapide" on narrow screens to guarantee fluid fit */
+    }
 }
 
 /* Responsive Overrides (For Desktops & Tablets) */
@@ -1595,11 +1845,11 @@ footer {
     background-color: var(--color-charcoal);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 10px 18px;
+    padding: 6px 12px;
     border-radius: 100px;
     font-family: var(--font-sans);
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     cursor: pointer;
     box-shadow: var(--shadow-medium);
     display: flex;
@@ -2349,5 +2599,462 @@ footer {
 .btn-pay-sub:active {
     transform: scale(0.97);
 }
+
+/* Premium Blur Details style */
+.blur-detail {
+    filter: blur(5px) grayscale(20%);
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.85;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+/* Espace Livreur dashboard & panel styles */
+.driver-login-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: var(--color-charcoal-light);
+}
+
+.driver-login-link a {
+    color: var(--color-primary-red);
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+.driver-login-link a:hover {
+    text-decoration: underline;
+}
+
+.driver-dashboard-welcome {
+    margin-bottom: 20px;
+    background: var(--color-primary-brown-light);
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+}
+
+.driver-dashboard-welcome h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--color-primary-brown-dark);
+}
+
+.driver-dashboard-welcome p {
+    font-size: 0.85rem;
+    color: var(--color-charcoal-light);
+    margin-top: 2px;
+}
+
+.driver-status-card {
+    background-color: var(--color-card-white);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.driver-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.driver-status-row:last-child {
+    margin-bottom: 0;
+}
+
+.driver-dashboard-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.driver-stat-box {
+    background: var(--color-bg-warm);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 12px;
+    text-align: center;
+}
+
+.driver-stat-val {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-charcoal);
+    margin-top: 4px;
+}
+
+/* Premium terms card in Drawer */
+.driver-terms-info {
+    background-color: var(--color-primary-yellow-light);
+    border: 1px solid rgba(246, 205, 86, 0.3);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.driver-terms-info h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-primary-brown-dark);
+    margin-bottom: 8px;
+}
+
+.driver-terms-info ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.driver-terms-info li {
+    font-size: 0.82rem;
+    color: var(--color-charcoal-light);
+    margin-bottom: 8px;
+    position: relative;
+    padding-left: 14px;
+    line-height: 1.4;
+}
+
+.driver-terms-info li:last-child {
+    margin-bottom: 0;
+}
+
+.driver-terms-info li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--color-primary-red);
+    font-weight: bold;
+}
+
+/* Unified Auth Modal tab selectors */
+.auth-tabs {
+    display: flex;
+    background: var(--color-bg-warm);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 20px;
+}
+
+.auth-tab {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    color: var(--color-charcoal-light);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.auth-tab.active {
+    background: var(--color-card-white);
+    color: var(--color-primary-red);
+    box-shadow: var(--shadow-soft);
+}
+
+/* Admin Dashboard Tables & Lists styling */
+.admin-table-container {
+    width: 100%;
+    overflow-x: auto;
+    background: var(--color-card-white);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.8rem;
+}
+
+.admin-table th, .admin-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.admin-table th {
+    background-color: var(--color-bg-warm);
+    font-weight: 700;
+    color: var(--color-charcoal-light);
+    white-space: nowrap;
+}
+
+.admin-table tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+    background-color: var(--color-primary-brown-light);
+}
+
+.badge-status {
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.badge-status.active {
+    background-color: var(--color-green-light);
+    color: var(--color-green-soft);
+}
+
+.badge-status.pending {
+    background-color: var(--color-primary-yellow-light);
+    color: var(--color-primary-brown);
+}
+
+.badge-status.suspended {
+    background-color: var(--color-primary-red-light);
+    color: var(--color-primary-red);
+}
+
+.btn-table-action {
+    border: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-right: 4px;
+    transition: var(--transition-smooth);
+    display: inline-block;
+}
+
+.btn-table-action.validate {
+    background-color: var(--color-green-light);
+    color: var(--color-green-soft);
+}
+
+.btn-table-action.suspend {
+    background-color: var(--color-primary-yellow-light);
+    color: var(--color-primary-brown);
+}
+
+.btn-table-action.delete {
+    background-color: var(--color-primary-red-light);
+    color: var(--color-primary-red);
+}
+
+.btn-table-action:hover {
+    transform: scale(1.06);
+}
+
+/* Visiteurs SVG chart & trend graph */
+.stat-chart-container {
+    background: var(--color-card-white);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-soft);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.chart-legend {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-green-soft);
+    background-color: var(--color-green-light);
+    padding: 4px 10px;
+    border-radius: 100px;
+}
+
+.chart-svg-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.evolution-chart {
+    width: 100%;
+    height: 140px;
+    display: block;
+}
+
+.chart-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding: 0 8px;
+}
+
+.chart-labels span {
+    font-size: 0.65rem;
+    color: var(--color-charcoal-muted);
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   PREMIUM FEATURE EXTENSIONS (WALLET, QUICK CHAT CHIPS, SMS OTP TOAST)
+   ========================================================================== */
+
+/* 1. Espace Livreur Portefeuille Virtuel (Wallet) */
+.driver-wallet-card {
+    background: linear-gradient(135deg, var(--color-primary-brown), var(--color-primary-brown-dark));
+    color: white;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--shadow-medium);
+}
+
+.wallet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.wallet-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.wallet-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-primary-yellow);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.wallet-desc {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.3;
+}
+
+/* 2. Chat Suggestion Chips */
+.chat-quick-replies {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 8px 10px 8px;
+    margin-bottom: 4px;
+    width: 100%;
+    scrollbar-width: none; /* Hide standard Firefox scrollbar */
+}
+
+.chat-quick-replies::-webkit-scrollbar {
+    display: none; /* Hide Chrome/Safari scrollbar */
+}
+
+.reply-chip {
+    flex-shrink: 0;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-primary-brown-light);
+    color: var(--color-primary-brown-dark);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.reply-chip:hover {
+    border-color: var(--color-primary-red);
+    background-color: var(--color-primary-red-light);
+    color: var(--color-primary-red);
+    transform: translateY(-1px);
+}
+
+.reply-chip:active {
+    transform: translateY(1px);
+}
+
+/* Adjust chat footer styling to accommodate suggestions */
+.chat-footer {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px 16px 16px;
+    background: var(--color-card-white);
+    border-top: 1px solid var(--color-border);
+}
+
+/* 3. Simulated incoming SMS Toast Notification */
+.sms-toast-container {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-150%);
+    width: 90%;
+    max-width: 380px;
+    background: rgba(44, 38, 35, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
+    padding: 14px 18px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+    z-index: 9999; /* Highest priority visual level */
+    color: white;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+
+.sms-toast-container.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.sms-toast-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.sms-toast-icon {
+    font-size: 0.85rem;
+}
+
+.sms-toast-title {
+    flex-grow: 1;
+    color: var(--color-primary-yellow);
+}
+
+.sms-toast-body {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #FFFFFF;
+}
+
+.sms-toast-body strong {
+    color: var(--color-primary-yellow);
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+}
+
+
 
 

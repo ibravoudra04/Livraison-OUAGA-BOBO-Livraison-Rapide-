@@ -27,6 +27,7 @@
         <nav class="nav-buttons">
             <button class="btn btn-secondary hidden" id="btn-nav-find">Trouver un livreur</button>
             <button class="btn btn-primary" id="btn-nav-register">Devenir livreur</button>
+            <button class="btn btn-secondary" id="btn-nav-login">Se connecter</button>
         </nav>
     </header>
 
@@ -40,25 +41,20 @@
                     <!-- Burkina Faso Map Accent Badge -->
                     <img src="burkina_map.png" alt="Carte du Burkina Faso" class="burkina-map-badge">
                     <h2>Recherchez un livreur près de chez vous</h2>
-                    <p>Mise en relation instantanée avec des livreurs indépendants à Ouagadougou et Bobo-Dioulasso. Épuré, transparent et immédiat.</p>
+                    <p style="font-size: 0.95rem; color: rgba(255,255,255,0.75); line-height: 1.5; max-width: 460px; margin: 0 auto 20px auto;">
+                        Visualisez les livreurs actifs autour de vous sur la carte en temps réel et contactez-les en un clic.
+                    </p>
                 </div>
                 
                 <div class="portal-options-single">
-                    <!-- Option Principale : Rechercher un livreur -->
-                    <div class="portal-option-card-large" id="portal-btn-find">
-                        <div class="portal-option-icon-large">
-                            <!-- Location Pin SVG -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        </div>
-                        <h3>Lancer la recherche</h3>
-                        <p>Visualisez les livreurs à moto, tricycle ou voiture actifs autour de vous sur la carte en temps réel et contactez-les directement.</p>
-                        <button class="btn btn-primary btn-portal-action">
-                            Trouver un livreur disponible
+                    <div class="portal-search-container" id="portal-btn-find">
+                        <!-- Big Magnifying Glass Button (Loupe) -->
+                        <button class="btn-portal-search-magnifier" aria-label="Lancer la recherche">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         </button>
+                        <span class="portal-search-caption">Lancer la recherche</span>
                     </div>
                 </div>
-
-
             </div>
         </div>
         
@@ -91,6 +87,12 @@
                             <div class="rider-vehicle">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
                                 <span id="sheet-rider-vehicle">Moto 135cc</span>
+                            </div>
+                            <!-- Clickable Star rating line -->
+                            <div class="sheet-rider-rating" id="sheet-rider-rating-trigger">
+                                <span class="rating-stars" id="sheet-rider-stars">★★★★★</span>
+                                <span class="rating-val" id="sheet-rider-rating-val">4.8</span>
+                                <span class="reviews-count" id="sheet-rider-reviews-count">(2 avis)</span>
                             </div>
                         </div>
                     </div>
@@ -231,97 +233,247 @@
 
             <div class="drawer-body">
                 
-                <!-- Formulaire principal -->
-                <form id="driver-register-form">
-                    <p class="form-subtitle">
-                        Inscrivez-vous gratuitement pour commencer à recevoir des courses dans votre zone.
-                    </p>
+                <!-- Panel Inscription Livreur -->
+                <div id="driver-register-panel">
+                    <form id="driver-register-form">
+                        <p class="form-subtitle">
+                            Inscrivez-vous gratuitement pour commencer à recevoir des courses dans votre zone.
+                        </p>
 
-                    <div class="driver-info-badge">
-                        <span class="info-badge-icon">ℹ️</span>
-                        <span>L'inscription est gratuite. Les 4 premières mises en relation clients sont offertes. À partir du 5ème client vous contactant, un abonnement de <strong>500 FCFA par 7 jours</strong> sera requis pour rester visible sur la plateforme.</span>
-                    </div>
-
-                    <!-- Nom complet -->
-                    <div class="form-group">
-                        <label for="driver-name" class="form-label">Nom complet *</label>
-                        <input type="text" id="driver-name" class="form-input" placeholder="Ex: Souleymane Barry" required>
-                    </div>
-
-                    <!-- Téléphone -->
-                    <div class="form-group">
-                        <label for="driver-phone" class="form-label">Numéro de téléphone *</label>
-                        <div class="input-wrapper">
-                            <span class="input-prefix">+226</span>
-                            <input type="tel" id="driver-phone" class="form-input form-input-prefix" placeholder="70 00 00 00" maxlength="11" required>
+                        <!-- Nom complet -->
+                        <div class="form-group">
+                            <label for="driver-name" class="form-label">Nom complet *</label>
+                            <input type="text" id="driver-name" class="form-input" placeholder="Ex: Souleymane Barry" required>
                         </div>
-                    </div>
 
-                    <!-- Type de transport / Moto, Tricycle, Voiture -->
-                    <div class="form-group">
-                        <label class="form-label">Moyen de transport *</label>
-                        <div class="vehicle-selector">
-                            <div class="vehicle-option selected" data-vehicle="Moto">
-                                <span class="vehicle-icon">🏍️</span>
-                                <span class="vehicle-label">Moto</span>
-                            </div>
-                            <div class="vehicle-option" data-vehicle="Tricycle">
-                                <span class="vehicle-icon">🛺</span>
-                                <span class="vehicle-label">Tricycle</span>
-                            </div>
-                            <div class="vehicle-option" data-vehicle="Voiture">
-                                <span class="vehicle-icon">🚗</span>
-                                <span class="vehicle-label">Voiture</span>
+                        <!-- Téléphone -->
+                        <div class="form-group">
+                            <label for="driver-phone" class="form-label">Numéro de téléphone *</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">+226</span>
+                                <input type="tel" id="driver-phone" class="form-input form-input-prefix" placeholder="70 00 00 00" maxlength="11" required>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Position GPS sur la carte -->
-                    <div class="form-group">
-                        <label class="form-label">Localisation GPS (Point d'attente) *</label>
-                        <div class="map-picker-container">
-                            <div class="map-picker-header">
-                                <span>Sélectionnez votre position</span>
-                                <span style="color:var(--color-primary-red);" id="lbl-picker-city">Ouagadougou</span>
+                        <!-- Mot de passe -->
+                        <div class="form-group">
+                            <label for="driver-password" class="form-label">Mot de passe de votre choix *</label>
+                            <input type="password" id="driver-password" class="form-input" placeholder="Choisissez votre mot de passe secret" required>
+                        </div>
+
+                        <!-- Type de transport / Moto, Tricycle, Voiture -->
+                        <div class="form-group">
+                            <label class="form-label">Moyen de transport *</label>
+                            <div class="vehicle-selector">
+                                <div class="vehicle-option selected" data-vehicle="Moto">
+                                    <span class="vehicle-icon">🏍️</span>
+                                    <span class="vehicle-label">Moto</span>
+                                </div>
+                                <div class="vehicle-option" data-vehicle="Tricycle">
+                                    <span class="vehicle-icon">🛺</span>
+                                    <span class="vehicle-label">Tricycle</span>
+                                </div>
+                                <div class="vehicle-option" data-vehicle="Voiture">
+                                    <span class="vehicle-icon">🚗</span>
+                                    <span class="vehicle-label">Voiture</span>
+                                </div>
                             </div>
-                            <div id="map-picker"></div>
                         </div>
-                        <div class="gps-hint">
-                            <span>📍</span>
-                            <span id="gps-status-desc">Faites glisser la carte et cliquez pour positionner votre repère.</span>
-                        </div>
-                    </div>
 
-                    <!-- Uploads d'identités -->
-                    <div class="form-group">
-                        <label class="form-label">Documents de vérification *</label>
-                        <div class="file-upload-grid">
+                        <!-- Position GPS sur la carte -->
+                        <div class="form-group">
+                            <label class="form-label">Localisation GPS (Point d'attente) *</label>
                             
-                            <!-- Upload CNI -->
-                            <div class="upload-box" id="box-upload-cni">
-                                <input type="file" id="upload-cni" accept="image/*" required>
-                                <span class="upload-icon">🪪</span>
-                                <span class="upload-text">Photo CNI</span>
-                                <img src="" alt="Aperçu CNI" class="upload-preview" id="preview-cni">
-                                <button type="button" class="upload-remove" id="btn-remove-cni">&times;</button>
+                            <!-- Geolocation Status Card -->
+                            <div class="geo-status-card" id="geo-status-card">
+                                <div class="geo-status-icon">📍</div>
+                                <div class="geo-status-details">
+                                    <h4 id="geo-status-title">Détection GPS requise</h4>
+                                    <p id="geo-status-text">Pour apparaître sur la carte des clients, nous devons enregistrer votre position exacte.</p>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-geo-locate" id="btn-geo-locate" style="width:auto; margin:0; padding:10px 16px; font-size:0.8rem; font-weight:700; border-radius:12px;">
+                                    Me géolocaliser
+                                </button>
+                                <div class="geo-loader hidden" id="geo-loader">
+                                    <div class="geo-spinner"></div>
+                                    <span style="font-size:0.75rem; color:var(--color-charcoal-light); font-weight:600;">Recherche GPS...</span>
+                                </div>
                             </div>
 
-                            <!-- Upload Selfie -->
-                            <div class="upload-box" id="box-upload-selfie">
-                                <input type="file" id="upload-selfie" accept="image/*" required>
-                                <span class="upload-icon">📸</span>
-                                <span class="upload-text">Photo Selfie</span>
-                                <img src="" alt="Aperçu Selfie" class="upload-preview" id="preview-selfie">
-                                <button type="button" class="upload-remove" id="btn-remove-selfie">&times;</button>
+                            <div class="map-picker-container hidden" id="map-picker-wrapper">
+                                <div class="map-picker-header">
+                                    <span>📍 Confirmer ma position (<span id="lbl-picker-city">Ouagadougou</span>)</span>
+                                    <span style="color:var(--color-primary-green); font-weight:700;" id="lbl-picker-status">✓ Position enregistrée</span>
+                                </div>
+                                <div id="map-picker"></div>
                             </div>
+                            <div class="gps-hint hidden" id="gps-fallback-hint">
+                                <span>⚠️</span>
+                                <span id="gps-status-desc">Détection échouée. Faites glisser la carte pour positionner votre repère de secours.</span>
+                            </div>
+                            
+                            <!-- Hidden inputs to hold the coordinates -->
+                            <input type="hidden" id="driver-lat" required>
+                            <input type="hidden" id="driver-lng" required>
+                        </div>
 
+                        <!-- Uploads d'identités -->
+                        <div class="form-group">
+                            <label class="form-label">Documents de vérification *</label>
+                            <div class="file-upload-grid">
+                                
+                                <!-- Upload CNI Recto -->
+                                <div class="upload-box" id="box-upload-cni-recto">
+                                    <input type="file" id="upload-cni-recto" accept="image/*" required>
+                                    <span class="upload-icon">🪪</span>
+                                    <span class="upload-text">Photo CNI Recto</span>
+                                    <img src="" alt="Aperçu CNI Recto" class="upload-preview" id="preview-cni-recto">
+                                    <button type="button" class="upload-remove" id="btn-remove-cni-recto">&times;</button>
+                                </div>
+
+                                <!-- Upload CNI Verso -->
+                                <div class="upload-box" id="box-upload-cni-verso">
+                                    <input type="file" id="upload-cni-verso" accept="image/*" required>
+                                    <span class="upload-icon">🪪</span>
+                                    <span class="upload-text">Photo CNI Verso</span>
+                                    <img src="" alt="Aperçu CNI Verso" class="upload-preview" id="preview-cni-verso">
+                                    <button type="button" class="upload-remove" id="btn-remove-cni-verso">&times;</button>
+                                </div>
+
+                                <!-- Upload Selfie -->
+                                <div class="upload-box" id="box-upload-selfie">
+                                    <input type="file" id="upload-selfie" accept="image/*" required>
+                                    <span class="upload-icon">📸</span>
+                                    <span class="upload-text">Photo Selfie</span>
+                                    <img src="" alt="Aperçu Selfie" class="upload-preview" id="preview-selfie">
+                                    <button type="button" class="upload-remove" id="btn-remove-selfie">&times;</button>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width:100%; padding:14px; border-radius:16px; font-size:1rem; margin-top:10px;">
+                            Soumettre mon inscription
+                        </button>
+                    </form>
+                    <p class="driver-login-link">Déjà inscrit ? <a href="#" id="link-to-login">Se connecter</a></p>
+                </div>
+
+                <!-- Panel Connexion Livreur -->
+                <div class="hidden" id="driver-login-panel">
+                    <p class="form-subtitle">
+                        Connectez-vous à votre espace livreur pour gérer votre statut et votre abonnement.
+                    </p>
+                    <form id="driver-login-form">
+                        <!-- Téléphone -->
+                        <div class="form-group">
+                            <label for="login-phone" class="form-label">Numéro de téléphone *</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">+226</span>
+                                <input type="tel" id="login-phone" class="form-input form-input-prefix" placeholder="70 00 00 00" maxlength="11" required>
+                            </div>
+                        </div>
+                        <!-- Code PIN -->
+                        <div class="form-group">
+                            <label for="login-pin" class="form-label">Code PIN (Défaut: 1234) *</label>
+                            <input type="password" id="login-pin" class="form-input" placeholder="Ex: 1234" maxlength="6" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%; padding:14px; border-radius:16px; font-size:1rem; margin-top:10px;">
+                            Se connecter
+                        </button>
+                    </form>
+                    <p class="driver-login-link">Pas encore inscrit ? <a href="#" id="link-to-register">Créer un compte</a></p>
+                </div>
+
+                <!-- Panel Tableau de Bord Livreur -->
+                <div class="hidden" id="driver-dashboard-panel">
+                    <div class="driver-dashboard-welcome">
+                        <h3 id="driver-dash-name">Bonjour, Souleymane !</h3>
+                        <p id="driver-dash-vehicle">🏍️ Moto</p>
+                    </div>
+                    <div class="driver-status-card">
+                        <div class="driver-status-row">
+                            <span class="form-label" style="margin-bottom:0;">Statut de votre compte :</span>
+                            <span class="rider-status" id="driver-dash-status">Disponible</span>
+                        </div>
+                        <div class="driver-status-row">
+                            <span class="form-label" style="margin-bottom:0;">Visibilité sur la carte :</span>
+                            <span id="driver-dash-visibility" style="color:var(--color-green-soft); font-weight:700;">🟢 En ligne</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Driver Wallet Balance Panel -->
+                    <div class="driver-wallet-card" id="driver-dash-wallet-box">
+                        <div class="wallet-header">
+                            <span class="wallet-label">💵 Mon Portefeuille</span>
+                            <span class="wallet-val" id="driver-dash-wallet-val">2 500 FCFA</span>
+                        </div>
+                        <p class="wallet-desc">Permet de payer automatiquement ou manuellement votre abonnement hebdomadaire.</p>
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            <button type="button" class="btn btn-primary" id="btn-driver-recharge-wallet" style="flex: 1; padding: 10px; font-size: 0.78rem; border-radius: 10px; margin: 0; background: var(--color-primary-green);">⚡ Recharger par MoMo</button>
+                            <button type="button" class="btn btn-secondary hidden" id="btn-driver-pay-sub-wallet" style="flex: 1; padding: 10px; font-size: 0.78rem; border-radius: 10px; margin: 0; background: var(--color-primary-red); color: white; border: none;">Déduire 500 FCFA</button>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="width:100%; padding:14px; border-radius:16px; font-size:1rem; margin-top:10px;">
-                        Soumettre mon inscription
+                    <div class="driver-dashboard-stats">
+                        <div class="driver-stat-box">
+                            <div class="info-label">Mises en Relation</div>
+                            <div class="driver-stat-val" id="driver-dash-contacts">2 / 4</div>
+                            <div style="font-size:0.65rem; color:var(--color-charcoal-muted); margin-top:2px;">offertes</div>
+                        </div>
+                        <div class="driver-stat-box">
+                            <div class="info-label">Clics Profil</div>
+                            <div class="driver-stat-val" id="driver-dash-views">18</div>
+                            <div style="font-size:0.65rem; color:var(--color-charcoal-muted); margin-top:2px;">visites</div>
+                        </div>
+                        <div class="driver-stat-box">
+                            <div class="info-label">Temps restant</div>
+                            <div class="driver-stat-val" id="driver-dash-days">6 jours</div>
+                            <div style="font-size:0.65rem; color:var(--color-charcoal-muted); margin-top:2px;">avant facturation</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes et Avis -->
+                    <div class="driver-terms-info" style="margin-top: 15px;">
+                        <h4>⭐ Notes & Avis Clients</h4>
+                        <div style="display:flex; align-items:center; gap:8px; margin-top:8px; margin-bottom:12px;">
+                            <span style="font-size:1.8rem; font-weight:800; color:var(--color-primary-yellow)" id="driver-dash-rating-val">4.9</span>
+                            <div>
+                                <div style="color:var(--color-primary-yellow); font-size:0.85rem;" id="driver-dash-stars">★★★★★</div>
+                                <div style="font-size:0.65rem; color:var(--color-charcoal-muted);" id="driver-dash-reviews-count">Basé sur 18 avis</div>
+                            </div>
+                        </div>
+                        <div id="driver-reviews-list" style="display:flex; flex-direction:column; gap:8px;">
+                            <!-- Inséré dynamiquement en JS -->
+                        </div>
+                    </div>
+
+                    <!-- Messagerie locale intégrée pour Livreur -->
+                    <div class="driver-terms-info" style="margin-top: 15px;">
+                        <h4>💬 Messages Clients (Messagerie Locale)</h4>
+                        <div id="driver-dash-chats-list" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                            <p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic;">Aucun message reçu pour le moment.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Option de paiement d'abonnement -->
+                    <div class="driver-terms-info" id="driver-dash-sub-box">
+                        <h4>ℹ️ Suivi de votre abonnement</h4>
+                        <p id="driver-dash-sub-text" style="font-size:0.8rem; color:var(--color-charcoal-light); line-height:1.4; margin-bottom:0;">
+                            Votre compte est gratuit pour le moment. Un abonnement de 500 FCFA / 7 jours sera requis à partir de la 4ème mise en relation ou du 7ème jour.
+                        </p>
+                        <button class="btn-unlock" id="btn-driver-pay-sub" style="width:100%; margin-top:12px; display:none; padding:10px; font-size:0.9rem;">
+                            Régler mon abonnement (500 FCFA)
+                        </button>
+                        <button class="btn btn-secondary" id="btn-driver-simulate-contact" style="width:100%; margin-top:10px; font-size:0.75rem; padding:6px 12px; border-radius:8px;">
+                            ⚡ Simuler 2 nouveaux contacts clients
+                        </button>
+                    </div>
+
+                    <button class="btn btn-secondary" id="btn-driver-logout" style="width:100%; padding:12px; border-radius:16px; margin-top:15px;">
+                        Se déconnecter
                     </button>
-                </form>
+                </div>
 
                 <!-- Écran de confirmation de soumission -->
                 <div class="registration-success" id="driver-success-panel">
@@ -330,6 +482,17 @@
                     <p>
                         Votre dossier est en cours de vérification. Vous serez contacté sous 24h.
                     </p>
+
+                    <!-- Premium notification card shown only AFTER registration -->
+                    <div class="driver-terms-info">
+                        <h4>⚠️ Règles de visibilité importantes :</h4>
+                        <ul style="margin: 0; padding-left: 0;">
+                            <li>Les <strong>4 premières mises en relation</strong> avec des clients sont 100% offertes.</li>
+                            <li>À partir de la <strong>4ème ou 5ème livraison</strong> (mises en relation), ou à partir du <strong>7ème jour</strong> de présence sur la plateforme, un abonnement de <strong>500 FCFA par 7 jours</strong> sera requis pour rester visible sur la carte.</li>
+                            <li>Vous pouvez vous connecter à votre <strong>Espace Livreur</strong> à tout moment pour suivre votre statut et régler votre abonnement.</li>
+                        </ul>
+                    </div>
+
                     <button class="btn btn-secondary" id="btn-return-map" style="width:100%; padding:12px;">
                         Retourner à la carte
                     </button>
@@ -363,6 +526,13 @@
             </div>
 
             <div class="chat-footer">
+                <!-- Chat Quick-Reply Suggestion Chips -->
+                <div class="chat-quick-replies" id="chat-quick-replies">
+                    <button type="button" class="reply-chip">Je suis arrivé !</button>
+                    <button type="button" class="reply-chip">D'accord, j'arrive</button>
+                    <button type="button" class="reply-chip">Combien pour la course ?</button>
+                    <button type="button" class="reply-chip">Colis récupéré !</button>
+                </div>
                 <form id="chat-send-form">
                     <input type="text" id="chat-input" placeholder="Écrivez votre message ici..." autocomplete="off" required>
                     <button type="submit" id="btn-send-message" aria-label="Envoyer">
@@ -372,75 +542,329 @@
             </div>
         </div>
 
+        <!-- Drawer Espace Client -->
+        <div class="driver-drawer" id="client-drawer">
+            <div class="drawer-header" style="background: var(--color-primary-brown-dark); color: white;">
+                <h2>👤 Mon Espace Client</h2>
+                <button class="btn-close-drawer" id="btn-close-client-drawer" style="color: white;" aria-label="Fermer le menu">&times;</button>
+            </div>
+
+            <div class="drawer-body" style="padding: 20px;">
+                <div id="client-dashboard-panel">
+                    <div class="driver-dashboard-welcome" style="margin-bottom: 20px;">
+                        <h3 id="client-dash-phone" style="font-weight:800; font-size:1.15rem;">Mon Compte Client</h3>
+                        <span class="badge-status active" style="font-size:0.75rem; padding: 4px 8px; border-radius: 6px; background-color: var(--color-green-light); color: var(--color-green-soft);">Client Abonné</span>
+                    </div>
+
+                    <!-- Historique de Consultation -->
+                    <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,255,255,0.9); border-radius:12px; padding:12px;">
+                        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown)">📍 Livreurs Consultés</h4>
+                        <div id="client-viewed-list" style="display:flex; flex-direction:column; gap:6px;">
+                            <p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun livreur consulté pour le moment.</p>
+                        </div>
+                    </div>
+
+                    <!-- Historique de Contact -->
+                    <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,255,255,0.9); border-radius:12px; padding:12px;">
+                        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown)">📞 Contacts Débloqués</h4>
+                        <div id="client-contacted-list" style="display:flex; flex-direction:column; gap:6px;">
+                            <p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun contact débloqué.</p>
+                        </div>
+                    </div>
+
+                    <!-- Ongoing chats list -->
+                    <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,255,255,0.9); border-radius:12px; padding:12px;">
+                        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown)">💬 Discussions en cours</h4>
+                        <div id="client-chats-list" style="display:flex; flex-direction:column; gap:6px;">
+                            <p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucune discussion active.</p>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary" id="btn-client-logout" style="width:100%; padding:12px; border-radius:16px; margin-top:24px; font-weight:700;">
+                        Se déconnecter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modale d'Authentification Unique (Se connecter) -->
+        <div class="modal-overlay" id="auth-modal">
+            <div class="payment-card" style="max-width: 420px; width: 95%;">
+                <div class="payment-header">
+                    <h3>🔐 Connexion Unique</h3>
+                    <button class="btn-close-modal" id="btn-close-auth" aria-label="Fermer">&times;</button>
+                </div>
+                
+                <div class="payment-body">
+                    <!-- Tab selector for Auth method -->
+                    <div class="auth-tabs" id="auth-method-tabs">
+                        <button type="button" class="auth-tab active" id="tab-auth-password">🔑 Mot de passe</button>
+                        <button type="button" class="auth-tab" id="tab-auth-otp">💬 Code SMS OTP</button>
+                    </div>
+
+                    <!-- Panel Connexion Unique (Password) -->
+                    <div id="auth-login-panel">
+                        <p class="form-subtitle" style="margin-bottom: 15px; text-align: center; font-size:0.85rem; color:var(--color-charcoal-light);">
+                            Accédez instantanément à votre espace en saisissant votre numéro et votre mot de passe.
+                        </p>
+                        <form id="auth-login-form">
+                            <!-- Numéro de téléphone -->
+                            <div class="form-group">
+                                <label for="auth-login-phone" class="form-label">Numéro de téléphone *</label>
+                                <div class="input-wrapper">
+                                    <span class="input-prefix">+226</span>
+                                    <input type="tel" id="auth-login-phone" class="form-input form-input-prefix" placeholder="70 00 00 00" maxlength="11" required autocomplete="username">
+                                </div>
+                            </div>
+                            <!-- Mot de passe -->
+                            <div class="form-group">
+                                <label for="auth-login-password" class="form-label">Mot de passe *</label>
+                                <input type="password" id="auth-login-password" class="form-input" placeholder="Saisissez votre mot de passe" required autocomplete="current-password">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; border-radius: 16px; margin-top: 15px; font-weight:700;">
+                                Se connecter
+                            </button>
+                        </form>
+                        
+                        <div style="text-align:center; margin-top: 20px; display:flex; flex-direction:column; gap:10px; font-size:0.85rem;">
+                            <p class="driver-login-link" style="margin:0;">Vous êtes un client ? <a href="#" id="link-to-client-register" style="font-weight:700; color:var(--color-primary-red);">Créer un compte Client (5 000 FCFA/mois)</a></p>
+                            <p class="driver-login-link" style="margin:0;">Vous êtes livreur ? <a href="#" id="link-to-driver-register" style="font-weight:700; color:var(--color-primary-brown);">S'enregistrer comme livreur</a></p>
+                        </div>
+                    </div>
+
+                    <!-- Panel Connexion Unique (SMS OTP) -->
+                    <div class="hidden" id="auth-otp-panel">
+                        <p class="form-subtitle" style="margin-bottom: 15px; text-align: center; font-size:0.85rem; color:var(--color-charcoal-light);">
+                            Connectez-vous de manière sécurisée sans mot de passe en recevant un code SMS temporaire sur votre téléphone.
+                        </p>
+                        <form id="auth-otp-form">
+                            <!-- Numéro de téléphone -->
+                            <div class="form-group" id="otp-phone-group">
+                                <label for="auth-otp-phone" class="form-label">Numéro de téléphone *</label>
+                                <div class="input-wrapper">
+                                    <span class="input-prefix">+226</span>
+                                    <input type="tel" id="auth-otp-phone" class="form-input form-input-prefix" placeholder="70 00 00 00" maxlength="11" required>
+                                </div>
+                                <button type="button" class="btn btn-primary" id="btn-send-otp" style="width: 100%; padding: 12px; border-radius: 12px; margin-top: 10px; font-size: 0.85rem; font-weight:700; background-color: var(--color-primary-brown); border:none; color:white;">
+                                    Recevoir mon code OTP par SMS
+                                </button>
+                            </div>
+                            
+                            <!-- Input Code OTP (Hidden at first) -->
+                            <div class="form-group hidden" id="otp-code-group">
+                                <label for="auth-otp-code" class="form-label" style="color:var(--color-primary-red); font-weight: 700;">Code de vérification OTP reçu *</label>
+                                <input type="text" id="auth-otp-code" class="form-input" placeholder="Ex: 4839" maxlength="4" style="text-align: center; font-size: 1.5rem; letter-spacing: 12px; font-weight: 800; font-family: monospace; background: var(--color-bg-warm); border: 2px solid var(--color-primary-red);">
+                                <p style="font-size: 0.72rem; color: var(--color-charcoal-muted); margin-top: 6px; text-align: center;">Cliquez sur la notification SMS simulée apparue en haut pour copier le code.</p>
+                                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; border-radius: 16px; margin-top: 15px; font-weight:700;">
+                                    Valider et Se connecter
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div style="text-align:center; margin-top: 20px; display:flex; flex-direction:column; gap:10px; font-size:0.85rem;">
+                            <p class="driver-login-link" style="margin:0;">Vous êtes un client ? <a href="#" id="link-to-client-register-otp" style="font-weight:700; color:var(--color-primary-red);">Créer un compte Client</a></p>
+                            <p class="driver-login-link" style="margin:0;">Vous êtes livreur ? <a href="#" id="link-to-driver-register-otp" style="font-weight:700; color:var(--color-primary-brown);">S'enregistrer comme livreur</a></p>
+                        </div>
+                    </div>
+
+                    <!-- Panel Inscription Client -->
+                    <div class="hidden" id="auth-client-register-section">
+                        <p class="form-subtitle" style="margin-bottom: 20px; text-align: center; font-size:0.85rem; color:var(--color-charcoal-light);">
+                            Créez votre compte client pour accéder à la messagerie directe illimitée et à votre historique de livreurs.
+                        </p>
+                        <form id="auth-client-register-form">
+                            <div class="form-group">
+                                <label for="auth-client-register-phone" class="form-label">Numéro de téléphone *</label>
+                                <div class="input-wrapper">
+                                    <span class="input-prefix">+226</span>
+                                    <input type="tel" id="auth-client-register-phone" class="form-input form-input-prefix" placeholder="70 00 00 00" maxlength="11" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="auth-client-register-password" class="form-label">Mot de passe de votre choix *</label>
+                                <input type="password" id="auth-client-register-password" class="form-input" placeholder="Choisissez un mot de passe" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; border-radius: 16px; margin-top: 15px; font-weight:700;">
+                                Créer mon compte client (5 000 FCFA)
+                            </button>
+                        </form>
+                        <p class="driver-login-link" style="text-align:center; margin-top:15px; font-size:0.85rem;">Déjà un compte ? <a href="#" id="link-to-login-panel" style="font-weight:700; color:var(--color-primary-red);">Se connecter</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Modale de Suivi Admin (Dashboard d'Administration) -->
         <div class="modal-overlay" id="admin-modal">
-            <div class="admin-card">
-                <div class="payment-header" style="background: var(--color-primary-brown-dark); color: white;">
-                    <h3>🔑 Espace Administration & Suivi</h3>
+            <div class="admin-card" style="max-width: 900px; width: 95%;">
+                <div class="payment-header" style="background: var(--color-primary-brown-dark); color: white; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h3>🔑 Espace Administration</h3>
+                        <button id="btn-admin-logout-session" style="font-size:0.75rem; background: rgba(255,255,255,0.18); border: none; color: white; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: var(--font-sans); transition: var(--transition-smooth);">Déconnexion</button>
+                    </div>
                     <button class="btn-close-modal" id="btn-close-admin" style="color: white;" aria-label="Fermer">&times;</button>
                 </div>
                 
-                <div class="admin-body">
-                    <p class="admin-subtitle">
-                        Suivi en temps réel des discussions et échanges en cours sur la plateforme (session active).
-                    </p>
-                    
-                    <div class="admin-tabs">
-                        <button class="admin-tab active" id="tab-chats">Discussions en Cours</button>
-                        <button class="admin-tab" id="tab-drivers">Livreurs & Abonnements</button>
-                        <button class="admin-tab" id="tab-stats">Statistiques Plateforme</button>
-                    </div>
-
-                    <!-- Liste des discussions actives -->
-                    <div class="admin-content-section" id="admin-chats-section">
-                        <div class="chat-sessions-list" id="admin-chat-sessions">
-                            <!-- Les sessions de chat s'affichent ici dynamiquement -->
-                            <div class="no-session-placeholder">
-                                Aucun échange de chat enregistré pour le moment dans cette session.
-                            </div>
-                        </div>
+                <div class="admin-body" style="max-height: 80vh; overflow-y: auto;">
+                    <!-- Vue Tableau de Bord Admin -->
+                    <div id="admin-dashboard-view">
+                        <p class="admin-subtitle">
+                            Suivi en temps réel des discussions et échanges en cours sur la plateforme (session active).
+                        </p>
                         
-                        <!-- Inspecteur de conversation en direct -->
-                        <div class="admin-conversation-inspector hidden" id="admin-inspector">
-                            <div class="inspector-header">
-                                <button class="btn-inspector-back" id="btn-inspector-back">&larr; Retour</button>
-                                <h4 id="inspector-title">Discussion avec Marc Diallo</h4>
+                        <div class="admin-tabs">
+                            <button class="admin-tab active" id="tab-chats">Discussions en Cours</button>
+                            <button class="admin-tab" id="tab-drivers">Livreurs & Abonnements</button>
+                            <button class="admin-tab" id="tab-stats">Statistiques Plateforme</button>
+                        </div>
+
+                        <!-- Liste des discussions actives -->
+                        <div class="admin-content-section" id="admin-chats-section">
+                            <div class="chat-sessions-list" id="admin-chat-sessions">
+                                <!-- Les sessions de chat s'affichent ici dynamiquement -->
+                                <div class="no-session-placeholder">
+                                    Aucun échange de chat enregistré pour le moment dans cette session.
+                                </div>
                             </div>
-                            <div class="inspector-messages" id="inspector-messages-list">
-                                <!-- Messages de la session sélectionnée -->
+                            
+                            <!-- Inspecteur de conversation en direct -->
+                            <div class="admin-conversation-inspector hidden" id="admin-inspector">
+                                <div class="inspector-header">
+                                    <button class="btn-inspector-back" id="btn-inspector-back">&larr; Retour</button>
+                                    <h4 id="inspector-title">Discussion avec Marc Diallo</h4>
+                                </div>
+                                <div class="inspector-messages" id="inspector-messages-list">
+                                    <!-- Messages de la session sélectionnée -->
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Liste des livreurs et abonnements -->
-                    <div class="admin-content-section hidden" id="admin-drivers-section">
-                        <div class="admin-drivers-list" id="admin-drivers-list">
-                            <!-- Rempli dynamiquement en JS -->
+                        <!-- Liste des livreurs et abonnements -->
+                        <div class="admin-content-section hidden" id="admin-drivers-section">
+                            <h4 style="font-weight:700; margin-bottom:8px;">👥 Liste Complète des Livreurs Inscrits</h4>
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Téléphone</th>
+                                            <th>Transport</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-table-drivers-list">
+                                        <!-- Rempli en JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h4 style="font-weight:700; margin-top:24px; margin-bottom:8px;">💳 Liste de tous les Abonnements (Clients & Livreurs)</h4>
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Utilisateur</th>
+                                            <th>Téléphone</th>
+                                            <th>Date Paiement</th>
+                                            <th>Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-table-subs-list">
+                                        <!-- Rempli en JS -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Statistiques de la plateforme -->
-                    <div class="admin-content-section hidden" id="admin-stats-section">
-                        <div class="admin-stats-grid">
-                            <div class="stat-item">
-                                <div class="stat-label">Déblocages payés</div>
-                                <div class="stat-value" id="stat-total-unlocks" style="color: var(--color-green-soft)">0</div>
-                                <div class="stat-desc">Frais à 200 FCFA</div>
+                        <!-- Statistiques de la plateforme -->
+                        <div class="admin-content-section hidden" id="admin-stats-section">
+                            <!-- Chart Visiteurs -->
+                            <div class="stat-chart-container">
+                                <div class="chart-header">
+                                    <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;">📈 Évolution des Visiteurs du Site</h4>
+                                    <span class="chart-legend">📈 +18% cette semaine (1 250 au total)</span>
+                                </div>
+                                <div class="chart-svg-wrapper">
+                                    <svg class="evolution-chart" viewBox="0 0 500 150">
+                                        <defs>
+                                            <linearGradient id="chart-grad-red" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="var(--color-primary-red)" stop-opacity="0.3"></stop>
+                                                <stop offset="100%" stop-color="var(--color-primary-red)" stop-opacity="0.0"></stop>
+                                            </linearGradient>
+                                        </defs>
+                                        <!-- Grid lines -->
+                                        <line x1="0" y1="30" x2="500" y2="30" stroke="var(--color-border)" stroke-dasharray="4"></line>
+                                        <line x1="0" y1="70" x2="500" y2="70" stroke="var(--color-border)" stroke-dasharray="4"></line>
+                                        <line x1="0" y1="110" x2="500" y2="110" stroke="var(--color-border)" stroke-dasharray="4"></line>
+                                        <!-- Area under the curve -->
+                                        <path d="M 0 150 Q 80 110 160 80 T 320 40 T 480 30 L 500 30 L 500 150 Z" fill="url(#chart-grad-red)"></path>
+                                        <!-- Line path -->
+                                        <path d="M 0 150 Q 80 110 160 80 T 320 40 T 480 30 L 500 30" fill="none" stroke="var(--color-primary-red)" stroke-width="3" stroke-linecap="round"></path>
+                                        <!-- Dots -->
+                                        <circle cx="80" cy="110" r="4" fill="var(--color-primary-red)" stroke="white" stroke-width="2"></circle>
+                                        <circle cx="160" cy="80" r="4" fill="var(--color-primary-red)" stroke="white" stroke-width="2"></circle>
+                                        <circle cx="320" cy="40" r="4" fill="var(--color-primary-red)" stroke="white" stroke-width="2"></circle>
+                                        <circle cx="480" cy="30" r="4" fill="var(--color-primary-red)" stroke="white" stroke-width="2"></circle>
+                                    </svg>
+                                    <div class="chart-labels">
+                                        <span>Lundi</span>
+                                        <span>Mardi</span>
+                                        <span>Mercredi</span>
+                                        <span>Jeudi</span>
+                                        <span>Vendredi</span>
+                                        <span>Samedi</span>
+                                        <span>Dimanche</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Revenus simulés</div>
-                                <div class="stat-value" id="stat-total-revenue" style="color: var(--color-primary-yellow)">0 FCFA</div>
-                                <div class="stat-desc">Frais de mise en relation</div>
+
+                            <div class="admin-stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-label">Déblocages payés</div>
+                                    <div class="stat-value" id="stat-total-unlocks" style="color: var(--color-green-soft)">0</div>
+                                    <div class="stat-desc">Frais à 200 FCFA</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Revenus simulés</div>
+                                    <div class="stat-value" id="stat-total-revenue" style="color: var(--color-primary-yellow)">0 FCFA</div>
+                                    <div class="stat-desc">Frais de mise en relation</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Livreurs enregistrés</div>
+                                    <div class="stat-value" id="stat-total-drivers">14</div>
+                                    <div class="stat-desc">Ouaga & Bobo</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Messages échangés</div>
+                                    <div class="stat-value" id="stat-total-messages" style="color: var(--color-primary-red)">0</div>
+                                    <div class="stat-desc">Échanges de chat</div>
+                                </div>
                             </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Livreurs enregistrés</div>
-                                <div class="stat-value" id="stat-total-drivers">14</div>
-                                <div class="stat-desc">Ouaga & Bobo</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Messages échangés</div>
-                                <div class="stat-value" id="stat-total-messages" style="color: var(--color-primary-red)">0</div>
-                                <div class="stat-desc">Échanges de chat</div>
+
+                            <!-- Stats générales supplémentaires -->
+                            <div class="admin-stats-grid" style="margin-top: 12px;">
+                                <div class="stat-item">
+                                    <div class="stat-label">Visiteurs uniques</div>
+                                    <div class="stat-value" style="color: var(--color-primary-brown)">1 250</div>
+                                    <div class="stat-desc">Cette semaine</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Pages vues</div>
+                                    <div class="stat-value">4 850</div>
+                                    <div class="stat-desc">Session active</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Profils consultés</div>
+                                    <div class="stat-value" id="stat-total-viewed-profiles">0</div>
+                                    <div class="stat-desc">Clics sur les pins</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Connexions Actives</div>
+                                    <div class="stat-value" style="color: var(--color-primary-yellow)">42</div>
+                                    <div class="stat-desc">Utilisateurs en ligne</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -523,6 +947,34 @@
             </div>
         </div>
 
+        <!-- Modale des Avis clients (Reviews Modal Overlay) -->
+        <div class="modal-overlay" id="reviews-modal">
+            <div class="payment-card" style="max-width: 480px; width: 95%;">
+                <div class="payment-header">
+                    <h3>⭐ Notes & Avis Clients</h3>
+                    <button class="btn-close-modal" id="btn-close-reviews" aria-label="Fermer">&times;</button>
+                </div>
+                <div class="payment-body" style="max-height: 70vh; overflow-y: auto; padding: 20px;">
+                    <!-- Header summary with big rating value -->
+                    <div class="reviews-summary-block" style="display:flex; align-items:center; justify-content:center; gap:20px; border-bottom: 1.5px solid var(--color-border); padding-bottom: 20px; margin-bottom: 20px; text-align:center;">
+                        <div>
+                            <span style="font-size:3rem; font-weight:800; color:var(--color-primary-yellow); line-height:1;" id="reviews-modal-avg-val">4.8</span>
+                            <div style="font-size:0.75rem; color:var(--color-charcoal-muted); font-weight:600; margin-top:6px;" id="reviews-modal-count-desc">Basé sur 2 avis</div>
+                        </div>
+                        <div style="text-align:left;">
+                            <div style="color:var(--color-primary-yellow); font-size:1.4rem; letter-spacing:1px; line-height:1;" id="reviews-modal-stars">★★★★★</div>
+                            <p style="font-size:0.8rem; color:var(--color-charcoal-light); margin:8px 0 0 0; line-height:1.4;">Moyenne générale calculée sur les retours d'expériences clients.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Scrollable list of comment cards -->
+                    <div id="reviews-modal-list" style="display:flex; flex-direction:column; gap:12px;">
+                        <!-- Inséré en JS dynamiquement -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Toast indicateur de quartier actif -->
         <div class="sector-active-toast" id="sector-active-toast">
             <span class="sector-toast-text" id="sector-toast-text">📍 Zone active : Patte d'Oie</span>
@@ -531,8 +983,20 @@
 
     </main>
 
+    <!-- Simulated Incoming SMS Notification Toast Overlay -->
+    <div class="sms-toast-container" id="sms-otp-toast">
+        <div class="sms-toast-header">
+            <span class="sms-toast-icon">💬</span>
+            <span class="sms-toast-title">MESSAGE (Simulé)</span>
+            <span class="sms-toast-time">À l'instant</span>
+        </div>
+        <div class="sms-toast-body" id="sms-otp-toast-body">
+            LIVRAISON RAPIDE : Votre code de vérification est <strong>4839</strong>. Valide pendant 5 minutes.
+        </div>
+    </div>
+
     <!-- Footer Minimal -->
-    <footer>
+    <footer id="main-footer">
         <div class="footer-contacts">
             <a href="https://wa.me/22600000000" class="footer-link" target="_blank" rel="noopener">
                 <!-- Whatsapp SVG -->
@@ -545,14 +1009,9 @@
                 Support Téléphonique
             </a>
         </div>
-        <div>&copy; 2026 Livraison Rapide BF. Fait avec passion pour Ouaga et Bobo.</div>
     </footer>
 
-    <!-- Bouton Flottant d'Administration / Suivi des Chats (Admin Control Key) -->
-    <button class="btn-admin-floating" id="btn-admin-floating" title="Espace d'Administration & Suivi">
-        <span>🔑 Admin</span>
-        <div class="admin-notification-badge hidden" id="admin-chat-badge">0</div>
-    </button>
+
 
     <!-- Leaflet Map JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
