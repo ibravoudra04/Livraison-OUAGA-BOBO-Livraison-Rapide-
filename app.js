@@ -12,9 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
         pendingServiceUnlock: null, // Rider that triggered the 5-profile limit unlock modal
         pendingSubscriptionUnlock: false, // Flag when a driver is paying their subscription
         pendingClientSubscriptionUnlock: false, // Flag when a client is paying their subscription
-        pendingWalletRecharge: false, // Flag when a driver is recharging their wallet balance
-        activeOTPCode: null, // Store active SMS OTP code
-        activeOTPPhone: null, // Store active SMS OTP phone
         loggedDriver: null, // The currently logged-in driver profile
         loggedClient: null, // The currently logged-in client profile
         isAdmin: false, // Flag showing if logged in as administrator
@@ -246,27 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnRemoveCniVerso = document.getElementById('btn-remove-cni-verso');
     const btnRemoveSelfie = document.getElementById('btn-remove-selfie');
     const vehicleOptions = document.querySelectorAll('.vehicle-option');
-
-    // Premium enhancements handles
-    const authMethodTabs = document.getElementById('auth-method-tabs');
-    const tabAuthPassword = document.getElementById('tab-auth-password');
-    const tabAuthOtp = document.getElementById('tab-auth-otp');
-    const authOtpPanel = document.getElementById('auth-otp-panel');
-    const authOtpForm = document.getElementById('auth-otp-form');
-    const authOtpPhoneInput = document.getElementById('auth-otp-phone');
-    const authOtpCodeInput = document.getElementById('auth-otp-code');
-    const btnSendOtp = document.getElementById('btn-send-otp');
-    const otpPhoneGroup = document.getElementById('otp-phone-group');
-    const otpCodeGroup = document.getElementById('otp-code-group');
-    
-    const smsOtpToast = document.getElementById('sms-otp-toast');
-    const smsOtpToastBody = document.getElementById('sms-otp-toast-body');
-    
-    const btnDriverRechargeWallet = document.getElementById('btn-driver-recharge-wallet');
-    const btnDriverPaySubWallet = document.getElementById('btn-driver-pay-sub-wallet');
-    const driverDashWalletVal = document.getElementById('driver-dash-wallet-val');
-    
-    const chatQuickReplies = document.getElementById('chat-quick-replies');
 
     let driverSelectedVehicle = 'Moto'; // Default selected vehicle
     let mapInitialized = false;
@@ -733,13 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
             paymentSuccessStep.style.display = 'block';
 
             // Save state
-            if (STATE.pendingWalletRecharge) {
-                if (STATE.loggedDriver) {
-                    if (STATE.loggedDriver.walletBalance === undefined) STATE.loggedDriver.walletBalance = 2500;
-                    STATE.loggedDriver.walletBalance += 2000;
-                }
-                STATE.totalRevenue += 2000;
-            } else if (STATE.pendingClientSubscriptionUnlock) {
+            if (STATE.pendingClientSubscriptionUnlock) {
                 if (STATE.loggedClient) {
                     STATE.loggedClient.subscriptionPaid = true;
                 }
@@ -796,11 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function completePaymentFlow() {
         closePaymentModal();
-        if (STATE.pendingWalletRecharge) {
-            STATE.pendingWalletRecharge = false;
-            updateDriverDashboardView();
-            openDriverDrawer();
-        } else if (STATE.pendingClientSubscriptionUnlock) {
+        if (STATE.pendingClientSubscriptionUnlock) {
             STATE.pendingClientSubscriptionUnlock = false;
             // Successfully logged in as premium client!
             openClientDrawer();
@@ -952,16 +918,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('driver-dash-contacts').innerText = `${contacts} / 4`;
         document.getElementById('driver-dash-views').innerText = views;
-
-        // Initialize wallet balance on profile if not set
-        if (driver.walletBalance === undefined) {
-            driver.walletBalance = 2500; // default 2500 FCFA
-        }
-        
-        // Update wallet DOM
-        if (driverDashWalletVal) {
-            driverDashWalletVal.innerText = `${driver.walletBalance} FCFA`;
-        }
         
         const statusTextEl = document.getElementById('driver-dash-status');
         const visibilityEl = document.getElementById('driver-dash-visibility');
@@ -979,7 +935,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             subTextEl.innerHTML = `Votre compte est en période d'essai gratuite. Les 4 premières mises en relation sont offertes. Vous êtes à <strong>${contacts}/4</strong>.`;
             payBtnEl.style.display = "none";
-            if (btnDriverPaySubWallet) btnDriverPaySubWallet.classList.add('hidden');
         } else if (isPaid) {
             statusTextEl.innerText = "Abonné (Actif)";
             statusTextEl.className = "rider-status";
@@ -991,7 +946,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             subTextEl.innerHTML = `Votre abonnement hebdomadaire de 500 FCFA est actif ! Merci de faire confiance à Livraison Rapide.`;
             payBtnEl.style.display = "none";
-            if (btnDriverPaySubWallet) btnDriverPaySubWallet.classList.add('hidden');
         } else {
             statusTextEl.innerText = "Abonnement Requis";
             statusTextEl.className = "rider-status";
@@ -1003,16 +957,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             subTextEl.innerHTML = `Vous avez atteint <strong>${contacts} relations clients</strong> ! Pour réactiver votre visibilité sur la carte, veuillez régler votre abonnement hebdomadaire de 500 FCFA.`;
             payBtnEl.style.display = "block";
-
-            // Wallet deduction option
-            if (btnDriverPaySubWallet) {
-                if (driver.walletBalance >= 500) {
-                    btnDriverPaySubWallet.classList.remove('hidden');
-                    btnDriverPaySubWallet.innerText = `Déduire de mon portefeuille (500 FCFA)`;
-                } else {
-                    btnDriverPaySubWallet.classList.add('hidden');
-                }
-            }
         }
         
         // Populate Reviews & Comments
@@ -2611,197 +2555,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-close-sector-toast').addEventListener('click', () => {
         document.getElementById('sector-active-toast').classList.remove('show');
     });
-
-    // SMS OTP Tab Toggling
-    if (tabAuthPassword && tabAuthOtp) {
-        tabAuthPassword.addEventListener('click', () => {
-            tabAuthPassword.classList.add('active');
-            tabAuthOtp.classList.remove('active');
-            authLoginPanel.classList.remove('hidden');
-            authOtpPanel.classList.add('hidden');
-        });
-
-        tabAuthOtp.addEventListener('click', () => {
-            tabAuthOtp.classList.add('active');
-            tabAuthPassword.classList.remove('active');
-            authOtpPanel.classList.remove('hidden');
-            authLoginPanel.classList.add('hidden');
-            
-            // Reset OTP panel state
-            otpPhoneGroup.classList.remove('hidden');
-            otpCodeGroup.classList.add('hidden');
-            authOtpPhoneInput.value = '';
-            authOtpCodeInput.value = '';
-        });
-    }
-
-    // Send OTP Simulated SMS Action
-    if (btnSendOtp) {
-        btnSendOtp.addEventListener('click', () => {
-            const phoneVal = authOtpPhoneInput.value.trim();
-            if (phoneVal.length < 8) {
-                alert("Veuillez saisir un numéro de téléphone valide à 8 chiffres.");
-                return;
-            }
-
-            const phoneNormalized = '+226 ' + phoneVal;
-            
-            // Generate simulated 4-digit code
-            const mockOTPCode = String(Math.floor(1000 + Math.random() * 9000));
-            STATE.activeOTPCode = mockOTPCode;
-            STATE.activeOTPPhone = phoneNormalized;
-
-            // Trigger simulated SMS Toast slide-in
-            if (smsOtpToast && smsOtpToastBody) {
-                smsOtpToastBody.innerHTML = `LIVRAISON RAPIDE : Votre code de vérification est <strong>${mockOTPCode}</strong>. Valide pendant 5 minutes. (Cliquez pour copier)`;
-                smsOtpToast.classList.add('show');
-                
-                // Clicking on toast auto-fills and copies it
-                smsOtpToast.onclick = () => {
-                    authOtpCodeInput.value = mockOTPCode;
-                    smsOtpToast.classList.remove('show');
-                };
-
-                // Auto-dismiss toast after 8 seconds
-                setTimeout(() => {
-                    smsOtpToast.classList.remove('show');
-                }, 8000);
-            }
-
-            // Slide phone group out, code group in
-            otpPhoneGroup.classList.add('hidden');
-            otpCodeGroup.classList.remove('hidden');
-            authOtpCodeInput.focus();
-        });
-    }
-
-    // OTP Verification Submit Handler
-    if (authOtpForm) {
-        authOtpForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const typedCode = authOtpCodeInput.value.trim();
-            
-            if (typedCode !== STATE.activeOTPCode) {
-                alert("❌ Code OTP incorrect. Veuillez réessayer ou demander un nouveau code.");
-                return;
-            }
-
-            // OTP verified! Auto-detect user role using phone
-            const phoneNormalized = STATE.activeOTPPhone;
-            
-            // Check if admin
-            if (phoneNormalized.replace(/\s+/g, '') === "+22667370909") {
-                STATE.isAdmin = true;
-                closeAuthModal();
-                openAdminModal();
-                renderRiders();
-                alert("👑 Bienvenue Ibrahim (OTP) ! Mode Administrateur Activé. Accès total et gratuit.");
-                return;
-            }
-
-            // Check if Driver
-            const allDrivers = [...STATE.riders.ouaga, ...STATE.riders.bobo];
-            let driver = allDrivers.find(r => r.phone.replace(/\s+/g, '') === phoneNormalized.replace(/\s+/g, ''));
-            if (driver) {
-                STATE.loggedDriver = driver;
-                closeAuthModal();
-                
-                if (driver.subscriptionPaid === true || (driver.contactsCount || 0) < 5) {
-                    driverRegisterPanel.classList.add('hidden');
-                    driverLoginPanel.classList.add('hidden');
-                    driverDashboardPanel.classList.remove('hidden');
-                    openDriverDrawer();
-                } else {
-                    STATE.pendingSubscriptionUnlock = true;
-                    openPaymentModal();
-                    alert("⚠️ Abonnement requis pour accéder à votre Espace Livreur. Une demande de paiement de 500 FCFA a été initiée.");
-                }
-                return;
-            }
-
-            // Check if Client
-            let client = STATE.clients.find(c => c.phone.replace(/\s+/g, '') === phoneNormalized.replace(/\s+/g, ''));
-            if (client) {
-                STATE.loggedClient = client;
-                closeAuthModal();
-                
-                if (client.subscriptionPaid === true) {
-                    openClientDrawer();
-                } else {
-                    STATE.pendingClientSubscriptionUnlock = true;
-                    openPaymentModal();
-                    alert("⚠️ Abonnement requis pour accéder à votre Espace Client. Une demande de paiement de 5 000 FCFA a été initiée.");
-                }
-                return;
-            }
-
-            // If new user, create a Client profile automatically
-            const newClient = {
-                phone: phoneNormalized,
-                password: '123',
-                name: 'Client ' + phoneNormalized.substring(5),
-                subscriptionPaid: false,
-                viewedDrivers: new Set(),
-                contactedDrivers: new Set()
-            };
-            STATE.clients.push(newClient);
-            STATE.loggedClient = newClient;
-            
-            closeAuthModal();
-            
-            // Pay Monthly sub
-            STATE.pendingClientSubscriptionUnlock = true;
-            openPaymentModal();
-            alert("🎉 Nouveau compte client créé par SMS OTP ! Veuillez activer votre abonnement mensuel (5 000 FCFA) pour accéder à l'Espace Client.");
-        });
-    }
-
-    // Chat Quick-Reply suggestion chips click bindings
-    if (chatQuickReplies) {
-        const chips = chatQuickReplies.querySelectorAll('.reply-chip');
-        chips.forEach(chip => {
-            chip.addEventListener('click', () => {
-                chatInput.value = chip.innerText;
-                sendClientMessage();
-            });
-        });
-    }
-
-    // Driver Virtual Wallet click bindings
-    if (btnDriverRechargeWallet) {
-        btnDriverRechargeWallet.addEventListener('click', () => {
-            STATE.pendingWalletRecharge = true;
-            openPaymentModal();
-            alert("⚡ Rechargement de votre Portefeuille Livreur : Une transaction Mobile Money de 2 000 FCFA a été initiée.");
-        });
-    }
-
-    if (btnDriverPaySubWallet) {
-        btnDriverPaySubWallet.addEventListener('click', () => {
-            if (!STATE.loggedDriver) return;
-            const driver = STATE.loggedDriver;
-            
-            if ((driver.walletBalance || 0) < 500) {
-                alert("❌ Solde insuffisant dans votre portefeuille. Veuillez recharger par Mobile Money.");
-                return;
-            }
-
-            // Deduct from wallet
-            driver.walletBalance -= 500;
-            driver.subscriptionPaid = true;
-            
-            // Add wallet payment entry for admin subscription logs
-            STATE.totalRevenue += 500;
-            
-            // Refresh
-            renderRiders();
-            updateDriverDashboardView();
-            updateAdminDashboardDrivers();
-            updateAdminDashboardStats();
-            
-            alert("✓ Abonnement payé avec succès depuis votre portefeuille virtuel ! Visibilité réactivée sur la carte.");
-        });
-    }
 
     // Boot the main Leaflet map immediately in the background under the glass welcome card
     initMainMap();

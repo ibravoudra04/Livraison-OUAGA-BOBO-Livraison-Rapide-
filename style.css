@@ -1196,9 +1196,8 @@ footer {
 .welcome-portal {
     width: 100%;
     height: 100%;
-    background: rgba(250, 246, 242, 0.25); /* Premium warm beige-sand translucent overlay */
-    backdrop-filter: blur(20px); /* Frosted glass effect showing active map behind */
-    -webkit-backdrop-filter: blur(20px);
+    /* Rich radial gradient of African terracotta clay & deep soil browns with spotlight effect */
+    background: radial-gradient(circle at center, #8D5537 0%, var(--color-primary-brown-dark) 65%, #3D2619 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1226,8 +1225,8 @@ footer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 28px;
-    padding: 36px 28px;
+    gap: 16px; /* Reduced gap to pull elements and search button higher */
+    padding: 28px 24px; /* Slightly more compact padding */
     background: rgba(255, 255, 255, 0.75); /* High-end clay glass reflection */
     border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 28px;
@@ -1250,6 +1249,14 @@ footer {
     text-align: center;
     max-width: 420px;
     margin: 0 auto;
+}
+
+.portal-hero p {
+    font-size: 0.92rem;
+    color: var(--color-charcoal-light); /* Charcoal gray color for readability over light glass */
+    line-height: 1.45;
+    max-width: 460px;
+    margin: 0 auto; /* Removed bottom margin to lift the search container */
 }
 
 .portal-logo-glow {
@@ -2902,157 +2909,6 @@ footer {
     font-size: 0.65rem;
     color: var(--color-charcoal-muted);
     font-weight: 700;
-}
-
-/* ==========================================================================
-   PREMIUM FEATURE EXTENSIONS (WALLET, QUICK CHAT CHIPS, SMS OTP TOAST)
-   ========================================================================== */
-
-/* 1. Espace Livreur Portefeuille Virtuel (Wallet) */
-.driver-wallet-card {
-    background: linear-gradient(135deg, var(--color-primary-brown), var(--color-primary-brown-dark));
-    color: white;
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: var(--shadow-medium);
-}
-
-.wallet-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-}
-
-.wallet-label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.2px;
-}
-
-.wallet-val {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--color-primary-yellow);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.wallet-desc {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.75);
-    line-height: 1.3;
-}
-
-/* 2. Chat Suggestion Chips */
-.chat-quick-replies {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding: 4px 8px 10px 8px;
-    margin-bottom: 4px;
-    width: 100%;
-    scrollbar-width: none; /* Hide standard Firefox scrollbar */
-}
-
-.chat-quick-replies::-webkit-scrollbar {
-    display: none; /* Hide Chrome/Safari scrollbar */
-}
-
-.reply-chip {
-    flex-shrink: 0;
-    border: 1px solid var(--color-border);
-    background-color: var(--color-primary-brown-light);
-    color: var(--color-primary-brown-dark);
-    padding: 6px 14px;
-    border-radius: 100px;
-    font-family: var(--font-sans);
-    font-size: 0.75rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: var(--transition-smooth);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-
-.reply-chip:hover {
-    border-color: var(--color-primary-red);
-    background-color: var(--color-primary-red-light);
-    color: var(--color-primary-red);
-    transform: translateY(-1px);
-}
-
-.reply-chip:active {
-    transform: translateY(1px);
-}
-
-/* Adjust chat footer styling to accommodate suggestions */
-.chat-footer {
-    display: flex;
-    flex-direction: column;
-    padding: 8px 16px 16px 16px;
-    background: var(--color-card-white);
-    border-top: 1px solid var(--color-border);
-}
-
-/* 3. Simulated incoming SMS Toast Notification */
-.sms-toast-container {
-    position: fixed;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-150%);
-    width: 90%;
-    max-width: 380px;
-    background: rgba(44, 38, 35, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 18px;
-    padding: 14px 18px;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
-    z-index: 9999; /* Highest priority visual level */
-    color: white;
-    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    cursor: pointer;
-}
-
-.sms-toast-container.show {
-    transform: translateX(-50%) translateY(0);
-}
-
-.sms-toast-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.5);
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-}
-
-.sms-toast-icon {
-    font-size: 0.85rem;
-}
-
-.sms-toast-title {
-    flex-grow: 1;
-    color: var(--color-primary-yellow);
-}
-
-.sms-toast-body {
-    font-size: 0.85rem;
-    line-height: 1.4;
-    color: #FFFFFF;
-}
-
-.sms-toast-body strong {
-    color: var(--color-primary-yellow);
-    font-size: 0.95rem;
-    letter-spacing: 1px;
 }
 
 

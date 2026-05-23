@@ -40,8 +40,7 @@
                 <div class="portal-hero">
                     <!-- Burkina Faso Map Accent Badge -->
                     <img src="burkina_map.png" alt="Carte du Burkina Faso" class="burkina-map-badge">
-                    <h2>Recherchez un livreur près de chez vous</h2>
-                    <p style="font-size: 0.95rem; color: rgba(255,255,255,0.75); line-height: 1.5; max-width: 460px; margin: 0 auto 20px auto;">
+                    <p>
                         Visualisez les livreurs actifs autour de vous sur la carte en temps réel et contactez-les en un clic.
                     </p>
                 </div>
@@ -401,20 +400,6 @@
                             <span id="driver-dash-visibility" style="color:var(--color-green-soft); font-weight:700;">🟢 En ligne</span>
                         </div>
                     </div>
-                    
-                    <!-- Driver Wallet Balance Panel -->
-                    <div class="driver-wallet-card" id="driver-dash-wallet-box">
-                        <div class="wallet-header">
-                            <span class="wallet-label">💵 Mon Portefeuille</span>
-                            <span class="wallet-val" id="driver-dash-wallet-val">2 500 FCFA</span>
-                        </div>
-                        <p class="wallet-desc">Permet de payer automatiquement ou manuellement votre abonnement hebdomadaire.</p>
-                        <div style="display: flex; gap: 8px; margin-top: 10px;">
-                            <button type="button" class="btn btn-primary" id="btn-driver-recharge-wallet" style="flex: 1; padding: 10px; font-size: 0.78rem; border-radius: 10px; margin: 0; background: var(--color-primary-green);">⚡ Recharger par MoMo</button>
-                            <button type="button" class="btn btn-secondary hidden" id="btn-driver-pay-sub-wallet" style="flex: 1; padding: 10px; font-size: 0.78rem; border-radius: 10px; margin: 0; background: var(--color-primary-red); color: white; border: none;">Déduire 500 FCFA</button>
-                        </div>
-                    </div>
-
                     <div class="driver-dashboard-stats">
                         <div class="driver-stat-box">
                             <div class="info-label">Mises en Relation</div>
@@ -526,13 +511,6 @@
             </div>
 
             <div class="chat-footer">
-                <!-- Chat Quick-Reply Suggestion Chips -->
-                <div class="chat-quick-replies" id="chat-quick-replies">
-                    <button type="button" class="reply-chip">Je suis arrivé !</button>
-                    <button type="button" class="reply-chip">D'accord, j'arrive</button>
-                    <button type="button" class="reply-chip">Combien pour la course ?</button>
-                    <button type="button" class="reply-chip">Colis récupéré !</button>
-                </div>
                 <form id="chat-send-form">
                     <input type="text" id="chat-input" placeholder="Écrivez votre message ici..." autocomplete="off" required>
                     <button type="submit" id="btn-send-message" aria-label="Envoyer">
@@ -596,15 +574,9 @@
                 </div>
                 
                 <div class="payment-body">
-                    <!-- Tab selector for Auth method -->
-                    <div class="auth-tabs" id="auth-method-tabs">
-                        <button type="button" class="auth-tab active" id="tab-auth-password">🔑 Mot de passe</button>
-                        <button type="button" class="auth-tab" id="tab-auth-otp">💬 Code SMS OTP</button>
-                    </div>
-
-                    <!-- Panel Connexion Unique (Password) -->
+                    <!-- Panel Connexion Unique -->
                     <div id="auth-login-panel">
-                        <p class="form-subtitle" style="margin-bottom: 15px; text-align: center; font-size:0.85rem; color:var(--color-charcoal-light);">
+                        <p class="form-subtitle" style="margin-bottom: 20px; text-align: center; font-size:0.85rem; color:var(--color-charcoal-light);">
                             Accédez instantanément à votre espace en saisissant votre numéro et votre mot de passe.
                         </p>
                         <form id="auth-login-form">
@@ -629,41 +601,6 @@
                         <div style="text-align:center; margin-top: 20px; display:flex; flex-direction:column; gap:10px; font-size:0.85rem;">
                             <p class="driver-login-link" style="margin:0;">Vous êtes un client ? <a href="#" id="link-to-client-register" style="font-weight:700; color:var(--color-primary-red);">Créer un compte Client (5 000 FCFA/mois)</a></p>
                             <p class="driver-login-link" style="margin:0;">Vous êtes livreur ? <a href="#" id="link-to-driver-register" style="font-weight:700; color:var(--color-primary-brown);">S'enregistrer comme livreur</a></p>
-                        </div>
-                    </div>
-
-                    <!-- Panel Connexion Unique (SMS OTP) -->
-                    <div class="hidden" id="auth-otp-panel">
-                        <p class="form-subtitle" style="margin-bottom: 15px; text-align: center; font-size:0.85rem; color:var(--color-charcoal-light);">
-                            Connectez-vous de manière sécurisée sans mot de passe en recevant un code SMS temporaire sur votre téléphone.
-                        </p>
-                        <form id="auth-otp-form">
-                            <!-- Numéro de téléphone -->
-                            <div class="form-group" id="otp-phone-group">
-                                <label for="auth-otp-phone" class="form-label">Numéro de téléphone *</label>
-                                <div class="input-wrapper">
-                                    <span class="input-prefix">+226</span>
-                                    <input type="tel" id="auth-otp-phone" class="form-input form-input-prefix" placeholder="70 00 00 00" maxlength="11" required>
-                                </div>
-                                <button type="button" class="btn btn-primary" id="btn-send-otp" style="width: 100%; padding: 12px; border-radius: 12px; margin-top: 10px; font-size: 0.85rem; font-weight:700; background-color: var(--color-primary-brown); border:none; color:white;">
-                                    Recevoir mon code OTP par SMS
-                                </button>
-                            </div>
-                            
-                            <!-- Input Code OTP (Hidden at first) -->
-                            <div class="form-group hidden" id="otp-code-group">
-                                <label for="auth-otp-code" class="form-label" style="color:var(--color-primary-red); font-weight: 700;">Code de vérification OTP reçu *</label>
-                                <input type="text" id="auth-otp-code" class="form-input" placeholder="Ex: 4839" maxlength="4" style="text-align: center; font-size: 1.5rem; letter-spacing: 12px; font-weight: 800; font-family: monospace; background: var(--color-bg-warm); border: 2px solid var(--color-primary-red);">
-                                <p style="font-size: 0.72rem; color: var(--color-charcoal-muted); margin-top: 6px; text-align: center;">Cliquez sur la notification SMS simulée apparue en haut pour copier le code.</p>
-                                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; border-radius: 16px; margin-top: 15px; font-weight:700;">
-                                    Valider et Se connecter
-                                </button>
-                            </div>
-                        </form>
-                        
-                        <div style="text-align:center; margin-top: 20px; display:flex; flex-direction:column; gap:10px; font-size:0.85rem;">
-                            <p class="driver-login-link" style="margin:0;">Vous êtes un client ? <a href="#" id="link-to-client-register-otp" style="font-weight:700; color:var(--color-primary-red);">Créer un compte Client</a></p>
-                            <p class="driver-login-link" style="margin:0;">Vous êtes livreur ? <a href="#" id="link-to-driver-register-otp" style="font-weight:700; color:var(--color-primary-brown);">S'enregistrer comme livreur</a></p>
                         </div>
                     </div>
 
@@ -982,18 +919,6 @@
         </div>
 
     </main>
-
-    <!-- Simulated Incoming SMS Notification Toast Overlay -->
-    <div class="sms-toast-container" id="sms-otp-toast">
-        <div class="sms-toast-header">
-            <span class="sms-toast-icon">💬</span>
-            <span class="sms-toast-title">MESSAGE (Simulé)</span>
-            <span class="sms-toast-time">À l'instant</span>
-        </div>
-        <div class="sms-toast-body" id="sms-otp-toast-body">
-            LIVRAISON RAPIDE : Votre code de vérification est <strong>4839</strong>. Valide pendant 5 minutes.
-        </div>
-    </div>
 
     <!-- Footer Minimal -->
     <footer id="main-footer">
