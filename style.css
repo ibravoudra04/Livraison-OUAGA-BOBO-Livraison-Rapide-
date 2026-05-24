@@ -3076,7 +3076,26 @@ footer {
     100% { transform: scale(1) rotate(360deg); opacity: 0.85; }
 }
 
+/* --- PASSWORD TOGGLE EYE BUTTON --- */
+.btn-toggle-password {
+    position: absolute;
+    right: 16px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--color-charcoal-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: var(--transition-smooth);
+    z-index: 10;
+}
 
+.btn-toggle-password:hover {
+    color: var(--color-charcoal);
+}
 
-
-
+.form-input-password {
+    padding-right: 48px;
+}

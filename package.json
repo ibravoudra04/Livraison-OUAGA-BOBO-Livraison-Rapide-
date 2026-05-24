@@ -1,0 +1,24 @@
+{
+  "name": "livraison-rapide-ouaga-bobo",
+  "version": "1.0.0",
+  "description": "Livraison Rapide - Mettez-vous en contact instantanément avec des livreurs indépendants à Ouagadougou et Bobo-Dioulasso",
+  "main": "app.js",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "vite": "^8.0.14"
+  },
+  "keywords": [
+    "livraison",
+    "burkina-faso"
+  ],
+  "author": "",
+  "license": "ISC"
+}

@@ -195,7 +195,13 @@
                             </p>
                             <div id="momo-client-password-wrapper" class="hidden" style="margin-top: 10px;">
                                 <label for="momo-client-password" class="form-label" style="font-size: 0.75rem;">Mot de passe secret :</label>
-                                <input type="password" id="momo-client-password" class="form-input" placeholder="Mot de passe de votre choix (ex: 1234)">
+                                <div class="input-wrapper">
+                                    <input type="password" id="momo-client-password" class="form-input form-input-password" placeholder="Mot de passe de votre choix (ex: 1234)">
+                                    <button type="button" class="btn-toggle-password" data-target="momo-client-password" aria-label="Afficher/Masquer le mot de passe">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-closed hidden"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -282,7 +288,13 @@
                         <!-- Mot de passe -->
                         <div class="form-group">
                             <label for="driver-password" class="form-label">Mot de passe de votre choix *</label>
-                            <input type="password" id="driver-password" class="form-input" placeholder="Choisissez votre mot de passe secret" required>
+                            <div class="input-wrapper">
+                                <input type="password" id="driver-password" class="form-input form-input-password" placeholder="Choisissez votre mot de passe secret" required>
+                                <button type="button" class="btn-toggle-password" data-target="driver-password" aria-label="Afficher/Masquer le mot de passe">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-closed hidden"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Type de transport / Moto, Tricycle, Voiture -->
@@ -419,7 +431,13 @@
                         <!-- Code PIN -->
                         <div class="form-group">
                             <label for="login-pin" class="form-label">Code PIN (Défaut: 1234) *</label>
-                            <input type="password" id="login-pin" class="form-input" placeholder="Ex: 1234" maxlength="6" required>
+                            <div class="input-wrapper">
+                                <input type="password" id="login-pin" class="form-input form-input-password" placeholder="Ex: 1234" maxlength="6" required>
+                                <button type="button" class="btn-toggle-password" data-target="login-pin" aria-label="Afficher/Masquer le mot de passe">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-closed hidden"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                </button>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width:100%; padding:14px; border-radius:16px; font-size:1rem; margin-top:10px;">
                             Se connecter
@@ -652,7 +670,13 @@
                             <!-- Mot de passe -->
                             <div class="form-group">
                                 <label for="auth-login-password" class="form-label">Mot de passe *</label>
-                                <input type="password" id="auth-login-password" class="form-input" placeholder="Saisissez votre mot de passe" required autocomplete="current-password">
+                                <div class="input-wrapper">
+                                    <input type="password" id="auth-login-password" class="form-input form-input-password" placeholder="Saisissez votre mot de passe" required autocomplete="current-password">
+                                    <button type="button" class="btn-toggle-password" data-target="auth-login-password" aria-label="Afficher/Masquer le mot de passe">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-closed hidden"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                    </button>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; border-radius: 16px; margin-top: 15px; font-weight:700;">
                                 Se connecter
@@ -680,7 +704,13 @@
                             </div>
                             <div class="form-group">
                                 <label for="auth-client-register-password" class="form-label">Mot de passe de votre choix *</label>
-                                <input type="password" id="auth-client-register-password" class="form-input" placeholder="Choisissez un mot de passe" required>
+                                <div class="input-wrapper">
+                                    <input type="password" id="auth-client-register-password" class="form-input form-input-password" placeholder="Choisissez un mot de passe" required>
+                                    <button type="button" class="btn-toggle-password" data-target="auth-client-register-password" aria-label="Afficher/Masquer le mot de passe">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-closed hidden"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                    </button>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; border-radius: 16px; margin-top: 15px; font-weight:700;">
                                 Créer mon compte client Gratuit
