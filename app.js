@@ -228,6 +228,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const lblPickerStatus = document.getElementById('lbl-picker-status');
     const driverLatInput = document.getElementById('driver-lat');
     const driverLngInput = document.getElementById('driver-lng');
+    const btnGpsAutoDetect = document.getElementById('btn-gps-auto-detect');
+    const mapLocateBtn = document.getElementById('map-locate-btn');
+    const driverRegisterCity = document.getElementById('driver-register-city');
+    const driverRegisterSectorsGroup = document.getElementById('driver-register-sectors-group');
+    const driverRegisterSectorsList = document.getElementById('driver-register-sectors-list');
+    const btnDriverUpdateLocation = document.getElementById('btn-driver-update-location');
+    const driverLocationUpdateStatus = document.getElementById('driver-location-update-status');
 
     // Onboarding file inputs & vehicle selection
     const uploadCniRecto = document.getElementById('upload-cni-recto');
@@ -905,6 +912,72 @@ document.addEventListener('DOMContentLoaded', () => {
         driverRegisterPanel.classList.remove('hidden');
     });
 
+    // Actualiser la position GPS en direct du livreur
+    btnDriverUpdateLocation.addEventListener('click', () => {
+        if (!STATE.loggedDriver) return;
+        const driver = STATE.loggedDriver;
+
+        btnDriverUpdateLocation.style.pointerEvents = 'none';
+        btnDriverUpdateLocation.innerHTML = `<div class="geo-spinner" style="width: 14px; height: 14px; border-top-color: white; display: inline-block; vertical-align: middle; margin-right: 6px;"></div>`;
+        driverLocationUpdateStatus.innerHTML = `<span>⏳</span> <span>Recherche de votre signal GPS...</span>`;
+
+        if (!navigator.geolocation) {
+            btnDriverUpdateLocation.style.pointerEvents = 'auto';
+            btnDriverUpdateLocation.innerHTML = `⚡ Actualiser`;
+            driverLocationUpdateStatus.innerHTML = `<span>❌</span> <span>GPS non supporté par votre navigateur.</span>`;
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                // Mettre à jour les coordonnées réelles du livreur
+                driver.lat = lat;
+                driver.lng = lng;
+
+                // Redessiner immédiatement tous les marqueurs sur la carte active
+                renderRiders();
+
+                btnDriverUpdateLocation.style.pointerEvents = 'auto';
+                btnDriverUpdateLocation.innerHTML = `⚡ Actualiser`;
+                
+                const time = getFormattedTime();
+                driverLocationUpdateStatus.innerHTML = `<span>✓</span> <span>Position mise à jour à ${time} : (${lat.toFixed(5)}, ${lng.toFixed(5)})</span>`;
+                driverLocationUpdateStatus.style.color = 'var(--color-green-soft)';
+
+                // Recentrer la carte sur sa nouvelle position s'il le souhaite
+                if (STATE.map) {
+                    STATE.map.panTo([lat, lng], { animate: true, duration: 0.6 });
+                }
+            },
+            (error) => {
+                // En cas d'échec du signal, simuler de façon fluide un déplacement à proximité du centre de sa ville active
+                const cityCenter = STATE.cityCenters[STATE.currentCity];
+                const randomLat = cityCenter.lat + (Math.random() - 0.5) * 0.012;
+                const randomLng = cityCenter.lng + (Math.random() - 0.5) * 0.012;
+                
+                driver.lat = randomLat;
+                driver.lng = randomLng;
+                
+                renderRiders();
+
+                btnDriverUpdateLocation.style.pointerEvents = 'auto';
+                btnDriverUpdateLocation.innerHTML = `⚡ Actualiser`;
+                
+                const time = getFormattedTime();
+                driverLocationUpdateStatus.innerHTML = `<span>⚡</span> <span>Position simulée à ${time} : (${randomLat.toFixed(5)}, ${randomLng.toFixed(5)})</span>`;
+                driverLocationUpdateStatus.style.color = 'var(--color-primary-brown)';
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            }
+        );
+    });
+
     function updateDriverDashboardView() {
         if (!STATE.loggedDriver) return;
         
@@ -1214,6 +1287,10 @@ document.addEventListener('DOMContentLoaded', () => {
             STATE.pickerMap = null;
             STATE.pickerMarker = null;
         }
+
+        if (driverRegisterCity) driverRegisterCity.value = '';
+        if (driverRegisterSectorsGroup) driverRegisterSectorsGroup.classList.add('hidden');
+        if (driverRegisterSectorsList) driverRegisterSectorsList.innerHTML = '';
 
         // Manage views depending on logged-in state of the driver
         if (STATE.loggedDriver) {
@@ -2001,23 +2078,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 100);
     }
 
-    function locateClientAndLaunchMap() {
-        const btnMapCard = document.getElementById('loc-btn-map');
+    function locateClientAndLaunchMap(triggerButton) {
+        let originalText = "";
+        let originalIcon = "";
         let iconEl = null;
-        let originalIcon = "📍";
-        
-        if (btnMapCard) {
-            iconEl = btnMapCard.querySelector('.loc-option-icon');
-            if (iconEl) {
-                originalIcon = iconEl.innerHTML;
-                iconEl.innerHTML = `<div class="geo-spinner" style="width: 24px; height: 24px; border-top-color: var(--color-primary-red); margin: 0 auto;"></div>`;
+
+        // Visual loading states on triggers
+        if (triggerButton) {
+            triggerButton.style.pointerEvents = 'none'; // prevent double clicks
+            if (triggerButton.id === 'loc-btn-map') {
+                iconEl = triggerButton.querySelector('.loc-option-icon');
+                if (iconEl) {
+                    originalIcon = iconEl.innerHTML;
+                    iconEl.innerHTML = `<div class="geo-spinner" style="width: 24px; height: 24px; border-top-color: var(--color-primary-red); margin: 0 auto;"></div>`;
+                }
+            } else if (triggerButton.id === 'btn-gps-auto-detect') {
+                originalText = triggerButton.innerHTML;
+                triggerButton.innerHTML = `<div class="geo-spinner" style="width: 20px; height: 20px; border-top-color: white; display: inline-block; vertical-align: middle; margin-right: 8px;"></div> Détection en cours...`;
+            } else if (triggerButton.id === 'map-locate-btn') {
+                originalText = triggerButton.innerHTML;
+                triggerButton.innerHTML = `<div class="geo-spinner" style="width: 20px; height: 20px; border-top-color: var(--color-primary-green); display: inline-block;"></div>`;
             }
-            btnMapCard.style.pointerEvents = 'none'; // prevent double clicks
         }
 
         if (!navigator.geolocation) {
-            if (iconEl) iconEl.innerHTML = originalIcon;
-            if (btnMapCard) btnMapCard.style.pointerEvents = 'auto';
+            // Restore trigger buttons
+            if (triggerButton) {
+                triggerButton.style.pointerEvents = 'auto';
+                if (triggerButton.id === 'loc-btn-map' && iconEl) iconEl.innerHTML = originalIcon;
+                else if (originalText) triggerButton.innerHTML = originalText;
+            }
             STATE.clientCoordinates = null;
             switchCity(portalSelectedCity);
             showMapView();
@@ -2030,25 +2120,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
 
-                // Save visitor coordinates
-                STATE.clientCoordinates = { lat: lat, lng: lng };
+                // 1. Calculate distances to the centers of Ouagadougou and Bobo-Dioulasso
+                const distToOuaga = getDistance(lat, lng, 12.3714, -1.5197);
+                const distToBobo = getDistance(lat, lng, 11.1774, -4.2983);
+                
+                let detectedCity = 'ouaga';
+                if (distToBobo < distToOuaga) {
+                    detectedCity = 'bobo';
+                }
 
-                // Restore card status
-                if (iconEl) iconEl.innerHTML = originalIcon;
-                if (btnMapCard) btnMapCard.style.pointerEvents = 'auto';
+                // 2. High-end Developer Experience Simulator Check (testers outside Burkina Faso)
+                const closestCenterDist = Math.min(distToOuaga, distToBobo);
+                if (closestCenterDist > 150) {
+                    // Simulate coordinate right next to active drivers for a beautiful proximity demonstration
+                    if (detectedCity === 'ouaga') {
+                        STATE.clientCoordinates = { lat: 12.3702, lng: -1.5185 };
+                    } else {
+                        STATE.clientCoordinates = { lat: 11.1782, lng: -4.2995 };
+                    }
+                } else {
+                    STATE.clientCoordinates = { lat: lat, lng: lng };
+                }
 
-                // Center on visitor position inside the selected city
-                switchCity(portalSelectedCity);
+                // Restore trigger buttons
+                if (triggerButton) {
+                    triggerButton.style.pointerEvents = 'auto';
+                    if (triggerButton.id === 'loc-btn-map' && iconEl) iconEl.innerHTML = originalIcon;
+                    else if (originalText) triggerButton.innerHTML = originalText;
+                }
+
+                // 3. Switch active city automatically and launch map centered on coordinates
+                switchCity(detectedCity);
+                portalSelectedCity = detectedCity;
+                
                 showMapView();
                 closeLocationPortal();
+
+                if (STATE.map) {
+                    STATE.map.setView([STATE.clientCoordinates.lat, STATE.clientCoordinates.lng], 15, {
+                        animate: true,
+                        pan: { duration: 0.8 }
+                    });
+                }
+
+                // 4. Present elegant dynamic geolocation confirmation toast badge
+                const toast = document.getElementById('sector-active-toast');
+                const cityName = detectedCity === 'ouaga' ? 'Ouagadougou' : 'Bobo-Dioulasso';
+                document.getElementById('sector-toast-text').innerText = `📍 Position détectée à ${cityName} !`;
+                toast.classList.add('show');
+                
+                // Auto-hide the toast after 4.5 seconds
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 4500);
             },
             (error) => {
-                // If denied or failed, fall back gracefully to default city map
-                if (iconEl) iconEl.innerHTML = originalIcon;
-                if (btnMapCard) btnMapCard.style.pointerEvents = 'auto';
+                // Restore trigger buttons on error
+                if (triggerButton) {
+                    triggerButton.style.pointerEvents = 'auto';
+                    if (triggerButton.id === 'loc-btn-map' && iconEl) iconEl.innerHTML = originalIcon;
+                    else if (originalText) triggerButton.innerHTML = originalText;
+                }
                 
                 STATE.clientCoordinates = null;
-                alert("ℹ️ Autorisation GPS refusée ou indisponible. Chargement de la carte par défaut.");
+                alert("ℹ️ Autorisation GPS refusée ou signal indisponible. Chargement de la carte par défaut.");
 
                 switchCity(portalSelectedCity);
                 showMapView();
@@ -2178,6 +2313,100 @@ document.addEventListener('DOMContentLoaded', () => {
     btnReturnMap.addEventListener('click', closeDriverDrawer);
     btnGeoLocate.addEventListener('click', triggerGeolocation);
 
+    // --- MANUALLY ASSIGN REGISTRATION LOCATION VIA CITIES & SECTORS ---
+    driverRegisterCity.addEventListener('change', (e) => {
+        const city = e.target.value;
+        renderRegisterSectors(city);
+        driverLatInput.value = '';
+        driverLngInput.value = '';
+        if (mapPickerWrapper) mapPickerWrapper.classList.add('hidden');
+    });
+
+    function renderRegisterSectors(city) {
+        driverRegisterSectorsList.innerHTML = '';
+        if (!city) {
+            driverRegisterSectorsGroup.classList.add('hidden');
+            return;
+        }
+
+        const citySectors = STATE.sectors[city] || [];
+        citySectors.forEach(sector => {
+            const wrapper = document.createElement('label');
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.gap = '8px';
+            wrapper.style.fontSize = '0.78rem';
+            wrapper.style.cursor = 'pointer';
+            wrapper.style.fontWeight = '600';
+            wrapper.style.color = 'var(--color-charcoal-light)';
+            wrapper.style.padding = '4px 6px';
+            wrapper.style.border = '1px solid var(--color-border)';
+            wrapper.style.borderRadius = '8px';
+            wrapper.style.backgroundColor = 'var(--color-bg-warm)';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = sector.name;
+            checkbox.className = 'driver-register-sector-checkbox';
+            checkbox.dataset.lat = sector.lat;
+            checkbox.dataset.lng = sector.lng;
+
+            checkbox.addEventListener('change', updateManualCoordinatesFromSectors);
+
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(document.createTextNode(sector.name));
+            driverRegisterSectorsList.appendChild(wrapper);
+        });
+
+        driverRegisterSectorsGroup.classList.remove('hidden');
+    }
+
+    function updateManualCoordinatesFromSectors() {
+        const checkboxes = document.querySelectorAll('.driver-register-sector-checkbox:checked');
+        if (checkboxes.length === 0) {
+            driverLatInput.value = '';
+            driverLngInput.value = '';
+            
+            if (gpsStatusDesc) {
+                gpsStatusDesc.innerHTML = `⚠️ Veuillez sélectionner au moins un quartier.`;
+                gpsStatusDesc.style.color = 'var(--color-primary-red)';
+            }
+            if (mapPickerWrapper) mapPickerWrapper.classList.add('hidden');
+            return;
+        }
+
+        let totalLat = 0;
+        let totalLng = 0;
+        const selectedNames = [];
+
+        checkboxes.forEach(cb => {
+            totalLat += parseFloat(cb.dataset.lat);
+            totalLng += parseFloat(cb.dataset.lng);
+            selectedNames.push(cb.value);
+        });
+
+        const avgLat = totalLat / checkboxes.length;
+        const avgLng = totalLng / checkboxes.length;
+
+        // Save coordinates
+        driverLatInput.value = avgLat;
+        driverLngInput.value = avgLng;
+
+        // Visual feedback
+        geoStatusCard.className = 'geo-status-card success-style';
+        document.getElementById('geo-status-title').innerText = "✓ Zone sélectionnée manuellement";
+        document.getElementById('geo-status-text').innerText = `Quartier(s) : ${selectedNames.join(', ')}`;
+
+        // Show picker map wrapper
+        mapPickerWrapper.classList.remove('hidden');
+        gpsFallbackHint.classList.add('hidden');
+
+        // Center map picker
+        setTimeout(() => {
+            initPickerMap(avgLat, avgLng, true); // Keep marker locked
+        }, 100);
+    }
+
     // Vehicle Option Cards selection
     vehicleOptions.forEach(opt => {
         opt.addEventListener('click', () => {
@@ -2211,9 +2440,9 @@ document.addEventListener('DOMContentLoaded', () => {
     driverForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
-        // Geolocation validation check
+        // Coordinates verification check
         if (!driverLatInput.value || !driverLngInput.value) {
-            alert("Veuillez d'abord enregistrer votre position GPS en cliquant sur « Me géolocaliser ».");
+            alert("Veuillez d'abord définir votre position géographique en cliquant sur « Me géolocaliser » ou en sélectionnant votre ville et vos quartiers.");
             return;
         }
         
@@ -2247,13 +2476,20 @@ document.addEventListener('DOMContentLoaded', () => {
             status: 'actif' // Start active, but can't access Espace Livreur dashboard without weekly sub (500 FCFA)
         };
 
+        // Determine target city from manual selector or active city focus
+        let targetCity = STATE.currentCity;
+        if (driverRegisterCity && driverRegisterCity.value) {
+            targetCity = driverRegisterCity.value;
+        }
+
         // Add to active city list
-        STATE.riders[STATE.currentCity].unshift(newRider);
+        STATE.riders[targetCity].unshift(newRider);
         
         // Set logged-in session for the registered driver
         STATE.loggedDriver = newRider;
         
-        // Redraw markers with the newly added rider
+        // Switch main city focus to display the new driver pin instantly
+        switchCity(targetCity);
         renderRiders();
     });
 
@@ -2525,7 +2761,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Step 2: Access mode selection
     document.getElementById('loc-btn-map').addEventListener('click', () => {
-        locateClientAndLaunchMap();
+        locateClientAndLaunchMap(document.getElementById('loc-btn-map'));
+    });
+    
+    // Step 1: GPS Auto-detection button
+    btnGpsAutoDetect.addEventListener('click', () => {
+        locateClientAndLaunchMap(btnGpsAutoDetect);
+    });
+
+    // Map: Floating GPS locate button
+    mapLocateBtn.addEventListener('click', () => {
+        locateClientAndLaunchMap(mapLocateBtn);
     });
     
     document.getElementById('loc-btn-sectors').addEventListener('click', () => {

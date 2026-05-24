@@ -1213,8 +1213,11 @@ footer {
 .welcome-portal {
     width: 100%;
     height: 100%;
-    /* Rich radial gradient of African terracotta clay & deep soil browns with spotlight effect */
-    background: radial-gradient(circle at center, #8D5537 0%, var(--color-primary-brown-dark) 65%, #3D2619 100%);
+    /* Rich radial gradient of African terracotta clay & deep soil browns with spotlight effect + Delivery Doodle watermarks */
+    background-image: 
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 120 120'%3E%3Cg stroke='%23FAF5F0' stroke-width='1.2' stroke-opacity='0.05' fill='none'%3E%3Ccircle cx='20' cy='35' r='4'/%3E%3Ccircle cx='40' cy='35' r='4'/%3E%3Cpath d='M 20 35 L 30 35 L 32 25 L 40 35 M 32 25 L 26 22 L 26 18 M 32 25 L 35 15 L 38 15 M 22 28 L 22 24 H 14 V 28 H 22'/%3E%3Crect x='75' y='15' width='16' height='14' rx='1'/%3E%3Cline x1='83' y1='15' x2='83' y2='29'/%3E%3Cline x1='75' y1='22' x2='91' y2='22'/%3E%3Cpath d='M 80 12 L 83 15 L 86 12'/%3E%3Cpath d='M 25 70 C 20 70, 17 74, 17 78 C 17 84, 25 90, 25 90 C 25 90, 33 84, 33 78 C 33 74, 30 70, 25 70 Z'/%3E%3Ccircle cx='25' cy='77' r='2.5'/%3E%3Ccircle cx='75' cy='85' r='3.5'/%3E%3Ccircle cx='91' cy='85' r='3.5'/%3E%3Cpath d='M 75 85 L 83 85 L 87 75 L 91 85 M 83 85 L 80 75 H 72 V 68 M 80 72 L 86 65 H 90'/%3E%3Ccircle cx='86' cy='62' r='2'/%3E%3C/g%3E%3Cg fill='%23FAF5F0' fill-opacity='0.05'%3E%3Ccircle cx='55' cy='50' r='1.5'/%3E%3Ccircle cx='105' cy='100' r='1.5'/%3E%3Ccircle cx='15' cy='110' r='1'/%3E%3Ccircle cx='110' cy='40' r='1'/%3E%3Ccircle cx='50' cy='105' r='1'/%3E%3C/g%3E%3C/svg%3E"), 
+        radial-gradient(circle at center, #8D5537 0%, var(--color-primary-brown-dark) 65%, #3D2619 100%);
+    background-repeat: repeat, no-repeat;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1575,8 +1578,11 @@ footer {
 }
 
 @media (max-width: 375px) {
-    .logo-text span {
-        display: none; /* Hides "Rapide" on narrow screens to guarantee fluid fit */
+    .logo-text {
+        font-size: 0.82rem; /* Scale down font size to ensure 'Livraison Rapide' fits completely without wrapping */
+    }
+    .logo-container {
+        gap: 4px;
     }
 }
 
@@ -2186,14 +2192,14 @@ footer {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     width: 100%;
-    max-width: 480px;
+    max-width: 410px; /* Reduced by 15% from 480px for a more compact and mobile-friendly fit */
     border-radius: 28px;
     box-shadow: 
         0 24px 50px rgba(54, 42, 33, 0.12),
         inset 0 1px 2px rgba(255, 255, 255, 0.95);
     overflow: hidden;
     position: relative;
-    padding: 32px 28px;
+    padding: 26px 22px; /* Adjusted padding to look perfect with smaller width */
     transform: translateY(30px) scale(0.98);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
     max-height: 90vh;
@@ -2464,7 +2470,7 @@ footer {
 /* Responsive adjustments */
 @media (max-width: 480px) {
     .location-portal-card {
-        padding: 24px 20px;
+        padding: 20px 16px;
     }
     .loc-city-grid {
         grid-template-columns: 1fr;
@@ -2938,6 +2944,91 @@ footer {
     color: var(--color-charcoal-muted);
     font-weight: 700;
 }
+
+/* Floating Locate Button on Map */
+.map-locate-btn {
+    position: absolute;
+    bottom: 24px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--color-card-white);
+    color: var(--color-primary-green);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-medium);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 500;
+    transition: var(--transition-smooth);
+}
+
+.map-locate-btn:hover {
+    color: var(--color-primary-green-hover);
+    transform: scale(1.08) rotate(15deg);
+    box-shadow: 0 8px 24px rgba(39, 174, 96, 0.2);
+}
+
+.map-locate-btn:active {
+    transform: scale(0.95);
+}
+
+/* Adjust map locate button position for mobile when sheet is open */
+@media (max-width: 768px) {
+    .map-locate-btn {
+        bottom: 80px; /* Offset so it floats above the sheet/nav area nicely */
+        right: 12px;
+    }
+}
+
+/* GPS Auto-Detect Step 1 card style */
+.gps-auto-detect-container {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+#btn-gps-auto-detect {
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.85), rgba(46, 204, 113, 0.6)) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.45) !important; /* Premium gloss glass border reflection */
+    color: var(--color-card-white) !important;
+    border-radius: 14px !important; /* Slightly smaller border radius */
+    padding: 10px 18px !important; /* Slightly smaller button height/padding as requested */
+    font-size: 0.85rem !important; /* Slightly smaller font size */
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 
+        0 8px 24px rgba(39, 174, 96, 0.22),
+        inset 0 2px 4px rgba(255, 255, 255, 0.35) !important; /* Inner white light gloss reflection */
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+#btn-gps-auto-detect:hover {
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.92), rgba(46, 204, 113, 0.72)) !important;
+    transform: translateY(-1.5px);
+    box-shadow: 
+        0 12px 28px rgba(39, 174, 96, 0.32),
+        inset 0 3px 6px rgba(255, 255, 255, 0.45) !important;
+}
+
+#btn-gps-auto-detect:active {
+    transform: translateY(1px);
+}
+
+@keyframes pulse-radar {
+    0% { transform: scale(1) rotate(0deg); opacity: 0.85; }
+    50% { transform: scale(1.18) rotate(180deg); opacity: 1; }
+    100% { transform: scale(1) rotate(360deg); opacity: 0.85; }
+}
+
 
 
 
