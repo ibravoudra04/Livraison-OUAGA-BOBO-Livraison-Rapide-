@@ -2399,36 +2399,37 @@ footer {
 
 /* Boutons retour */
 .btn-loc-back {
-    display: block;
-    width: 100%;
-    padding: 10px 18px;
-    background: linear-gradient(135deg, rgba(39, 174, 96, 0.85), rgba(46, 204, 113, 0.6)) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+    position: absolute;
+    bottom: 12px;
+    left: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent !important;
+    border: none !important;
     font-family: var(--font-sans);
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--color-card-white) !important;
+    font-size: 1.4rem !important; /* Elegant bold black arrow size */
+    font-weight: 800 !important;
+    color: var(--color-charcoal) !important;
     cursor: pointer;
     transition: var(--transition-smooth);
-    border-radius: 14px;
-    box-shadow: 
-        0 8px 24px rgba(39, 174, 96, 0.22),
-        inset 0 2px 4px rgba(255, 255, 255, 0.35) !important;
-    text-align: center;
+    border-radius: 50%;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    z-index: 100;
 }
 
 .btn-loc-back:hover {
-    background: linear-gradient(135deg, rgba(39, 174, 96, 0.92), rgba(46, 204, 113, 0.72)) !important;
-    transform: translateY(-1.5px);
-    box-shadow: 
-        0 12px 28px rgba(39, 174, 96, 0.32),
-        inset 0 3px 6px rgba(255, 255, 255, 0.45) !important;
+    color: var(--color-primary-red) !important; /* Warm red hover highlight */
+    transform: scale(1.15) translateX(-2px);
+    background: rgba(0, 0, 0, 0.05) !important;
 }
 
 .btn-loc-back:active {
-    transform: translateY(1px);
+    transform: scale(0.95);
 }
 
 /* Floating Home Button on Map */
@@ -3038,9 +3039,7 @@ footer {
 }
 
 #btn-gps-auto-detect {
-    background: linear-gradient(135deg, rgba(39, 174, 96, 0.85), rgba(46, 204, 113, 0.6)) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
+    background: #27AE60 !important; /* Pure Burkina flag green */
     border: 1.5px solid rgba(255, 255, 255, 0.45) !important; /* Premium gloss glass border reflection */
     color: var(--color-card-white) !important;
     border-radius: 14px !important; /* Slightly smaller border radius */
@@ -3050,7 +3049,7 @@ footer {
     cursor: pointer;
     width: 100%;
     box-shadow: 
-        0 8px 24px rgba(39, 174, 96, 0.22),
+        0 8px 24px rgba(39, 174, 96, 0.35), /* Highly vibrant green glow */
         inset 0 2px 4px rgba(255, 255, 255, 0.35) !important; /* Inner white light gloss reflection */
     transition: var(--transition-smooth);
     display: flex;
@@ -3060,10 +3059,10 @@ footer {
 }
 
 #btn-gps-auto-detect:hover {
-    background: linear-gradient(135deg, rgba(39, 174, 96, 0.92), rgba(46, 204, 113, 0.72)) !important;
+    background: #219653 !important; /* Vibrant flag green hover */
     transform: translateY(-1.5px);
     box-shadow: 
-        0 12px 28px rgba(39, 174, 96, 0.32),
+        0 12px 28px rgba(39, 174, 96, 0.45),
         inset 0 3px 6px rgba(255, 255, 255, 0.45) !important;
 }
 

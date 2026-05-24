@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         markers: [],
         clients: [
             { phone: '+226 76 00 00 01', password: '123', name: 'Zakarie Kaboré', subscriptionPaid: true, viewedDrivers: new Set(['o1', 'o2']), contactedDrivers: new Set(['o1']) },
-            { phone: '+226 70 99 99 99', password: '123', name: 'Alida Sawadogo', subscriptionPaid: false, viewedDrivers: new Set(), contactedDrivers: new Set() }
+            { phone: '+226 70 99 99 99', password: '123', name: 'Alida Sawadogo', subscriptionPaid: true, viewedDrivers: new Set(), contactedDrivers: new Set() }
         ],
         riders: {
             ouaga: [
@@ -637,6 +637,23 @@ document.addEventListener('DOMContentLoaded', () => {
         ussdPinInput.value = '';
         btnSubmitMomo.disabled = false;
         btnSubmitMomo.innerText = 'Lancer le paiement';
+
+        // Reset client account creation checkbox and password wrapper
+        const momoCreateClientGroup = document.getElementById('momo-create-client-group');
+        const momoCreateClientCheckbox = document.getElementById('momo-create-client-checkbox');
+        const momoClientPasswordWrapper = document.getElementById('momo-client-password-wrapper');
+        const momoClientPasswordInput = document.getElementById('momo-client-password');
+        
+        if (momoCreateClientGroup) {
+            if (STATE.loggedClient) {
+                momoCreateClientGroup.classList.add('hidden');
+            } else {
+                momoCreateClientGroup.classList.remove('hidden');
+                if (momoCreateClientCheckbox) momoCreateClientCheckbox.checked = false;
+                if (momoClientPasswordWrapper) momoClientPasswordWrapper.classList.add('hidden');
+                if (momoClientPasswordInput) momoClientPasswordInput.value = '';
+            }
+        }
         
         const titleEl = document.querySelector('.payment-title');
         const amountEl = document.querySelector('.payment-amount');
@@ -741,25 +758,53 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (STATE.selectedRider) {
                 STATE.unlockedRiders.add(STATE.selectedRider.id);
                 
-                // Track contacted history if client is logged in
-                if (STATE.loggedClient) {
-                    if (!STATE.loggedClient.contactedDrivers) {
-                        STATE.loggedClient.contactedDrivers = new Set();
-                    }
-                    STATE.loggedClient.contactedDrivers.add(STATE.selectedRider.id);
-                    updateClientDashboardView();
-                }
-
-                // Increment contact count for the rider
                 const rider = findRiderById(STATE.selectedRider.id);
                 if (rider) {
                     if (rider.contactsCount === undefined) rider.contactsCount = 0;
                     rider.contactsCount++;
                 }
                 
-                // Track Admin Statistics
                 STATE.totalUnlocks++;
                 STATE.totalRevenue += 200;
+            }
+
+            // Handle free client account auto-creation upon paying 200 FCFA
+            const momoCreateClientCheckbox = document.getElementById('momo-create-client-checkbox');
+            if (momoCreateClientCheckbox && momoCreateClientCheckbox.checked && !STATE.loggedClient) {
+                const momoPhoneVal = document.getElementById('momo-phone').value.trim();
+                const momoClientPassVal = document.getElementById('momo-client-password').value.trim() || '1234';
+                if (momoPhoneVal) {
+                    const phoneNormalized = '+226 ' + momoPhoneVal.replace(/\s+/g, '').replace(/^\+226/, '');
+                    let existingClient = STATE.clients.find(c => c.phone.replace(/\s+/g, '') === phoneNormalized.replace(/\s+/g, ''));
+                    if (!existingClient) {
+                        const newClient = {
+                            phone: phoneNormalized,
+                            password: momoClientPassVal,
+                            name: 'Client ' + momoPhoneVal,
+                            subscriptionPaid: true,
+                            viewedDrivers: new Set(),
+                            contactedDrivers: new Set()
+                        };
+                        STATE.clients.push(newClient);
+                        STATE.loggedClient = newClient;
+                    } else {
+                        STATE.loggedClient = existingClient;
+                        STATE.loggedClient.subscriptionPaid = true;
+                    }
+                }
+            }
+
+            // Track contacted history if client is logged in
+            if (STATE.loggedClient) {
+                if (!STATE.loggedClient.contactedDrivers) {
+                    STATE.loggedClient.contactedDrivers = new Set();
+                }
+                const unlockedRiderId = STATE.selectedRider ? STATE.selectedRider.id : (STATE.pendingServiceUnlock ? STATE.pendingServiceUnlock.id : '');
+                if (unlockedRiderId) {
+                    STATE.loggedClient.contactedDrivers.add(unlockedRiderId);
+                    STATE.unlockedRiders.add(unlockedRiderId); // Ensure in unlocked set
+                }
+                updateClientDashboardView();
             }
             
             // Trigger map markers updates
@@ -2306,6 +2351,20 @@ document.addEventListener('DOMContentLoaded', () => {
     methodMoov.addEventListener('click', () => handleProviderSelect(methodMoov, 'Moov Money'));
 
     btnSubmitMomo.addEventListener('click', startPaymentSimulation);
+
+    // Toggle client password field during MoMo payment when checkbox is clicked
+    const momoCreateClientCheckbox = document.getElementById('momo-create-client-checkbox');
+    const momoClientPasswordWrapper = document.getElementById('momo-client-password-wrapper');
+    if (momoCreateClientCheckbox && momoClientPasswordWrapper) {
+        momoCreateClientCheckbox.addEventListener('change', () => {
+            if (momoCreateClientCheckbox.checked) {
+                momoClientPasswordWrapper.classList.remove('hidden');
+            } else {
+                momoClientPasswordWrapper.classList.add('hidden');
+            }
+        });
+    }
+
     btnUssdCancel.addEventListener('click', () => {
         // Reset back to payment details step
         paymentFormStep.style.display = 'block';
@@ -2513,10 +2572,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Chat button trigger
     btnChatRider.addEventListener('click', () => {
         if (STATE.selectedRider) {
-            if (STATE.loggedClient && STATE.loggedClient.subscriptionPaid === true) {
+            if (STATE.loggedClient) {
                 openChatDrawer(STATE.selectedRider);
             } else {
-                alert("💬 La messagerie directe intégrée est réservée aux clients abonnés Premium (5 000 FCFA/mois).\n\nVeuillez vous connecter et activer votre abonnement pour clavarder en direct. Les visiteurs standards peuvent utiliser les appels téléphoniques classiques.");
+                alert("💬 La messagerie directe intégrée est réservée aux clients connectés (Compte Client Gratuit).\n\nVeuillez créer ou vous connecter à votre compte client gratuit pour clavarder en direct. Les visiteurs standards peuvent utiliser les appels téléphoniques classiques.");
                 openAuthModal();
             }
         }
@@ -2657,16 +2716,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (client) {
             if (client.password === passwordInputVal) {
                 STATE.loggedClient = client;
-                closeAuthModal();
-                
-                if (client.subscriptionPaid === true) {
-                    openClientDrawer();
-                } else {
-                    // Client monthly premium payment required (5 000 FCFA)
-                    STATE.pendingClientSubscriptionUnlock = true;
-                    openPaymentModal();
-                    alert("⚠️ Abonnement requis pour accéder à votre Espace Client. Une demande de paiement de 5 000 FCFA a été initiée.");
+                client.subscriptionPaid = true; // Ensure premium/free is active
+
+                // Restore all previously contacted/unlocked riders
+                if (client.contactedDrivers) {
+                    client.contactedDrivers.forEach(id => STATE.unlockedRiders.add(id));
                 }
+
+                closeAuthModal();
+                openClientDrawer();
+                alert(`🎉 Bienvenue dans votre Espace Client ! Retrouvez vos livreurs débloqués et discutez.`);
                 return;
             } else {
                 alert("❌ Mot de passe incorrect pour ce compte client.");
@@ -2699,7 +2758,7 @@ document.addEventListener('DOMContentLoaded', () => {
             phone: phoneNormalized,
             password: passwordVal,
             name: 'Client ' + phoneVal,
-            subscriptionPaid: false,
+            subscriptionPaid: true, // Free client account activated
             viewedDrivers: new Set(),
             contactedDrivers: new Set()
         };
@@ -2708,11 +2767,8 @@ document.addEventListener('DOMContentLoaded', () => {
         STATE.loggedClient = newClient;
         
         closeAuthModal();
-        
-        // Automatically launch 5 000 FCFA payment monthly sub
-        STATE.pendingClientSubscriptionUnlock = true;
-        openPaymentModal();
-        alert("🎉 Compte Client créé ! Pour activer votre compte et accéder à la messagerie directe, veuillez régler votre abonnement mensuel de 5 000 FCFA.");
+        openClientDrawer();
+        alert("🎉 Compte Client gratuit créé et activé avec succès ! Retrouvez l'historique de vos livreurs.");
     });
 
     // Client Dashboard elements closers & logouts
