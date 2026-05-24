@@ -235,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const driverRegisterSectorsList = document.getElementById('driver-register-sectors-list');
     const btnDriverUpdateLocation = document.getElementById('btn-driver-update-location');
     const driverLocationUpdateStatus = document.getElementById('driver-location-update-status');
+    const mapHomeBtn = document.getElementById('map-home-btn');
 
     // Onboarding file inputs & vehicle selection
     const uploadCniRecto = document.getElementById('upload-cni-recto');
@@ -1359,6 +1360,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         navBtnFind.classList.add('active');
         navBtnRegister.classList.remove('active');
+
+        // Hide full header on map view as requested
+        const headerEl = document.querySelector('header');
+        if (headerEl) headerEl.classList.add('hidden');
+        
+        // Show floating home/return button on map
+        if (mapHomeBtn) mapHomeBtn.classList.remove('hidden');
         
         if (!mapInitialized) {
             initMainMap();
@@ -1401,6 +1409,13 @@ document.addEventListener('DOMContentLoaded', () => {
         navBtnFind.classList.add('hidden');
         navBtnRegister.classList.remove('hidden'); // Keep Devenir livreur visible at top-right
         navBtnRegister.classList.remove('active');
+
+        // Restore header when returning to home portal
+        const headerEl = document.querySelector('header');
+        if (headerEl) headerEl.classList.remove('hidden');
+        
+        // Hide floating home/return button
+        if (mapHomeBtn) mapHomeBtn.classList.add('hidden');
         
         closeRiderSheet();
         if (driverDrawer.classList.contains('open')) {
@@ -2773,6 +2788,13 @@ document.addEventListener('DOMContentLoaded', () => {
     mapLocateBtn.addEventListener('click', () => {
         locateClientAndLaunchMap(mapLocateBtn);
     });
+
+    // Map: Floating home/return button
+    if (mapHomeBtn) {
+        mapHomeBtn.addEventListener('click', () => {
+            returnToWelcomePortal();
+        });
+    }
     
     document.getElementById('loc-btn-sectors').addEventListener('click', () => {
         document.getElementById('loc-sectors-desc').innerText = `Quartiers disponibles à ${portalSelectedCity === 'ouaga' ? 'Ouagadougou' : 'Bobo-Dioulasso'}`;

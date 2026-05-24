@@ -2197,7 +2197,7 @@ footer {
     box-shadow: 
         0 24px 50px rgba(54, 42, 33, 0.12),
         inset 0 1px 2px rgba(255, 255, 255, 0.95);
-    overflow: hidden;
+    overflow-y: auto; /* Enable scroll if viewport is extremely small on mobile (Bobo-Dioulasso choice stays 100% accessible) */
     position: relative;
     padding: 26px 22px; /* Adjusted padding to look perfect with smaller width */
     transform: translateY(30px) scale(0.98);
@@ -2401,21 +2401,69 @@ footer {
 .btn-loc-back {
     display: block;
     width: 100%;
-    padding: 12px;
-    background: transparent;
-    border: none;
+    padding: 10px 18px;
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.85), rgba(46, 204, 113, 0.6)) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
     font-family: var(--font-sans);
     font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-charcoal-light);
+    font-weight: 700;
+    color: var(--color-card-white) !important;
     cursor: pointer;
     transition: var(--transition-smooth);
-    border-radius: 12px;
+    border-radius: 14px;
+    box-shadow: 
+        0 8px 24px rgba(39, 174, 96, 0.22),
+        inset 0 2px 4px rgba(255, 255, 255, 0.35) !important;
+    text-align: center;
 }
 
 .btn-loc-back:hover {
-    color: var(--color-charcoal);
-    background-color: var(--color-bg-warm);
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.92), rgba(46, 204, 113, 0.72)) !important;
+    transform: translateY(-1.5px);
+    box-shadow: 
+        0 12px 28px rgba(39, 174, 96, 0.32),
+        inset 0 3px 6px rgba(255, 255, 255, 0.45) !important;
+}
+
+.btn-loc-back:active {
+    transform: translateY(1px);
+}
+
+/* Floating Home Button on Map */
+.map-home-btn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--color-card-white);
+    color: var(--color-primary-brown);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-medium);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 500;
+    transition: var(--transition-smooth);
+}
+
+.map-home-btn:hover {
+    color: var(--color-primary-brown-hover);
+    transform: scale(1.08) rotate(-10deg);
+    box-shadow: 0 8px 24px rgba(141, 85, 55, 0.2);
+}
+
+.map-home-btn:active {
+    transform: scale(0.95);
+}
+
+/* Offset Leaflet zoom controls to prevent overlap with floating home button */
+.leaflet-top.leaflet-left {
+    top: 70px !important;
 }
 
 /* Toast indicateur de quartier actif */
