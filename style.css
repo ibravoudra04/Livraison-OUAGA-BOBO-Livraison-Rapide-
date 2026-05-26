@@ -70,8 +70,11 @@ body {
 
 /* Header Minimal */
 header {
-    background: var(--color-bg-warm); /* Sandy warm beige header to match theme */
-    border-bottom: 1px solid var(--color-border);
+    background: rgba(250, 246, 242, 0.75);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 4px 30px rgba(54, 42, 33, 0.03), inset 0 1px 1px rgba(255, 255, 255, 0.85);
     padding: 12px 20px;
     display: flex;
     justify-content: space-between;
@@ -1575,6 +1578,22 @@ footer {
         font-size: 0.75rem;
         padding: 6px 10px;
     }
+    .city-switcher {
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 90%;
+        box-shadow: 0 4px 16px rgba(54, 42, 33, 0.06);
+    }
+    .map-info-badge {
+        top: 68px; /* Stacked below the city-switcher to completely prevent overlap on mobile */
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        padding: 6px 12px;
+        font-size: 0.78rem;
+        box-shadow: 0 4px 16px rgba(54, 42, 33, 0.06);
+    }
 }
 
 @media (max-width: 375px) {
@@ -2534,7 +2553,6 @@ footer {
 /* Premium Map Blur effect before payment */
 .map-blurred {
     filter: blur(5px) grayscale(15%);
-    pointer-events: none;
     transition: filter 0.4s ease;
 }
 
@@ -3098,4 +3116,176 @@ footer {
 
 .form-input-password {
     padding-right: 48px;
+}
+
+/* --- PREMIUM LIQUID GLASSMORPHISM DESIGN SYSTEM OVERRIDES --- */
+
+/* Glassmorphic main containers */
+header {
+    background: rgba(254, 250, 246, 0.68) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    box-shadow: 0 4px 30px rgba(54, 42, 33, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+}
+
+.driver-drawer, .bottom-sheet, .payment-card, .admin-card, .ussd-simulation, .chat-drawer {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.55) !important;
+    backdrop-filter: blur(35px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(35px) saturate(180%) !important;
+    box-shadow: 
+        0 24px 70px rgba(54, 42, 33, 0.12),
+        inset 0 1px 2.5px rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Modals Overlay style */
+.modal-overlay {
+    background: rgba(54, 42, 33, 0.4) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Header areas of drawers/modals */
+.drawer-header, .payment-header {
+    background: rgba(250, 245, 240, 0.25) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    color: var(--color-charcoal) !important;
+}
+
+.drawer-header h2, .payment-header h3 {
+    font-weight: 800 !important;
+    letter-spacing: -0.4px !important;
+    color: var(--color-primary-brown-dark) !important;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Polished transparent inner cards & statistic tiles */
+.driver-dashboard-welcome, .driver-status-card, .driver-stat-box, .info-item, .geo-status-card, .manual-location-selector, .driver-terms-info, .review-entry-card {
+    background: rgba(255, 255, 255, 0.42) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(12px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(140%) !important;
+    box-shadow: 
+        0 8px 30px rgba(54, 42, 33, 0.025),
+        inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+    border-radius: 20px !important;
+    transition: var(--transition-smooth) !important;
+}
+
+.driver-dashboard-welcome:hover, .driver-status-card:hover, .driver-stat-box:hover, .geo-status-card:hover, .review-entry-card:hover {
+    background: rgba(255, 255, 255, 0.72) !important;
+    border-color: rgba(255, 255, 255, 0.9) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 
+        0 14px 40px rgba(54, 42, 33, 0.05),
+        inset 0 1px 1px rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Highly premium inputs and buttons in liquid glass theme */
+.form-input {
+    background: rgba(255, 255, 255, 0.35) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: inset 0 1px 2px rgba(54, 42, 33, 0.02) !important;
+    border-radius: 16px !important;
+    transition: var(--transition-smooth) !important;
+}
+
+.form-input:focus {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-color: var(--color-primary-red) !important;
+    box-shadow: 
+        0 0 0 4px rgba(232, 92, 74, 0.15),
+        inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+}
+
+/* African terracotta & savannah flag color highlights */
+.btn-primary, .btn-unlock {
+    background: linear-gradient(135deg, var(--color-primary-red), var(--color-primary-red-hover)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 
+        0 10px 24px rgba(232, 92, 74, 0.3),
+        inset 0 1.5px 2px rgba(255, 255, 255, 0.35) !important;
+    border-radius: 16px !important;
+}
+
+.btn-primary:hover, .btn-unlock:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 
+        0 14px 30px rgba(232, 92, 74, 0.42),
+        inset 0 2px 3px rgba(255, 255, 255, 0.45) !important;
+}
+
+#btn-nav-register, #btn-gps-auto-detect, #btn-client-premium-search {
+    background: linear-gradient(135deg, var(--color-primary-green), var(--color-primary-green-hover)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 
+        0 10px 24px rgba(39, 174, 96, 0.3),
+        inset 0 1.5px 2px rgba(255, 255, 255, 0.35) !important;
+}
+
+#btn-nav-register:hover, #btn-gps-auto-detect:hover, #btn-client-premium-search:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 
+        0 14px 30px rgba(39, 174, 96, 0.42),
+        inset 0 2px 3px rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Beautiful profile badge styling */
+.badge-status.active {
+    background-color: rgba(39, 174, 96, 0.12) !important;
+    color: var(--color-primary-green) !important;
+    border: 1px solid rgba(39, 174, 96, 0.25) !important;
+}
+
+.badge-status.suspended {
+    background-color: rgba(232, 92, 74, 0.12) !important;
+    color: var(--color-primary-red) !important;
+    border: 1px solid rgba(232, 92, 74, 0.25) !important;
+}
+
+/* Chat bubble aesthetics */
+.chat-message.sent {
+    background: linear-gradient(135deg, var(--color-primary-brown), var(--color-primary-brown-hover)) !important;
+    color: white !important;
+    border-radius: 16px 16px 2px 16px !important;
+    box-shadow: 0 4px 12px rgba(141, 85, 55, 0.15) !important;
+}
+
+.chat-message.received {
+    background: rgba(255, 255, 255, 0.5) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    color: var(--color-charcoal) !important;
+    border-radius: 16px 16px 16px 2px !important;
+    box-shadow: 0 4px 12px rgba(54, 42, 33, 0.02) !important;
+}
+
+/* Custom scrollbar hiding for clean fluid look */
+.drawer-body::-webkit-scrollbar,
+.loc-sectors-grid::-webkit-scrollbar,
+#loc-sectors-list::-webkit-scrollbar,
+#reviews-modal-list::-webkit-scrollbar,
+.location-portal-card::-webkit-scrollbar,
+.admin-body::-webkit-scrollbar,
+.chat-body::-webkit-scrollbar,
+.inspector-messages::-webkit-scrollbar {
+    display: none !important;
+}
+
+.drawer-body,
+.loc-sectors-grid,
+#loc-sectors-list,
+#reviews-modal-list,
+.location-portal-card,
+.admin-body,
+.chat-body,
+.inspector-messages {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
 }

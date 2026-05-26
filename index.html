@@ -19,8 +19,26 @@
     <header>
         <a href="#" class="logo-container" id="logo-home">
             <div class="logo-icon">
-                <!-- Moto Icon SVG -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                <!-- Scooter Delivery Icon with Rear Mounted Box SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Wheels -->
+                    <circle cx="5" cy="18" r="2.5" />
+                    <circle cx="19" cy="18" r="2.5" />
+                    <!-- Scooter Frame -->
+                    <path d="M5 18h4.5l1.5-4.5h4.5l1.5 4.5h2" />
+                    <!-- Steering Column -->
+                    <path d="M16 13.5l2-6.5h-1.5" />
+                    <!-- Rider Torso -->
+                    <path d="M9.5 13.5l1-5h3" />
+                    <!-- Rider Helmet -->
+                    <circle cx="12" cy="5" r="1.5" fill="currentColor" />
+                    <!-- Rider Arm -->
+                    <path d="M12.5 8.5l3.5-1.5" />
+                    <!-- Mounted Delivery Box on Rear Rack -->
+                    <rect x="2" y="8" width="4.5" height="4.5" rx="1" fill="currentColor" fill-opacity="0.25" stroke="currentColor" stroke-width="1.8" />
+                    <!-- Support Rack -->
+                    <path d="M4 12.5v3" />
+                </svg>
             </div>
             <h1 class="logo-text">Livraison<span>Rapide</span></h1>
         </a>
@@ -28,6 +46,7 @@
             <button class="btn btn-secondary hidden" id="btn-nav-find">Trouver un livreur</button>
             <button class="btn btn-primary" id="btn-nav-register">Devenir livreur</button>
             <button class="btn btn-secondary" id="btn-nav-login">Se connecter</button>
+            <button class="btn btn-secondary hidden" id="btn-nav-logout">Se déconnecter</button>
         </nav>
     </header>
 
@@ -184,26 +203,7 @@
                             </div>
                         </div>
 
-                        <!-- Option compte client gratuit -->
-                        <div class="form-group" id="momo-create-client-group" style="margin-top: 15px; border-top: 1px solid var(--color-border); padding-top: 15px;">
-                            <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; color: var(--color-primary-brown);">
-                                <input type="checkbox" id="momo-create-client-checkbox" style="width: 18px; height: 18px; accent-color: var(--color-primary-green);">
-                                Créer un compte client gratuit 🎁
-                            </label>
-                            <p style="font-size: 0.72rem; color: var(--color-charcoal-light); margin-top: 4px; line-height: 1.3;">
-                                Sauvegardez vos livreurs débloqués et discutez en direct avec eux via notre messagerie intégrée.
-                            </p>
-                            <div id="momo-client-password-wrapper" class="hidden" style="margin-top: 10px;">
-                                <label for="momo-client-password" class="form-label" style="font-size: 0.75rem;">Mot de passe secret :</label>
-                                <div class="input-wrapper">
-                                    <input type="password" id="momo-client-password" class="form-input form-input-password" placeholder="Mot de passe de votre choix (ex: 1234)">
-                                    <button type="button" class="btn-toggle-password" data-target="momo-client-password" aria-label="Afficher/Masquer le mot de passe">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-closed hidden"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Options for standard visitor checkout simplified -->
 
                         <button class="btn-unlock" id="btn-submit-momo" style="width:100%;">
                             Lancer le paiement
@@ -602,7 +602,10 @@
         <!-- Drawer Espace Client -->
         <div class="driver-drawer" id="client-drawer">
             <div class="drawer-header" style="background: var(--color-primary-brown-dark); color: white;">
-                <h2>👤 Mon Espace Client</h2>
+                <h2 style="display:flex; align-items:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    Mon Espace Client
+                </h2>
                 <button class="btn-close-drawer" id="btn-close-client-drawer" style="color: white;" aria-label="Fermer le menu">&times;</button>
             </div>
 
@@ -610,12 +613,38 @@
                 <div id="client-dashboard-panel">
                     <div class="driver-dashboard-welcome" style="margin-bottom: 20px;">
                         <h3 id="client-dash-phone" style="font-weight:800; font-size:1.15rem;">Mon Compte Client</h3>
-                        <span class="badge-status active" style="font-size:0.75rem; padding: 4px 8px; border-radius: 6px; background-color: var(--color-green-light); color: var(--color-green-soft);">Compte Gratuit</span>
+                        <span class="badge-status active" id="client-dash-badge" style="font-size:0.75rem; padding: 4px 8px; border-radius: 6px; background-color: var(--color-green-light); color: var(--color-green-soft);">Compte Gratuit</span>
+                    </div>
+
+                    <!-- Bouton Recherche Automatique pour Client Premium -->
+                    <div id="client-premium-search-box" class="hidden" style="margin-bottom: 15px;">
+                        <button type="button" class="btn-unlock" id="btn-client-premium-search" style="width:100%; padding:12px; font-size:0.85rem; border-radius:12px; font-weight:700; background: linear-gradient(135deg, var(--color-primary-green), var(--color-primary-green-hover)); box-shadow:none; color: white; display:flex; align-items:center; justify-content:center; gap:8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                            Lancer la recherche automatique
+                        </button>
+                    </div>
+
+                    <!-- Option de passage au Premium pour le Client -->
+                    <div id="client-premium-upgrade-box" class="driver-terms-info" style="margin-top: 15px; background: rgba(255,250,240,0.9); border: 1.5px solid var(--color-primary-yellow); border-radius:12px; padding:12px; text-align: left;">
+                        <h4 style="margin:0 0 6px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><polygon points="12 2 2 22 12 17 22 22 12 2"></polygon></svg>
+                            Devenir Client Premium !
+                        </h4>
+                        <p style="margin:0 0 10px 0; font-size:0.72rem; color:var(--color-charcoal-light); line-height: 1.35;">
+                            Recherchez et débloquez en illimité les livreurs sans payer 200 FCFA par profil.
+                        </p>
+                        <button type="button" class="btn-unlock" id="btn-client-pay-premium" style="width:100%; padding:10px; font-size:0.82rem; border-radius:10px; box-shadow:none; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #D4AF37;"><path d="M6 3h12l4 6-10 13L2 9z"></path></svg>
+                            Activer le Premium (5 000 FCFA / mois)
+                        </button>
                     </div>
 
                     <!-- Historique de Consultation -->
                     <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,255,255,0.9); border-radius:12px; padding:12px;">
-                        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown)">📍 Livreurs Consultés</h4>
+                        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                            Livreurs Consultés
+                        </h4>
                         <div id="client-viewed-list" style="display:flex; flex-direction:column; gap:6px;">
                             <p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun livreur consulté pour le moment.</p>
                         </div>
@@ -623,7 +652,10 @@
 
                     <!-- Historique de Contact -->
                     <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,255,255,0.9); border-radius:12px; padding:12px;">
-                        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown)">📞 Contacts Débloqués</h4>
+                        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                            Contacts Débloqués
+                        </h4>
                         <div id="client-contacted-list" style="display:flex; flex-direction:column; gap:6px;">
                             <p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun contact débloqué.</p>
                         </div>
@@ -631,7 +663,10 @@
 
                     <!-- Ongoing chats list -->
                     <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,255,255,0.9); border-radius:12px; padding:12px;">
-                        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown)">💬 Discussions en cours</h4>
+                        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            Discussions en cours
+                        </h4>
                         <div id="client-chats-list" style="display:flex; flex-direction:column; gap:6px;">
                             <p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucune discussion active.</p>
                         </div>
@@ -684,7 +719,7 @@
                         </form>
                         
                         <div style="text-align:center; margin-top: 20px; display:flex; flex-direction:column; gap:10px; font-size:0.85rem;">
-                            <p class="driver-login-link" style="margin:0;">Vous êtes un client ? <a href="#" id="link-to-client-register" style="font-weight:700; color:var(--color-primary-red);">Créer un compte Client Gratuit</a></p>
+                            <p class="driver-login-link" style="margin:0;">Vous êtes un client ? <a href="#" id="link-to-client-register" style="font-weight:700; color:var(--color-primary-red);">Créer un compte Client Premium</a></p>
                             <p class="driver-login-link" style="margin:0;">Vous êtes livreur ? <a href="#" id="link-to-driver-register" style="font-weight:700; color:var(--color-primary-brown);">S'enregistrer comme livreur</a></p>
                         </div>
                     </div>
@@ -692,9 +727,17 @@
                     <!-- Panel Inscription Client -->
                     <div class="hidden" id="auth-client-register-section">
                         <p class="form-subtitle" style="margin-bottom: 20px; text-align: center; font-size:0.85rem; color:var(--color-charcoal-light);">
-                            Créez votre compte client gratuit pour accéder à la messagerie directe et à votre historique de livreurs.
+                            Créez votre compte Client Premium (5 000 FCFA / mois) pour accéder à la recherche et messagerie directe illimitées.
                         </p>
                         <form id="auth-client-register-form">
+                            <!-- Nom complet -->
+                            <div class="form-group">
+                                <label for="auth-client-register-name" class="form-label">Nom complet *</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="auth-client-register-name" class="form-input" placeholder="Ex: Adama Ouédraogo" required>
+                                </div>
+                            </div>
+                            <!-- Numéro de téléphone -->
                             <div class="form-group">
                                 <label for="auth-client-register-phone" class="form-label">Numéro de téléphone *</label>
                                 <div class="input-wrapper">
@@ -702,6 +745,7 @@
                                     <input type="tel" id="auth-client-register-phone" class="form-input form-input-prefix" placeholder="70 00 00 00" maxlength="11" required>
                                 </div>
                             </div>
+                            <!-- Mot de passe -->
                             <div class="form-group">
                                 <label for="auth-client-register-password" class="form-label">Mot de passe de votre choix *</label>
                                 <div class="input-wrapper">
@@ -712,8 +756,8 @@
                                     </button>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; border-radius: 16px; margin-top: 15px; font-weight:700;">
-                                Créer mon compte client Gratuit
+                            <button type="submit" class="btn btn-primary" id="btn-submit-client-register" style="width: 100%; padding: 14px; border-radius: 16px; margin-top: 15px; font-weight:700;">
+                                💎 Créer mon compte Premium (5 000 FCFA / mois)
                             </button>
                         </form>
                         <p class="driver-login-link" style="text-align:center; margin-top:15px; font-size:0.85rem;">Déjà un compte ? <a href="#" id="link-to-login-panel" style="font-weight:700; color:var(--color-primary-red);">Se connecter</a></p>

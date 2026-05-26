@@ -290,10 +290,16 @@ document.addEventListener('DOMContentLoaded', () => {
             zoom = 14;
         }
 
-        // Leaflet options - disabled inertia for snap responses on mobile
+        // Leaflet options - touch gesture controls and zooming enabled
         STATE.map = L.map('map', {
-            zoomControl: false, // Custom position or fallback
-            attributionControl: false // Styled minimal foot
+            zoomControl: false,
+            attributionControl: false,
+            dragging: true,
+            touchZoom: true,
+            doubleClickZoom: true,
+            scrollWheelZoom: true,
+            boxZoom: true,
+            tap: true
         }).setView([center.lat, center.lng], zoom);
 
         // CartoDB Positron - Beautiful minimalist Light gray tiles (ideal for Wave UI look)
@@ -469,7 +475,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         STATE.pickerMap = L.map('map-picker', {
             zoomControl: false,
-            attributionControl: false
+            attributionControl: false,
+            dragging: true,
+            touchZoom: true,
+            doubleClickZoom: true,
+            scrollWheelZoom: true,
+            boxZoom: true,
+            tap: true
         }).setView([targetLat, targetLng], 15);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -521,6 +533,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const mapEl = document.getElementById('map');
         if (!mapEl) return;
         
+        const isPremiumClient = STATE.loggedClient && STATE.loggedClient.subscriptionPaid === true;
+        
+        if (STATE.isAdmin || isPremiumClient) {
+            mapEl.classList.remove('map-blurred');
+            return;
+        }
+        
         if (STATE.selectedRider) {
             if (STATE.unlockedRiders.has(STATE.selectedRider.id)) {
                 mapEl.classList.remove('map-blurred');
@@ -539,6 +558,19 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 mapEl.classList.add('map-blurred');
             }
+        }
+    }
+
+    // Update Top Navigation buttons depending on login state
+    function updateNavButtons() {
+        const loggedIn = STATE.loggedClient || STATE.loggedDriver || STATE.isAdmin;
+        const logoutBtn = document.getElementById('btn-nav-logout');
+        if (loggedIn) {
+            btnNavLogin.classList.add('hidden');
+            if (logoutBtn) logoutBtn.classList.remove('hidden');
+        } else {
+            btnNavLogin.classList.remove('hidden');
+            if (logoutBtn) logoutBtn.classList.add('hidden');
         }
     }
 
@@ -663,22 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSubmitMomo.disabled = false;
         btnSubmitMomo.innerText = 'Lancer le paiement';
 
-        // Reset client account creation checkbox and password wrapper
-        const momoCreateClientGroup = document.getElementById('momo-create-client-group');
-        const momoCreateClientCheckbox = document.getElementById('momo-create-client-checkbox');
-        const momoClientPasswordWrapper = document.getElementById('momo-client-password-wrapper');
-        const momoClientPasswordInput = document.getElementById('momo-client-password');
-        
-        if (momoCreateClientGroup) {
-            if (STATE.loggedClient) {
-                momoCreateClientGroup.classList.add('hidden');
-            } else {
-                momoCreateClientGroup.classList.remove('hidden');
-                if (momoCreateClientCheckbox) momoCreateClientCheckbox.checked = false;
-                if (momoClientPasswordWrapper) momoClientPasswordWrapper.classList.add('hidden');
-                if (momoClientPasswordInput) momoClientPasswordInput.value = '';
-            }
-        }
+        // Reset Mobile Money payment states
         
         const titleEl = document.querySelector('.payment-title');
         const amountEl = document.querySelector('.payment-amount');
@@ -762,6 +779,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (STATE.pendingClientSubscriptionUnlock) {
                 if (STATE.loggedClient) {
                     STATE.loggedClient.subscriptionPaid = true;
+                } else if (STATE.tempPremiumClientRegistration) {
+                    const reg = STATE.tempPremiumClientRegistration;
+                    const newClient = {
+                        phone: reg.phone,
+                        password: reg.password,
+                        name: reg.name,
+                        subscriptionPaid: true, // Mark premium paid!
+                        viewedDrivers: new Set(),
+                        contactedDrivers: new Set()
+                    };
+                    STATE.clients.push(newClient);
+                    STATE.loggedClient = newClient;
+                    STATE.tempPremiumClientRegistration = null;
                 }
                 STATE.totalRevenue += 5000;
             } else if (STATE.pendingSubscriptionUnlock) {
@@ -793,31 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 STATE.totalRevenue += 200;
             }
 
-            // Handle free client account auto-creation upon paying 200 FCFA
-            const momoCreateClientCheckbox = document.getElementById('momo-create-client-checkbox');
-            if (momoCreateClientCheckbox && momoCreateClientCheckbox.checked && !STATE.loggedClient) {
-                const momoPhoneVal = document.getElementById('momo-phone').value.trim();
-                const momoClientPassVal = document.getElementById('momo-client-password').value.trim() || '1234';
-                if (momoPhoneVal) {
-                    const phoneNormalized = '+226 ' + momoPhoneVal.replace(/\s+/g, '').replace(/^\+226/, '');
-                    let existingClient = STATE.clients.find(c => c.phone.replace(/\s+/g, '') === phoneNormalized.replace(/\s+/g, ''));
-                    if (!existingClient) {
-                        const newClient = {
-                            phone: phoneNormalized,
-                            password: momoClientPassVal,
-                            name: 'Client ' + momoPhoneVal,
-                            subscriptionPaid: true,
-                            viewedDrivers: new Set(),
-                            contactedDrivers: new Set()
-                        };
-                        STATE.clients.push(newClient);
-                        STATE.loggedClient = newClient;
-                    } else {
-                        STATE.loggedClient = existingClient;
-                        STATE.loggedClient.subscriptionPaid = true;
-                    }
-                }
-            }
+            // Client account creation strictly through Premium registration portal
 
             // Track contacted history if client is logged in
             if (STATE.loggedClient) {
@@ -1043,7 +1049,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             {
                 enableHighAccuracy: true,
-                timeout: 5000,
+                timeout: 12000,
                 maximumAge: 0
             }
         );
@@ -1192,6 +1198,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const client = STATE.loggedClient;
         clientDashPhone.innerText = `Compte : ${client.phone}`;
         
+        // Dynamically adjust premium badge and premium upgrade box depending on subscriptionPaid
+        const clientBadge = document.getElementById('client-dash-badge');
+        const premiumUpgradeBox = document.getElementById('client-premium-upgrade-box');
+        const clientSearchBox = document.getElementById('client-premium-search-box');
+        
+        if (client.subscriptionPaid === true) {
+            if (clientBadge) {
+                clientBadge.innerText = "Compte Premium 💎";
+                clientBadge.style.backgroundColor = "var(--color-primary-yellow-light)";
+                clientBadge.style.color = "var(--color-primary-brown)";
+            }
+            if (premiumUpgradeBox) {
+                premiumUpgradeBox.style.display = "none";
+            }
+            if (clientSearchBox) {
+                clientSearchBox.classList.remove('hidden');
+            }
+        } else {
+            if (clientBadge) {
+                clientBadge.innerText = "Compte Gratuit";
+                clientBadge.style.backgroundColor = "var(--color-green-light)";
+                clientBadge.style.color = "var(--color-green-soft)";
+            }
+            if (premiumUpgradeBox) {
+                premiumUpgradeBox.style.display = "block";
+            }
+            if (clientSearchBox) {
+                clientSearchBox.classList.add('hidden');
+            }
+        }
+        
         // Viewed Drivers
         clientViewedList.innerHTML = '';
         const viewedIds = Array.from(client.viewedDrivers || []);
@@ -1212,13 +1249,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 row.style.boxShadow = '0 2px 4px rgba(0,0,0,0.03)';
                 row.innerHTML = `
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-weight:700; width:24px; height:24px; border-radius:50%; background:var(--color-primary-yellow-light); display:flex; align-items:center; justify-content:center; font-size:0.7rem;">${r.initial}</span>
+                        <span style="font-weight:700; width:24px; height:24px; border-radius:50%; background:var(--color-primary-yellow-light); display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:var(--color-primary-brown);">${r.initial}</span>
                         <div>
                             <div style="font-weight:700; font-size:0.75rem;">${r.name}</div>
                             <div style="font-size:0.65rem; color:var(--color-charcoal-muted);">${r.vehicle}</div>
                         </div>
                     </div>
-                    <span style="font-size: 0.85rem; color: var(--color-primary-brown); font-weight:700;">📍 Voir</span>
+                    <span style="font-size: 0.8rem; color: var(--color-primary-brown); font-weight: 700; display:flex; align-items:center; gap:4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        Voir
+                    </span>
                 `;
                 row.addEventListener('click', () => {
                     // Center and select rider
@@ -1260,7 +1300,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="font-size:0.65rem; color:var(--color-charcoal-light); font-weight:600;">${r.phone}</div>
                         </div>
                     </div>
-                    <a href="tel:${r.phone.replace(/\s+/g, '')}" style="background: var(--color-green-light); color:var(--color-green-soft); width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:0.8rem;">📞</a>
+                    <a href="tel:${r.phone.replace(/\s+/g, '')}" style="background: var(--color-green-light); color:var(--color-green-soft); width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </a>
                 `;
                 clientContactedList.appendChild(row);
             });
@@ -2090,7 +2132,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const geoOptions = {
             enableHighAccuracy: true,
-            timeout: 8000,
+            timeout: 15000,
             maximumAge: 0
         };
 
@@ -2276,7 +2318,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             {
                 enableHighAccuracy: true,
-                timeout: 5000,
+                timeout: 12000,
                 maximumAge: 0
             }
         );
@@ -2425,18 +2467,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnSubmitMomo.addEventListener('click', startPaymentSimulation);
 
-    // Toggle client password field during MoMo payment when checkbox is clicked
-    const momoCreateClientCheckbox = document.getElementById('momo-create-client-checkbox');
-    const momoClientPasswordWrapper = document.getElementById('momo-client-password-wrapper');
-    if (momoCreateClientCheckbox && momoClientPasswordWrapper) {
-        momoCreateClientCheckbox.addEventListener('change', () => {
-            if (momoCreateClientCheckbox.checked) {
-                momoClientPasswordWrapper.classList.remove('hidden');
-            } else {
-                momoClientPasswordWrapper.classList.add('hidden');
-            }
-        });
-    }
+    // Toggle password display logic removed as visitors checkout without accounts
 
     btnUssdCancel.addEventListener('click', () => {
         // Reset back to payment details step
@@ -2733,20 +2764,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const phoneInputVal = authLoginPhone.value.trim();
         const passwordInputVal = authLoginPassword.value.trim();
         
-        // 1. Check if Admin using SHA-256 cryptographic hashes
-        // Normalize the phone to only digits and check the last 8 digits (immune to spaces or country code)
-        const cleanPhone = phoneInputVal.replace(/\D/g, '');
-        const last8Digits = cleanPhone.slice(-8);
-        
+        // Normalize the phone to only digits and check the last 8 digits (immune to spaces or country codes)
+        const last8Digits = phoneInputVal.replace(/\s+/g, '').replace(/^\+226/, '').slice(-8);
         const phoneHash = await hashSHA256(last8Digits);
         const passwordHash = await hashSHA256(passwordInputVal);
         
+        // 1. Check if Admin using SHA-256 cryptographic hashes
         if ((phoneHash === "d258b68b75f56860d5b27341e4a36f527c73a876356e9c60e0a5c104443af6b6" || phoneHash === "NjczNzA5MDk=" || last8Digits === "67370909" || phoneInputVal === "67370909") && 
             (passwordHash === "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f" || passwordHash === "MTIzNDU2Nzg=" || passwordInputVal === "12345678")) {
             STATE.isAdmin = true;
             closeAuthModal();
             openAdminModal();
             renderRiders();
+            updateMapBlurState();
+            updateNavButtons();
             alert("👑 Bienvenue Ibrahim ! Mode Administrateur Activé. Accès total et gratuit.");
             return;
         }
@@ -2766,6 +2797,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (driver.password === passwordInputVal) {
                 STATE.loggedDriver = driver;
                 closeAuthModal();
+                updateNavButtons();
                 
                 // Weekly Subscription checking for Espace Livreur dashboard
                 if (driver.subscriptionPaid === true || (driver.contactsCount || 0) < 5) {
@@ -2797,15 +2829,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (client) {
             if (client.password === passwordInputVal) {
                 STATE.loggedClient = client;
-                client.subscriptionPaid = true; // Ensure premium/free is active
-
+ 
                 // Restore all previously contacted/unlocked riders
                 if (client.contactedDrivers) {
                     client.contactedDrivers.forEach(id => STATE.unlockedRiders.add(id));
                 }
-
+ 
                 closeAuthModal();
                 openClientDrawer();
+                updateNavButtons();
                 alert(`🎉 Bienvenue dans votre Espace Client ! Retrouvez vos livreurs débloqués et discutez.`);
                 return;
             } else {
@@ -2822,6 +2854,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authClientRegisterForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
+        const nameVal = document.getElementById('auth-client-register-name').value.trim();
         const phoneVal = authClientRegisterPhone.value.trim();
         const passwordVal = authClientRegisterPassword.value.trim();
         
@@ -2835,22 +2868,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        const newClient = {
+        // Save temporary details and trigger 5000 FCFA payment flow (Strictly Premium Accounts)
+        STATE.tempPremiumClientRegistration = {
             phone: phoneNormalized,
             password: passwordVal,
-            name: 'Client ' + phoneVal,
-            subscriptionPaid: true, // Free client account activated
-            viewedDrivers: new Set(),
-            contactedDrivers: new Set()
+            name: nameVal || ('Client ' + phoneVal)
         };
-        
-        STATE.clients.push(newClient);
-        STATE.loggedClient = newClient;
-        
+        STATE.pendingClientSubscriptionUnlock = true;
         closeAuthModal();
-        openClientDrawer();
-        alert("🎉 Compte Client gratuit créé et activé avec succès ! Retrouvez l'historique de vos livreurs.");
+        openPaymentModal();
+        alert("💎 Pour activer votre Compte Client Premium, veuillez procéder au paiement de 5 000 FCFA (simulation).");
     });
+
+    // Client Dashboard elements upgrade Premium
+    const btnClientPayPremium = document.getElementById('btn-client-pay-premium');
+    if (btnClientPayPremium) {
+        btnClientPayPremium.addEventListener('click', () => {
+            STATE.pendingClientSubscriptionUnlock = true;
+            openPaymentModal();
+        });
+    }
 
     // Client Dashboard elements closers & logouts
     btnCloseClientDrawer.addEventListener('click', () => {
@@ -2859,6 +2896,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnClientLogout.addEventListener('click', () => {
         STATE.loggedClient = null;
+        updateNavButtons();
         closeClientDrawer();
         alert("Espace Client déconnecté.");
     });
@@ -2869,6 +2907,7 @@ document.addEventListener('DOMContentLoaded', () => {
         driverDashboardPanel.classList.add('hidden');
         driverRegisterPanel.classList.remove('hidden');
         closeDriverDrawer();
+        updateNavButtons();
         alert("Espace Livreur déconnecté.");
     });
 
@@ -2876,8 +2915,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAdminLogoutSession.addEventListener('click', () => {
         STATE.isAdmin = false;
         renderRiders();
-        alert("Session Administrateur déconnectée.");
         closeAdminModal();
+        updateNavButtons();
+        alert("Session Administrateur déconnectée.");
     });
 
     // Close admin modal
@@ -2961,7 +3001,46 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sector-active-toast').classList.remove('show');
     });
 
+    // Disconnect (Logout) Navigation Button Click Binding
+    const btnNavLogout = document.getElementById('btn-nav-logout');
+    if (btnNavLogout) {
+        btnNavLogout.addEventListener('click', () => {
+            STATE.loggedClient = null;
+            STATE.loggedDriver = null;
+            STATE.isAdmin = false;
+            
+            // Close any open drawers/views
+            closeClientDrawer();
+            closeDriverDrawer();
+            closeAdminModal();
+            
+            // Reset map locks
+            STATE.unlockedRiders.clear();
+            STATE.clickedRiders.clear();
+            
+            renderRiders();
+            updateMapBlurState();
+            updateNavButtons();
+            
+            alert("Session déconnectée avec succès.");
+        });
+    }
+
+    // Client Premium Automatic Search Button Click Binding
+    const btnClientPremiumSearch = document.getElementById('btn-client-premium-search');
+    if (btnClientPremiumSearch) {
+        btnClientPremiumSearch.addEventListener('click', () => {
+            // Force close client drawer
+            clientDrawer.classList.remove('open');
+            // Transition to map view
+            showMapView();
+            // Trigger robust live geolocation
+            locateClientAndLaunchMap(document.getElementById('map-locate-btn'));
+        });
+    }
+
     // Boot the main Leaflet map immediately in the background under the glass welcome card
     initMainMap();
     mapInitialized = true;
+    updateNavButtons();
 });
