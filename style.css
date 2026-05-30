@@ -3530,12 +3530,12 @@ header {
 
 /* Unified Premium Back/Retour Buttons */
 .btn-back-drawer, .btn-back-modal {
-    background: rgba(141, 85, 55, 0.08) !important;
-    color: var(--color-primary-brown) !important;
-    border: 1px solid rgba(141, 85, 55, 0.15) !important;
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: #111111 !important; /* Bold opaque black text */
+    border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
     padding: 6px 14px;
     border-radius: 10px;
-    font-weight: 700;
+    font-weight: 800; /* Extra bold text */
     font-size: 0.78rem;
     cursor: pointer;
     display: inline-flex;
@@ -3547,9 +3547,9 @@ header {
 }
 
 .btn-back-drawer:hover, .btn-back-modal:hover {
-    background: rgba(141, 85, 55, 0.15) !important;
+    background: rgba(0, 0, 0, 0.1) !important;
     transform: translateX(-2px);
-    color: var(--color-primary-brown-hover) !important;
+    color: black !important;
 }
 
 .btn-back-drawer:active, .btn-back-modal:active {
