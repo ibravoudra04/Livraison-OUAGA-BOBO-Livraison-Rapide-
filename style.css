@@ -151,13 +151,31 @@ header {
 }
 
 #btn-nav-register {
-    background-color: var(--color-primary-green);
-    color: var(--color-card-white);
+    background: linear-gradient(135deg, var(--color-primary-green), var(--color-primary-green-hover)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 
+        0 10px 24px rgba(39, 174, 96, 0.3),
+        inset 0 1.5px 2px rgba(255, 255, 255, 0.35) !important;
+    border-radius: 20px !important;
+    padding: 14px 28px !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    color: var(--color-card-white) !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition-smooth);
 }
 
 #btn-nav-register:hover {
-    background-color: var(--color-primary-green-hover);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, var(--color-primary-green-hover), var(--color-primary-green)) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 
+        0 14px 30px rgba(39, 174, 96, 0.42),
+        inset 0 2px 3px rgba(255, 255, 255, 0.45) !important;
 }
 
 .btn-secondary {
@@ -1229,8 +1247,10 @@ footer {
         radial-gradient(circle at center, #8D5537 0%, var(--color-primary-brown-dark) 65%, #3D2619 100%);
     background-repeat: repeat, no-repeat;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 20px;
     padding: 20px;
     z-index: 1000;
     position: absolute;
