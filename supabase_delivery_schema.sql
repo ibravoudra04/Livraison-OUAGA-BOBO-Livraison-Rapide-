@@ -1,0 +1,224 @@
+-- 0. Nettoyer le schéma existant pour repartir sur des bases saines
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users CASCADE;
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP VIEW IF EXISTS public.livreurs_view CASCADE;
+DROP TABLE IF EXISTS public.avis CASCADE;
+DROP TABLE IF EXISTS public.deblocages CASCADE;
+DROP TABLE IF EXISTS public.chats_livraison CASCADE;
+DROP TABLE IF EXISTS public.livreurs CASCADE;
+DROP TABLE IF EXISTS public.clients_livraison CASCADE;
+
+-- 1. Table des clients de livraison
+CREATE TABLE public.clients_livraison (
+    id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
+    phone TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    subscription_paid BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 2. Table des livreurs (riders)
+CREATE TABLE public.livreurs (
+    id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    vehicle TEXT NOT NULL,
+    phone TEXT NOT NULL UNIQUE,
+    lat NUMERIC NOT NULL,
+    lng NUMERIC NOT NULL,
+    initial TEXT NOT NULL,
+    contacts_count INTEGER NOT NULL DEFAULT 0,
+    subscription_paid BOOLEAN NOT NULL DEFAULT false,
+    status TEXT NOT NULL CHECK (status IN ('actif', 'suspendu', 'en attente')),
+    views_count INTEGER NOT NULL DEFAULT 0,
+    rating NUMERIC NOT NULL DEFAULT 4.8,
+    city TEXT NOT NULL CHECK (city IN ('ouaga', 'bobo')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 3. Table des déblocages (relations clients-livreurs)
+CREATE TABLE public.deblocages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID REFERENCES public.clients_livraison(id) ON DELETE CASCADE,
+    rider_id UUID REFERENCES public.livreurs(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(client_id, rider_id)
+);
+
+-- 4. Table des avis et revues de livreurs
+CREATE TABLE public.avis (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    rider_id UUID REFERENCES public.livreurs(id) ON DELETE CASCADE,
+    text TEXT NOT NULL,
+    stars NUMERIC NOT NULL,
+    date TEXT NOT NULL DEFAULT 'Aujourd''hui',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 5. Table des messages (chats)
+CREATE TABLE public.chats_livraison (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    rider_id UUID REFERENCES public.livreurs(id) ON DELETE CASCADE,
+    client_id UUID REFERENCES public.clients_livraison(id) ON DELETE CASCADE,
+    sender TEXT NOT NULL CHECK (sender IN ('client', 'rider')),
+    text TEXT NOT NULL,
+    time TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- --- DÉCLENCHEUR DE SYNCHRONISATION DES PROFILS ---
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (new.raw_user_meta_data->>'role') = 'client' THEN
+        INSERT INTO public.clients_livraison (id, phone, name, subscription_paid)
+        VALUES (
+            new.id,
+            COALESCE(new.raw_user_meta_data->>'phone', new.phone),
+            COALESCE(new.raw_user_meta_data->>'name', 'Client'),
+            COALESCE((new.raw_user_meta_data->>'subscription_paid')::boolean, false)
+        )
+        ON CONFLICT (id) DO UPDATE SET
+            phone = EXCLUDED.phone,
+            name = EXCLUDED.name;
+    ELSIF (new.raw_user_meta_data->>'role') = 'rider' THEN
+        INSERT INTO public.livreurs (id, name, vehicle, phone, lat, lng, initial, contacts_count, subscription_paid, status, rating, city)
+        VALUES (
+            new.id,
+            COALESCE(new.raw_user_meta_data->>'name', 'Livreur'),
+            COALESCE(new.raw_user_meta_data->>'vehicle', 'Moto'),
+            COALESCE(new.raw_user_meta_data->>'phone', new.phone),
+            COALESCE((new.raw_user_meta_data->>'lat')::numeric, 12.3714),
+            COALESCE((new.raw_user_meta_data->>'lng')::numeric, -1.5197),
+            COALESCE(new.raw_user_meta_data->>'initial', 'L'),
+            0,
+            COALESCE((new.raw_user_meta_data->>'subscription_paid')::boolean, false),
+            'actif',
+            5.0,
+            COALESCE(new.raw_user_meta_data->>'city', 'ouaga')
+        )
+        ON CONFLICT (id) DO UPDATE SET
+            phone = EXCLUDED.phone,
+            name = EXCLUDED.name,
+            vehicle = EXCLUDED.vehicle,
+            lat = EXCLUDED.lat,
+            lng = EXCLUDED.lng,
+            initial = EXCLUDED.initial,
+            city = EXCLUDED.city;
+    END IF;
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- --- VUE SÉCURISÉE AVEC MASQUAGE DYNAMIQUE (POSTGRES SIDE) ---
+CREATE OR REPLACE VIEW public.livreurs_view AS
+SELECT 
+    id, name, vehicle, lat, lng, initial, contacts_count, subscription_paid, status, views_count, rating, city, created_at,
+    CASE 
+        -- Règle 1 : Le connecté est le livreur lui-même
+        WHEN (select auth.uid()) = id THEN phone
+        -- Règle 2 : Le connecté a débloqué ce livreur
+        WHEN EXISTS (
+            SELECT 1 FROM public.deblocages d 
+            WHERE d.client_id = auth.uid() AND d.rider_id = livreurs.id
+        ) THEN phone
+        -- Règle 3 : Le connecté est un administrateur
+        WHEN (auth.jwt()->'user_metadata'->>'role') = 'admin' THEN phone
+        -- Par défaut : Masquage du numéro de téléphone
+        ELSE 
+            CASE 
+                WHEN length(phone) >= 8 THEN substring(phone from 1 for 7) || ' •• •• ••'
+                ELSE '+226 •• •• •• ••'
+            END
+    END as phone_display,
+    CASE 
+        WHEN (select auth.uid()) = id 
+           OR EXISTS (
+               SELECT 1 FROM public.deblocages d 
+               WHERE d.client_id = auth.uid() AND d.rider_id = livreurs.id
+           ) 
+           OR (auth.jwt()->'user_metadata'->>'role') = 'admin' THEN true
+        ELSE false
+    END as is_unlocked
+FROM public.livreurs;
+
+-- --- ATTRIBUTION DES DROITS ET POLITIQUES RLS ---
+
+-- Activer la sécurité RLS sur toutes les tables
+ALTER TABLE public.clients_livraison ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.livreurs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.deblocages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.avis ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chats_livraison ENABLE ROW LEVEL SECURITY;
+
+-- 1. Droits d'accès sur les tables de profils
+-- Clients : Lecture/écriture strictement restreinte à soi-même ou admin
+CREATE POLICY "Clients manage own profile" ON public.clients_livraison
+    FOR ALL TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Admins manage all clients" ON public.clients_livraison
+    FOR ALL TO authenticated USING (
+        (auth.jwt()->'user_metadata'->>'role') = 'admin'
+    );
+
+-- Livreurs : Modification de son propre profil, lecture restreinte
+CREATE POLICY "Livreurs manage own profile" ON public.livreurs
+    FOR ALL TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Admins manage all livreurs" ON public.livreurs
+    FOR ALL TO authenticated USING (
+        (auth.jwt()->'user_metadata'->>'role') = 'admin'
+    );
+
+-- Attribution de droits sur la vue pour tout le monde (requis pour afficher la carte)
+GRANT SELECT ON public.livreurs_view TO anon, authenticated;
+
+-- 2. Politiques RLS de Déblocages
+CREATE POLICY "Clients manage own unlocks" ON public.deblocages
+    FOR ALL TO authenticated USING (auth.uid() = client_id) WITH CHECK (auth.uid() = client_id);
+
+CREATE POLICY "Admins manage all unlocks" ON public.deblocages
+    FOR ALL TO authenticated USING (
+        (auth.jwt()->'user_metadata'->>'role') = 'admin'
+    );
+
+-- 3. Politiques RLS des Avis (Reviews)
+CREATE POLICY "Anyone can read reviews" ON public.avis
+    FOR SELECT USING (true);
+
+CREATE POLICY "Unlocked clients can post reviews" ON public.avis
+    FOR INSERT TO authenticated WITH CHECK (
+        EXISTS (SELECT 1 FROM public.deblocages d WHERE d.client_id = auth.uid() AND d.rider_id = rider_id)
+    );
+
+-- 4. Politiques RLS de Messagerie (Chats)
+CREATE POLICY "Users can manage own chats" ON public.chats_livraison
+    FOR ALL TO authenticated USING (
+        auth.uid() = client_id OR auth.uid() = rider_id
+    ) WITH CHECK (
+        auth.uid() = client_id OR auth.uid() = rider_id
+    );
+
+CREATE POLICY "Admins can manage all chats" ON public.chats_livraison
+    FOR ALL TO authenticated USING (
+        (auth.jwt()->'user_metadata'->>'role') = 'admin'
+    );
+
+-- --- TRIGGER AUTOMATIQUE DE COMPTEUR DE DÉBLOCAGE ---
+CREATE OR REPLACE FUNCTION public.increment_rider_contacts()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE public.livreurs 
+    SET contacts_count = contacts_count + 1
+    WHERE id = new.rider_id;
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_deblocage_created ON public.deblocages CASCADE;
+CREATE TRIGGER on_deblocage_created
+    AFTER INSERT ON public.deblocages
+    FOR EACH ROW EXECUTE FUNCTION public.increment_rider_contacts();

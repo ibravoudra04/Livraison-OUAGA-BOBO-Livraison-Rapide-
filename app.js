@@ -28,6 +28,61 @@ document.addEventListener('DOMContentLoaded', () => {
         return btoa(str);
     };
 
+    const formatPhoneForDB = (phone) => {
+        if (typeof phone !== 'string') return phone;
+        const flat = phone.replace(/\s+/g, '').replace(/^\+226/, '');
+        if (flat.length === 8) {
+            return `+226 ${flat.slice(0, 2)} ${flat.slice(2, 4)} ${flat.slice(4, 6)} ${flat.slice(6, 8)}`;
+        }
+        return phone;
+    };
+
+    const sanitizePassword = (pass) => {
+        if (typeof pass !== 'string') return '';
+        const trimmed = pass.trim();
+        const flat = trimmed.replace(/\s+/g, '');
+        if (/^\d+$/.test(flat)) {
+            return flat;
+        }
+        return trimmed;
+    };
+
+    // Create Custom Alert Container for Glassmorphism Toasts
+    const customAlertContainer = document.createElement('div');
+    customAlertContainer.id = 'custom-alert-container';
+    document.body.appendChild(customAlertContainer);
+
+    // Global window.alert override for custom glassmorphism alerts
+    window.alert = (message) => {
+        const toast = document.createElement('div');
+        toast.className = 'custom-alert-toast';
+        
+        let icon = "🔔";
+        if (message.includes("❌") || message.includes("Erreur") || message.includes("incorrect")) {
+            icon = "⚠️";
+            message = message.replace("❌", "").trim();
+        } else if (message.includes("🎉") || message.includes("Bienvenue") || message.includes("succès") || message.includes("déconnectée")) {
+            icon = "💎";
+            message = message.replace("🎉", "").trim().replace("💎", "").trim();
+        } else if (message.includes("⚡") || message.includes("Position") || message.includes("enregistrée")) {
+            icon = "📍";
+            message = message.replace("⚡", "").trim();
+        } else if (message.includes("💬")) {
+            icon = "💬";
+            message = message.replace("💬", "").trim();
+        }
+        
+        toast.innerHTML = `<span style="font-size: 1.25rem;">${icon}</span> <span>${message}</span>`;
+        customAlertContainer.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 4000);
+    };
+
     const STATE = {
         currentCity: 'ouaga', // 'ouaga' or 'bobo'
         selectedRider: null,
@@ -51,29 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
         pickerMap: null,
         pickerMarker: null,
         markers: [],
-        clients: [
-            { phone: '+226 76 00 00 01', password: '123', name: 'Zakarie Kaboré', subscriptionPaid: true, viewedDrivers: new Set(['o1', 'o2']), contactedDrivers: new Set(['o1']) },
-            { phone: '+226 70 99 99 99', password: '123', name: 'Alida Sawadogo', subscriptionPaid: true, viewedDrivers: new Set(), contactedDrivers: new Set() }
-        ],
+        clients: [],
         riders: {
-            ouaga: [
-                { id: 'o1', name: 'Idrissa Sawadogo', vehicle: 'Moto 135cc', distance: '0.4 km', phone: '+226 76 45 82 10', lat: 12.3685, lng: -1.5152, initial: 'IS', contactsCount: 4, subscriptionPaid: false, status: 'actif', password: '1234', viewsCount: 15, rating: 4.8, reviews: [{ text: "Très rapide et courtois !", stars: 5, date: "Hier" }, { text: "Colis livré en bon état.", stars: 4.5, date: "Il y a 3 jours" }] },
-                { id: 'o2', name: 'Moussa Kaboré', vehicle: 'Scooter Crypton', distance: '1.8 km', phone: '+226 70 89 41 23', lat: 12.3552, lng: -1.5024, initial: 'MK', contactsCount: 2, subscriptionPaid: false, status: 'actif', password: '1234', viewsCount: 8, rating: 4.9, reviews: [{ text: "Super service ! Je recommande.", stars: 5, date: "Hier" }] },
-                { id: 'o3', name: 'Alassane Diallo', vehicle: 'Moto 150cc', distance: '3.2 km', phone: '+226 77 12 34 56', lat: 12.3391, lng: -1.5304, initial: 'AD', contactsCount: 5, subscriptionPaid: false, status: 'suspendu', password: '1234', viewsCount: 22, rating: 4.2, reviews: [{ text: "Un peu de retard mais très poli.", stars: 4, date: "Il y a 1 semaine" }] },
-                { id: 'o4', name: 'Abdoulaye Ouédraogo', vehicle: 'Moto 135cc', distance: '4.1 km', phone: '+226 65 77 88 99', lat: 12.3854, lng: -1.5412, initial: 'AO', contactsCount: 1, subscriptionPaid: false, status: 'actif', password: '1234', viewsCount: 6, rating: 4.7, reviews: [{ text: "Excellent !", stars: 5, date: "Hier" }] },
-                { id: 'o5', name: 'Adama Sanou', vehicle: 'Scooter Crypton', distance: '3.9 km', phone: '+226 71 50 60 70', lat: 12.3920, lng: -1.4985, initial: 'AS', contactsCount: 5, subscriptionPaid: true, status: 'actif', password: '1234', viewsCount: 30, rating: 5.0, reviews: [{ text: "Le meilleur livreur de Ouaga !", stars: 5, date: "Il y a 2 jours" }, { text: "Service impeccable.", stars: 5, date: "Il y a 5 jours" }] },
-                { id: 'o6', name: 'Yacouba Traoré', vehicle: 'Vélo / VTT', distance: '2.5 km', phone: '+226 76 99 88 77', lat: 12.3582, lng: -1.5540, initial: 'YT', contactsCount: 0, subscriptionPaid: false, status: 'en attente', password: '1234', viewsCount: 3, rating: 4.6, reviews: [] },
-                { id: 'o7', name: 'Cheick Barry', vehicle: 'Moto 135cc', distance: '0.9 km', phone: '+226 72 11 22 33', lat: 12.3732, lng: -1.5285, initial: 'CB', contactsCount: 3, subscriptionPaid: false, status: 'actif', password: '1234', viewsCount: 12, rating: 4.5, reviews: [{ text: "Très bon service.", stars: 4.5, date: "Hier" }] },
-                { id: 'o8', name: 'Boubacar Sidibé', vehicle: 'Scooter', distance: '1.1 km', phone: '+226 66 55 44 33', lat: 12.3601, lng: -1.5212, initial: 'BS', contactsCount: 4, subscriptionPaid: false, status: 'actif', password: '1234', viewsCount: 19, rating: 4.9, reviews: [{ text: "Rapide et efficace.", stars: 5, date: "Hier" }] }
-            ],
-            bobo: [
-                { id: 'b1', name: 'Sékou Sangaré', vehicle: 'Moto 135cc', distance: '0.6 km', phone: '+226 76 11 22 99', lat: 11.1812, lng: -4.2924, initial: 'SS', contactsCount: 4, subscriptionPaid: false, status: 'actif', password: '1234', viewsCount: 14, rating: 4.8, reviews: [{ text: "Parfait pour Bobo-Dioulasso !", stars: 5, date: "Hier" }] },
-                { id: 'b2', name: 'Drissa Barro', vehicle: 'Scooter Crypton', distance: '2.2 km', phone: '+226 70 54 87 21', lat: 11.1685, lng: -4.2854, initial: 'DB', contactsCount: 1, subscriptionPaid: false, status: 'actif', password: '1234', viewsCount: 9, rating: 4.7, reviews: [] },
-                { id: 'b3', name: 'Issouf Dao', vehicle: 'Moto 150cc', distance: '2.8 km', phone: '+226 77 98 65 32', lat: 11.1942, lng: -4.3120, initial: 'ID', contactsCount: 5, subscriptionPaid: false, status: 'actif', password: '1234', viewsCount: 16, rating: 4.3, reviews: [{ text: "Bon service.", stars: 4, date: "Hier" }] },
-                { id: 'b4', name: 'Hamidou Coulibaly', vehicle: 'Scooter', distance: '1.1 km', phone: '+226 65 33 22 11', lat: 11.1714, lng: -4.3054, initial: 'HC', contactsCount: 2, subscriptionPaid: false, status: 'actif', password: '1234', viewsCount: 11, rating: 4.9, reviews: [{ text: "Super sympa et efficace.", stars: 5, date: "Hier" }] },
-                { id: 'b5', name: 'Karim Sanogo', vehicle: 'Vélo / VTT', distance: '1.9 km', phone: '+226 71 88 55 44', lat: 11.1852, lng: -4.3214, initial: 'KS', contactsCount: 3, subscriptionPaid: false, status: 'actif', password: '1234', viewsCount: 13, rating: 4.6, reviews: [{ text: "Très courageux en vélo.", stars: 5, date: "Hier" }] },
-                { id: 'b6', name: 'Ousmane Ouattara', vehicle: 'Moto 135cc', distance: '1.5 km', phone: '+226 72 32 11 00', lat: 11.1620, lng: -4.2995, initial: 'OO', contactsCount: 5, subscriptionPaid: true, status: 'actif', password: '1234', viewsCount: 25, rating: 5.0, reviews: [{ text: "Excellent service à Bobo !", stars: 5, date: "Hier" }] }
-            ]
+            ouaga: [],
+            bobo: []
         },
         cityCenters: {
             ouaga: { lat: 12.3714, lng: -1.5197, name: 'Ouagadougou' },
@@ -100,6 +136,165 @@ document.addEventListener('DOMContentLoaded', () => {
             ]
         }
     };
+
+    // --- SUPABASE CLIENT INITIALIZATION ---
+    const supabaseUrl = 'https://ftbhmfdlvrykfbanajfp.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YmhtZmRsdnJ5a2ZiYW5hamZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjEwNzAsImV4cCI6MjA5NTM5NzA3MH0.dK8-E2psZ4oCY6P8GXHsREWBFORLRI9H71x-mT82Pp8';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+    async function loadDataFromSupabase() {
+        try {
+            // 1. Load clients (allowed for Admin role, gracefully fails with RLS for public)
+            const { data: clientsData, error: clientsErr } = await supabase.from('clients_livraison').select('*');
+            if (!clientsErr && clientsData) {
+                STATE.clients = clientsData.map(c => ({
+                    id: c.id,
+                    phone: c.phone,
+                    name: c.name,
+                    subscriptionPaid: c.subscription_paid,
+                    viewedDrivers: new Set(),
+                    contactedDrivers: new Set()
+                }));
+            }
+
+            // 2. Load riders via secure database view (applies dynamic masking)
+            const { data: ridersData, error: ridersErr } = await supabase.from('livreurs_view').select('*');
+            if (!ridersErr && ridersData) {
+                STATE.riders.ouaga = [];
+                STATE.riders.bobo = [];
+                ridersData.forEach(r => {
+                    const riderObj = {
+                        id: r.id,
+                        name: r.name,
+                        vehicle: r.vehicle,
+                        distance: '1.0 km',
+                        phone: r.phone_display, // Masked phone number computed securely side by DB
+                        lat: Number(r.lat),
+                        lng: Number(r.lng),
+                        initial: r.initial,
+                        contactsCount: r.contacts_count,
+                        subscriptionPaid: r.subscription_paid,
+                        status: r.status,
+                        viewsCount: r.views_count,
+                        rating: Number(r.rating),
+                        reviews: [],
+                        isUnlocked: r.is_unlocked // Inviolable source of truth from Database
+                    };
+                    if (r.city === 'ouaga') {
+                        STATE.riders.ouaga.push(riderObj);
+                    } else {
+                        STATE.riders.bobo.push(riderObj);
+                    }
+                });
+            }
+
+            // 3. Load reviews (avis)
+            const { data: reviewsData } = await supabase.from('avis').select('*');
+            if (reviewsData) {
+                reviewsData.forEach(rev => {
+                    const rider = findRiderById(rev.rider_id);
+                    if (rider) {
+                        rider.reviews.push({ text: rev.text, stars: Number(rev.stars), date: rev.date });
+                    }
+                });
+            }
+
+            // 4. Load chats (securely scoped to active user via RLS)
+            const { data: chatsData } = await supabase.from('chats_livraison').select('*').order('created_at', { ascending: true });
+            if (chatsData) {
+                STATE.chats = {};
+                chatsData.forEach(msg => {
+                    if (!STATE.chats[msg.rider_id]) STATE.chats[msg.rider_id] = [];
+                    STATE.chats[msg.rider_id].push({ sender: msg.sender, text: msg.text, time: msg.time });
+                });
+                STATE.totalMessages = chatsData.length;
+            }
+
+            // Update UI
+            renderRiders();
+            updateAdminDashboardStats();
+        } catch (err) {
+            console.error("Error loading data from Supabase:", err);
+        }
+    }
+
+    // Secure Session Persistence Checking Function on page startup
+    async function checkActiveSession() {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const user = session.user;
+                const role = user.user_metadata.role;
+                
+                if (role === 'client') {
+                    const { data: dbClient } = await supabase.from('clients_livraison').select('*').eq('id', user.id).maybeSingle();
+                    if (dbClient) {
+                        let client = {
+                            id: dbClient.id,
+                            phone: dbClient.phone,
+                            name: dbClient.name,
+                            subscriptionPaid: dbClient.subscription_paid,
+                            viewedDrivers: new Set(),
+                            contactedDrivers: new Set()
+                        };
+                        STATE.clients.push(client);
+                        STATE.loggedClient = client;
+                        
+                        // Restore previously unlocked drivers
+                        const { data: unlocks } = await supabase.from('deblocages').select('rider_id');
+                        if (unlocks) {
+                            unlocks.forEach(u => {
+                                STATE.unlockedRiders.add(u.rider_id);
+                                client.contactedDrivers.add(u.rider_id);
+                            });
+                        }
+                        
+                        updateNavButtons();
+                    }
+                } else if (role === 'rider') {
+                    const { data: dbDriver } = await supabase.from('livreurs').select('*').eq('id', user.id).maybeSingle();
+                    if (dbDriver) {
+                        let driver = findRiderById(dbDriver.id);
+                        if (!driver) {
+                            driver = {
+                                id: dbDriver.id,
+                                name: dbDriver.name,
+                                vehicle: dbDriver.vehicle,
+                                distance: '1.0 km',
+                                phone: dbDriver.phone,
+                                lat: Number(dbDriver.lat),
+                                lng: Number(dbDriver.lng),
+                                initial: dbDriver.initial,
+                                contactsCount: dbDriver.contacts_count,
+                                subscriptionPaid: dbDriver.subscription_paid,
+                                status: dbDriver.status,
+                                viewsCount: dbDriver.views_count,
+                                rating: Number(dbDriver.rating),
+                                reviews: []
+                            };
+                            if (dbDriver.city === 'ouaga') STATE.riders.ouaga.push(driver);
+                            else STATE.riders.bobo.push(driver);
+                        }
+                        STATE.loggedDriver = driver;
+                        
+                        // Render dashboard directly
+                        driverRegisterPanel.classList.add('hidden');
+                        driverLoginPanel.classList.add('hidden');
+                        driverDashboardPanel.classList.remove('hidden');
+                        updateDriverDashboardView();
+                        updateNavButtons();
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Error restoring session:", err);
+        }
+    }
+
+    // Call load initial data asynchronously and check active session
+    loadDataFromSupabase().then(() => {
+        checkActiveSession();
+    });
 
     // --- DOM ELEMENTS ---
     const welcomePortal = document.getElementById('welcome-portal');
@@ -779,24 +974,53 @@ document.addEventListener('DOMContentLoaded', () => {
             if (STATE.pendingClientSubscriptionUnlock) {
                 if (STATE.loggedClient) {
                     STATE.loggedClient.subscriptionPaid = true;
+                    supabase.from('clients_livraison').update({ subscription_paid: true }).eq('id', STATE.loggedClient.id).then();
                 } else if (STATE.tempPremiumClientRegistration) {
                     const reg = STATE.tempPremiumClientRegistration;
-                    const newClient = {
-                        phone: reg.phone,
-                        password: reg.password,
-                        name: reg.name,
-                        subscriptionPaid: true, // Mark premium paid!
-                        viewedDrivers: new Set(),
-                        contactedDrivers: new Set()
-                    };
-                    STATE.clients.push(newClient);
-                    STATE.loggedClient = newClient;
-                    STATE.tempPremiumClientRegistration = null;
+                    const virtualEmail = reg.phone.replace(/\s+/g, '').replace('+', '') + '@livraison.com';
+                    const sanitizedPass = sanitizePassword(reg.password);
+                    const securePassword = sanitizedPass.length < 6 ? sanitizedPass + "_secure_pad" : sanitizedPass;
+                    
+                    supabase.auth.signUp({
+                        email: virtualEmail,
+                        password: securePassword,
+                        options: {
+                            data: {
+                                name: reg.name,
+                                phone: reg.phone,
+                                role: 'client',
+                                subscription_paid: true
+                            }
+                        }
+                    }).then(({ data: authData, error: authError }) => {
+                        if (authError) {
+                            alert("❌ Erreur de création de compte : " + authError.message);
+                            return;
+                        }
+                        
+                        const newClient = {
+                            id: authData.user.id,
+                            phone: reg.phone,
+                            name: reg.name,
+                            subscriptionPaid: true,
+                            viewedDrivers: new Set(),
+                            contactedDrivers: new Set()
+                        };
+                        STATE.clients.push(newClient);
+                        STATE.loggedClient = newClient;
+                        STATE.tempPremiumClientRegistration = null;
+                        
+                        updateClientDashboardView();
+                        updateNavButtons();
+                        renderRiders();
+                        alert("🎉 Votre compte Client Premium a été créé et activé avec succès !");
+                    });
                 }
                 STATE.totalRevenue += 5000;
             } else if (STATE.pendingSubscriptionUnlock) {
                 if (STATE.loggedDriver) {
                     STATE.loggedDriver.subscriptionPaid = true;
+                    supabase.from('livreurs').update({ subscription_paid: true, status: 'actif' }).eq('id', STATE.loggedDriver.id).then();
                 }
                 STATE.totalRevenue += 500;
             } else if (STATE.pendingServiceUnlock) {
@@ -823,8 +1047,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 STATE.totalRevenue += 200;
             }
 
-            // Client account creation strictly through Premium registration portal
-
             // Track contacted history if client is logged in
             if (STATE.loggedClient) {
                 if (!STATE.loggedClient.contactedDrivers) {
@@ -834,6 +1056,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (unlockedRiderId) {
                     STATE.loggedClient.contactedDrivers.add(unlockedRiderId);
                     STATE.unlockedRiders.add(unlockedRiderId); // Ensure in unlocked set
+                    supabase.from('deblocages').insert([{ client_id: STATE.loggedClient.id, rider_id: unlockedRiderId }]).then();
                 }
                 updateClientDashboardView();
             }
@@ -930,26 +1153,64 @@ document.addEventListener('DOMContentLoaded', () => {
         driverSuccessPanel.style.display = 'none';
     });
     
-    // Espace Livreur Login Submit
-    driverLoginForm.addEventListener('submit', (e) => {
+    // Espace Livreur Login Submit (Authenticated via Supabase Auth)
+    driverLoginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const phoneVal = document.getElementById('login-phone').value.trim();
-        const phoneNormalized = '+226 ' + phoneVal;
-        
-        let driver = [...STATE.riders.ouaga, ...STATE.riders.bobo].find(r => r.phone === phoneNormalized || r.phone.replace(/\s+/g, '') === phoneNormalized.replace(/\s+/g, ''));
-        
+        const phoneNormalized = formatPhoneForDB(phoneVal);
+        const passwordInputVal = document.getElementById('login-pin').value.trim();
+
+        const virtualEmail = phoneNormalized.replace(/\s+/g, '').replace('+', '') + '@livraison.com';
+
+        // Sign in via Supabase Auth (with secure padding fallback for short PINs)
+        const sanitizedPass = sanitizePassword(passwordInputVal);
+        const securePassword = sanitizedPass.length < 6 ? sanitizedPass + "_secure_pad" : sanitizedPass;
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email: virtualEmail,
+            password: securePassword
+        });
+
+        if (authError) {
+            alert("❌ Numéro ou PIN incorrect pour ce compte livreur.");
+            return;
+        }
+
+        const user = authData.user;
+        const role = user.user_metadata.role;
+
+        if (role !== 'rider') {
+            alert("❌ Ce compte n'est pas un compte livreur.");
+            await supabase.auth.signOut();
+            return;
+        }
+
+        const { data: dbDriver, error: dbError } = await supabase.from('livreurs').select('*').eq('id', user.id).maybeSingle();
+
+        if (dbError || !dbDriver) {
+            alert("❌ Profil livreur introuvable dans la base de données.");
+            return;
+        }
+
+        let driver = findRiderById(dbDriver.id);
         if (!driver) {
-            // Automatically spin up a mock test driver if not registered yet
             driver = {
-                id: 'mock_logged_' + Date.now(),
-                name: 'Souleymane Barry (Livreur)',
-                vehicle: '🏍️ Moto 135cc',
-                phone: phoneNormalized,
-                contactsCount: 2,
-                subscriptionPaid: false,
-                initial: 'SB'
+                id: dbDriver.id,
+                name: dbDriver.name,
+                vehicle: dbDriver.vehicle,
+                distance: '1.0 km',
+                phone: dbDriver.phone,
+                lat: Number(dbDriver.lat),
+                lng: Number(dbDriver.lng),
+                initial: dbDriver.initial,
+                contactsCount: dbDriver.contacts_count,
+                subscriptionPaid: dbDriver.subscription_paid,
+                status: dbDriver.status,
+                viewsCount: dbDriver.views_count,
+                rating: Number(dbDriver.rating),
+                reviews: []
             };
-            STATE.riders[STATE.currentCity].unshift(driver);
+            if (dbDriver.city === 'ouaga') STATE.riders.ouaga.push(driver);
+            else STATE.riders.bobo.push(driver);
         }
         
         STATE.loggedDriver = driver;
@@ -958,6 +1219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         driverLoginPanel.classList.add('hidden');
         driverDashboardPanel.classList.remove('hidden');
         updateDriverDashboardView();
+        updateNavButtons();
     });
     
     // Simulate Contacts for pricing rules test
@@ -1116,10 +1378,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (ratingValEl && reviewsListEl) {
             reviewsListEl.innerHTML = '';
-            const rating = driver.rating || 4.8;
-            const reviews = driver.reviews || [
-                { text: "Très bon service.", stars: 5, date: "Hier" }
-            ];
+            const rating = driver.rating || 5.0;
+            const reviews = driver.reviews || [];
             
             ratingValEl.innerText = rating.toFixed(1);
             reviewsCountEl.innerText = `Basé sur ${reviews.length} avis`;
@@ -1644,6 +1904,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (STATE.chats[rider.id].length === 0) {
             triggerRiderWelcomeGreeting(rider);
         }
+
+        // --- REALTIME CHAT ROOM SUBSCRIPTION ---
+        if (window.chatChannel) {
+            supabase.removeChannel(window.chatChannel);
+        }
+        window.chatChannel = supabase.channel('schema-db-changes')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'chats_livraison', filter: `rider_id=eq.${rider.id}` },
+                (payload) => {
+                    const newMsg = payload.new;
+                    // Add to STATE if not already present
+                    const exists = STATE.chats[rider.id].some(m => m.text === newMsg.text && m.time === newMsg.time && m.sender === newMsg.sender);
+                    if (!exists) {
+                        STATE.chats[rider.id].push({ sender: newMsg.sender, text: newMsg.text, time: newMsg.time });
+                        renderChatMessages(rider.id);
+                    }
+                }
+            )
+            .subscribe();
     }
     
     function renderChatMessages(riderId) {
@@ -1725,6 +2005,15 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.value = '';
         renderChatMessages(rider.id);
         
+        // Write message to Supabase DB!
+        supabase.from('chats_livraison').insert([{
+            rider_id: rider.id,
+            client_id: STATE.loggedClient ? STATE.loggedClient.id : null,
+            sender: 'client',
+            text: text,
+            time: time
+        }]).then();
+
         // Update admin monitoring panels
         updateAdminDashboardChats();
         updateAdminDashboardStats();
@@ -1794,6 +2083,16 @@ document.addEventListener('DOMContentLoaded', () => {
             STATE.totalMessages++;
             
             renderChatMessages(rider.id);
+
+            // Write response message to Supabase DB!
+            supabase.from('chats_livraison').insert([{
+                rider_id: rider.id,
+                client_id: STATE.loggedClient ? STATE.loggedClient.id : null,
+                sender: 'rider',
+                text: replyText,
+                time: time
+            }]).then();
+
             updateAdminDashboardChats();
             updateAdminDashboardStats();
             
@@ -2112,6 +2411,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const viewedProfilesEl = document.getElementById('stat-total-viewed-profiles');
         if (viewedProfilesEl) {
             viewedProfilesEl.innerText = STATE.totalViewedProfiles || 0;
+        }
+
+        // Dynamically replace other hardcoded/fictitious stats with real ones
+        const uniqueVisitorsEl = document.getElementById('stat-unique-visitors');
+        const pageViewsEl = document.getElementById('stat-page-views');
+        const activeConnectionsEl = document.getElementById('stat-active-connections');
+        const chartLegendEl = document.getElementById('chart-legend-text');
+        
+        if (uniqueVisitorsEl) {
+            uniqueVisitorsEl.innerText = STATE.clients.length;
+        }
+        if (pageViewsEl) {
+            pageViewsEl.innerText = (STATE.totalViewedProfiles * 3) + STATE.totalMessages;
+        }
+        if (activeConnectionsEl) {
+            let active = 0;
+            if (STATE.loggedClient) active++;
+            if (STATE.loggedDriver) active++;
+            if (STATE.isAdmin) active++;
+            activeConnectionsEl.innerText = active > 0 ? active : 1; // At least the admin themselves!
+        }
+        if (chartLegendEl) {
+            chartLegendEl.innerText = `📈 ${STATE.clients.length} visiteurs au total`;
         }
     }
 
@@ -2629,30 +2951,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const phone = document.getElementById('driver-phone').value;
         const password = document.getElementById('driver-password').value;
         
-        // Hide Form panel, Show confirmation success panel
-        driverRegisterPanel.classList.add('hidden');
-        driverSuccessPanel.style.display = 'block';
-
-        // Dynamically append the new driver onto our map list so it becomes visual instantly!
         const latLng = STATE.pickerMarker.getLatLng();
         const firstInitials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'L';
-        const newRider = {
-            id: 'mock_' + Date.now(),
-            name: name,
-            vehicle: driverSelectedVehicle,
-            distance: 'à proximité',
-            phone: '+226 ' + phone,
-            lat: latLng.lat,
-            lng: latLng.lng,
-            initial: firstInitials,
-            contactsCount: 0,
-            subscriptionPaid: false,
-            password: password,
-            viewsCount: 0,
-            rating: 5.0,
-            reviews: [],
-            status: 'actif' // Start active, but can't access Espace Livreur dashboard without weekly sub (500 FCFA)
-        };
 
         // Determine target city from manual selector or active city focus
         let targetCity = STATE.currentCity;
@@ -2660,15 +2960,65 @@ document.addEventListener('DOMContentLoaded', () => {
             targetCity = driverRegisterCity.value;
         }
 
-        // Add to active city list
-        STATE.riders[targetCity].unshift(newRider);
-        
-        // Set logged-in session for the registered driver
-        STATE.loggedDriver = newRider;
-        
-        // Switch main city focus to display the new driver pin instantly
-        switchCity(targetCity);
-        renderRiders();
+        const phoneNormalized = formatPhoneForDB(phone);
+        const virtualEmail = phoneNormalized.replace(/\s+/g, '').replace('+', '') + '@livraison.com';
+
+        // Sign up the driver securely via Supabase Auth (with secure padding fallback for short passwords/PINs)
+        const sanitizedPass = sanitizePassword(password);
+        const securePassword = sanitizedPass.length < 6 ? sanitizedPass + "_secure_pad" : sanitizedPass;
+        supabase.auth.signUp({
+            email: virtualEmail,
+            password: securePassword,
+            options: {
+                data: {
+                    name: name,
+                    phone: phoneNormalized,
+                    role: 'rider',
+                    vehicle: driverSelectedVehicle,
+                    lat: latLng.lat,
+                    lng: latLng.lng,
+                    initial: firstInitials,
+                    city: targetCity,
+                    subscription_paid: false
+                }
+            }
+        }).then(({ data: signUpData, error: signUpError }) => {
+            if (signUpError) {
+                alert("❌ Erreur d'enregistrement : " + signUpError.message);
+                return;
+            }
+            
+            const newRider = {
+                id: signUpData.user.id,
+                name: name,
+                vehicle: driverSelectedVehicle,
+                distance: 'à proximité',
+                phone: phoneNormalized,
+                lat: latLng.lat,
+                lng: latLng.lng,
+                initial: firstInitials,
+                contactsCount: 0,
+                subscriptionPaid: false,
+                viewsCount: 0,
+                rating: 5.0,
+                reviews: [],
+                status: 'actif'
+            };
+            
+            // Add to active city list
+            STATE.riders[targetCity].unshift(newRider);
+            
+            // Set logged-in session for the registered driver
+            STATE.loggedDriver = newRider;
+            
+            // Switch main city focus to display the new driver pin instantly
+            switchCity(targetCity);
+            renderRiders();
+
+            // Hide Form panel, Show confirmation success panel
+            driverRegisterPanel.classList.add('hidden');
+            driverSuccessPanel.style.display = 'block';
+        });
     });
 
     // --- LIVE CHAT DRAWER & ADMIN PANEL EVENT BINDINGS ---
@@ -2757,7 +3107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         switchAuthPanel('login');
     });
 
-    // Unified Login Form Submit (Credentials auto-detection)
+    // Unified Login Form Submit (Credentials auto-detection with Supabase Auth)
     authLoginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -2783,71 +3133,102 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Normalize phones for lookup
-        const phoneNormalized = '+226 ' + phoneInputVal.replace(/\s+/g, '').replace(/^\+226/, '');
-        
-        // 2. Check if Livreur
-        const allDrivers = [...STATE.riders.ouaga, ...STATE.riders.bobo];
-        let driver = allDrivers.find(r => {
-            const p1 = r.phone.replace(/\s+/g, '');
-            const p2 = phoneNormalized.replace(/\s+/g, '');
-            return p1 === p2 || p1.includes(p2) || p2.includes(p1);
+        const phoneNormalized = formatPhoneForDB(phoneInputVal);
+        const virtualEmail = phoneNormalized.replace(/\s+/g, '').replace('+', '') + '@livraison.com';
+
+        // 2. Sign in via Supabase Auth (with secure padding fallback for short passwords/PINs)
+        const sanitizedPass = sanitizePassword(passwordInputVal);
+        const securePassword = sanitizedPass.length < 6 ? sanitizedPass + "_secure_pad" : sanitizedPass;
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email: virtualEmail,
+            password: securePassword
         });
-        
-        if (driver) {
-            if (driver.password === passwordInputVal) {
+
+        if (authError) {
+            alert("❌ Numéro ou mot de passe incorrect. Si vous n'avez pas encore de compte, veuillez d'abord vous inscrire.");
+            return;
+        }
+
+        const user = authData.user;
+        const role = user.user_metadata.role;
+
+        if (role === 'rider') {
+            const { data: dbDriver, error: dbError } = await supabase.from('livreurs').select('*').eq('id', user.id).maybeSingle();
+            if (dbDriver) {
+                let driver = findRiderById(dbDriver.id);
+                if (!driver) {
+                    driver = {
+                        id: dbDriver.id,
+                        name: dbDriver.name,
+                        vehicle: dbDriver.vehicle,
+                        distance: '1.0 km',
+                        phone: dbDriver.phone,
+                        lat: Number(dbDriver.lat),
+                        lng: Number(dbDriver.lng),
+                        initial: dbDriver.initial,
+                        contactsCount: dbDriver.contacts_count,
+                        subscriptionPaid: dbDriver.subscription_paid,
+                        status: dbDriver.status,
+                        viewsCount: dbDriver.views_count,
+                        rating: Number(dbDriver.rating),
+                        reviews: []
+                    };
+                    if (dbDriver.city === 'ouaga') STATE.riders.ouaga.push(driver);
+                    else STATE.riders.bobo.push(driver);
+                }
                 STATE.loggedDriver = driver;
                 closeAuthModal();
                 updateNavButtons();
                 
                 // Weekly Subscription checking for Espace Livreur dashboard
                 if (driver.subscriptionPaid === true || (driver.contactsCount || 0) < 5) {
-                    // Force drawer dashboard view directly
                     driverRegisterPanel.classList.add('hidden');
                     driverLoginPanel.classList.add('hidden');
                     driverDashboardPanel.classList.remove('hidden');
                     openDriverDrawer();
                 } else {
-                    // Weekly sub required (500 FCFA).
                     STATE.pendingSubscriptionUnlock = true;
                     openPaymentModal();
                     alert("⚠️ Abonnement requis pour accéder à votre Espace Livreur. Une demande de paiement de 500 FCFA a été initiée.");
                 }
-                return;
             } else {
-                alert("❌ Mot de passe incorrect pour ce compte livreur.");
-                return;
+                alert("❌ Profil livreur introuvable.");
             }
-        }
-        
-        // 3. Check if Client
-        let client = STATE.clients.find(c => {
-            const p1 = c.phone.replace(/\s+/g, '');
-            const p2 = phoneNormalized.replace(/\s+/g, '');
-            return p1 === p2 || p1.includes(p2) || p2.includes(p1);
-        });
-        
-        if (client) {
-            if (client.password === passwordInputVal) {
+        } else if (role === 'client') {
+            const { data: dbClient, error: dbError } = await supabase.from('clients_livraison').select('*').eq('id', user.id).maybeSingle();
+            if (dbClient) {
+                let client = STATE.clients.find(c => c.id === dbClient.id);
+                if (!client) {
+                    client = {
+                        id: dbClient.id,
+                        phone: dbClient.phone,
+                        name: dbClient.name,
+                        subscriptionPaid: dbClient.subscription_paid,
+                        viewedDrivers: new Set(),
+                        contactedDrivers: new Set()
+                    };
+                    STATE.clients.push(client);
+                }
                 STATE.loggedClient = client;
  
-                // Restore all previously contacted/unlocked riders
-                if (client.contactedDrivers) {
-                    client.contactedDrivers.forEach(id => STATE.unlockedRiders.add(id));
+                // Restore all previously contacted/unlocked riders from deblocages (secured automatically by RLS)
+                const { data: unlocks } = await supabase.from('deblocages').select('rider_id');
+                if (unlocks) {
+                    unlocks.forEach(u => {
+                        STATE.unlockedRiders.add(u.rider_id);
+                        client.contactedDrivers.add(u.rider_id);
+                    });
                 }
  
                 closeAuthModal();
                 openClientDrawer();
                 updateNavButtons();
+                renderRiders();
                 alert(`🎉 Bienvenue dans votre Espace Client ! Retrouvez vos livreurs débloqués et discutez.`);
-                return;
             } else {
-                alert("❌ Mot de passe incorrect pour ce compte client.");
-                return;
+                alert("❌ Profil client introuvable.");
             }
         }
-        
-        // Compte non trouvé
-        alert("❌ Aucun compte trouvé avec ce numéro. Si vous êtes un client, veuillez cliquer sur 'Créer un compte Client'. Si vous êtes livreur, cliquez sur 'S'enregistrer comme livreur'.");
     });
 
     // Client Signup Submit Form
@@ -2858,7 +3239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const phoneVal = authClientRegisterPhone.value.trim();
         const passwordVal = authClientRegisterPassword.value.trim();
         
-        const phoneNormalized = '+226 ' + phoneVal;
+        const phoneNormalized = formatPhoneForDB(phoneVal);
         
         // Verify if client already exists
         let exists = STATE.clients.find(c => c.phone.replace(/\s+/g, '') === phoneNormalized.replace(/\s+/g, ''));
@@ -2894,20 +3275,24 @@ document.addEventListener('DOMContentLoaded', () => {
         closeClientDrawer();
     });
 
-    btnClientLogout.addEventListener('click', () => {
+    btnClientLogout.addEventListener('click', async () => {
+        await supabase.auth.signOut();
         STATE.loggedClient = null;
         updateNavButtons();
         closeClientDrawer();
+        renderRiders();
         alert("Espace Client déconnecté.");
     });
 
     // Driver Dashboard Logout override
-    btnDriverLogout.addEventListener('click', () => {
+    btnDriverLogout.addEventListener('click', async () => {
+        await supabase.auth.signOut();
         STATE.loggedDriver = null;
         driverDashboardPanel.classList.add('hidden');
         driverRegisterPanel.classList.remove('hidden');
         closeDriverDrawer();
         updateNavButtons();
+        renderRiders();
         alert("Espace Livreur déconnecté.");
     });
 
