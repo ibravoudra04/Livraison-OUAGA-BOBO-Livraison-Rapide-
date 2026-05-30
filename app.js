@@ -57,22 +57,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const toast = document.createElement('div');
         toast.className = 'custom-alert-toast';
         
-        let icon = "🔔";
+        // Default modern bell icon
+        let iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-brown)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`;
+        
         if (message.includes("❌") || message.includes("Erreur") || message.includes("incorrect")) {
-            icon = "⚠️";
+            // Error icon: Red clean cross circle
+            iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E85C4A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
             message = message.replace("❌", "").trim();
         } else if (message.includes("🎉") || message.includes("Bienvenue") || message.includes("succès") || message.includes("déconnectée")) {
-            icon = "💎";
+            // Success icon: Green elegant checkmark circle
+            iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27AE60" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
             message = message.replace("🎉", "").trim().replace("💎", "").trim();
         } else if (message.includes("⚡") || message.includes("Position") || message.includes("enregistrée")) {
-            icon = "📍";
+            // Location/GPS icon: Vibrant savannah gold pin
+            iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F6CD56" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`;
             message = message.replace("⚡", "").trim();
         } else if (message.includes("💬")) {
-            icon = "💬";
+            // Chat bubble icon: Earthy clay brown bubble
+            iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8D5537" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
             message = message.replace("💬", "").trim();
         }
         
-        toast.innerHTML = `<span style="font-size: 1.25rem;">${icon}</span> <span>${message}</span>`;
+        toast.innerHTML = `<span style="display:flex; align-items:center; justify-content:center; flex-shrink:0;">${iconHtml}</span> <span style="font-size: 0.92rem; font-weight:700; color:var(--color-charcoal);">${message}</span>`;
         customAlertContainer.appendChild(toast);
         
         setTimeout(() => {

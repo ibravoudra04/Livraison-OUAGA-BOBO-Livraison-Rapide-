@@ -3433,7 +3433,16 @@ header {
 }
 
 @media (max-width: 380px) {
+    .logo-container {
+        gap: 4px !important;
+    }
+    .logo-icon {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 6px !important;
+    }
     .logo-text {
-        display: none !important; /* Hide logo text to leave maximum space for header actions */
+        font-size: 0.82rem !important;
+        display: block !important; /* Keep the name visible on small screens */
     }
 }
