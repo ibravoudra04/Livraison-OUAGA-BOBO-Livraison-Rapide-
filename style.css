@@ -3351,3 +3351,89 @@ header {
         transform: translateY(0) scale(1);
     }
 }
+
+/* Styled Se déconnecter button to be smaller and elegant */
+#btn-nav-logout {
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
+    background: rgba(232, 92, 74, 0.08) !important;
+    color: var(--color-primary-red) !important;
+    border: 1px solid rgba(232, 92, 74, 0.15) !important;
+    box-shadow: none !important;
+    transition: var(--transition-smooth) !important;
+}
+
+#btn-nav-logout:hover {
+    background: rgba(232, 92, 74, 0.15) !important;
+    color: var(--color-primary-red-hover) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Responsive Media Queries for Elegant Header Buttons */
+@media (max-width: 768px) {
+    header {
+        padding: 8px 12px !important;
+        height: 58px !important;
+    }
+
+    .logo-container {
+        gap: 8px !important;
+    }
+
+    .logo-icon {
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 8px !important;
+    }
+
+    .logo-text {
+        font-size: 0.98rem !important;
+    }
+
+    .nav-buttons {
+        gap: 6px !important;
+    }
+
+    .nav-buttons .btn {
+        font-size: 0.78rem !important;
+        padding: 6px 12px !important;
+        border-radius: 12px !important;
+        gap: 4px !important;
+    }
+
+    #btn-nav-logout {
+        padding: 5px 10px !important;
+        font-size: 0.75rem !important;
+        border-radius: 10px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        padding: 8px 10px !important;
+    }
+
+    .logo-container {
+        gap: 6px !important;
+    }
+
+    .logo-text {
+        font-size: 0.9rem !important;
+    }
+
+    .nav-buttons {
+        gap: 4px !important;
+    }
+
+    .nav-buttons .btn {
+        font-size: 0.74rem !important;
+        padding: 5px 10px !important;
+        border-radius: 10px !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .logo-text {
+        display: none !important; /* Hide logo text to leave maximum space for header actions */
+    }
+}

@@ -125,8 +125,8 @@ SELECT
             SELECT 1 FROM public.deblocages d 
             WHERE d.client_id = auth.uid() AND d.rider_id = livreurs.id
         ) THEN phone
-        -- Règle 3 : Le connecté est un administrateur
-        WHEN (auth.jwt()->'user_metadata'->>'role') = 'admin' THEN phone
+        -- Règle 3 : Le connecté est un administrateur vérifié via app_metadata
+        WHEN (auth.jwt()->'app_metadata'->>'role') = 'admin' THEN phone
         -- Par défaut : Masquage du numéro de téléphone
         ELSE 
             CASE 
@@ -140,7 +140,7 @@ SELECT
                SELECT 1 FROM public.deblocages d 
                WHERE d.client_id = auth.uid() AND d.rider_id = livreurs.id
            ) 
-           OR (auth.jwt()->'user_metadata'->>'role') = 'admin' THEN true
+           OR (auth.jwt()->'app_metadata'->>'role') = 'admin' THEN true
         ELSE false
     END as is_unlocked
 FROM public.livreurs;
@@ -161,7 +161,7 @@ CREATE POLICY "Clients manage own profile" ON public.clients_livraison
 
 CREATE POLICY "Admins manage all clients" ON public.clients_livraison
     FOR ALL TO authenticated USING (
-        (auth.jwt()->'user_metadata'->>'role') = 'admin'
+        (auth.jwt()->'app_metadata'->>'role') = 'admin'
     );
 
 -- Livreurs : Modification de son propre profil, lecture restreinte
@@ -170,28 +170,46 @@ CREATE POLICY "Livreurs manage own profile" ON public.livreurs
 
 CREATE POLICY "Admins manage all livreurs" ON public.livreurs
     FOR ALL TO authenticated USING (
-        (auth.jwt()->'user_metadata'->>'role') = 'admin'
+        (auth.jwt()->'app_metadata'->>'role') = 'admin'
     );
 
 -- Attribution de droits sur la vue pour tout le monde (requis pour afficher la carte)
 GRANT SELECT ON public.livreurs_view TO anon, authenticated;
 
 -- 2. Politiques RLS de Déblocages
-CREATE POLICY "Clients manage own unlocks" ON public.deblocages
-    FOR ALL TO authenticated USING (auth.uid() = client_id) WITH CHECK (auth.uid() = client_id);
+-- Lecture : Les clients peuvent voir leurs propres déblocages
+CREATE POLICY "Clients read own unlocks" ON public.deblocages
+    FOR SELECT TO authenticated USING (auth.uid() = client_id);
+
+-- Insertion : Un client ne peut s'insérer un déblocage lui-même QUE s'il est Premium (abonné payé).
+-- Les utilisateurs gratuits passent par la fonction RPC simulate_payment_unlock()
+CREATE POLICY "Premium clients can unlock directly" ON public.deblocages
+    FOR INSERT TO authenticated WITH CHECK (
+        auth.uid() = client_id 
+        AND EXISTS (
+            SELECT 1 FROM public.clients_livraison c 
+            WHERE c.id = auth.uid() AND c.subscription_paid = true
+        )
+    );
 
 CREATE POLICY "Admins manage all unlocks" ON public.deblocages
     FOR ALL TO authenticated USING (
-        (auth.jwt()->'user_metadata'->>'role') = 'admin'
+        (auth.jwt()->'app_metadata'->>'role') = 'admin'
     );
 
--- 3. Politiques RLS des Avis (Reviews)
+-- 3. Politiques RLS des Avis (Reviews) avec traçabilité et unicité
+-- Ajustement de la structure : Ajout de la colonne de traçabilité client et de la contrainte unique
+ALTER TABLE public.avis ADD COLUMN IF NOT EXISTS client_id UUID REFERENCES public.clients_livraison(id) ON DELETE CASCADE;
+ALTER TABLE public.avis DROP CONSTRAINT IF EXISTS uq_client_rider_avis;
+ALTER TABLE public.avis ADD CONSTRAINT uq_client_rider_avis UNIQUE (client_id, rider_id);
+
 CREATE POLICY "Anyone can read reviews" ON public.avis
     FOR SELECT USING (true);
 
 CREATE POLICY "Unlocked clients can post reviews" ON public.avis
     FOR INSERT TO authenticated WITH CHECK (
-        EXISTS (SELECT 1 FROM public.deblocages d WHERE d.client_id = auth.uid() AND d.rider_id = rider_id)
+        auth.uid() = client_id
+        AND EXISTS (SELECT 1 FROM public.deblocages d WHERE d.client_id = auth.uid() AND d.rider_id = rider_id)
     );
 
 -- 4. Politiques RLS de Messagerie (Chats)
@@ -204,7 +222,7 @@ CREATE POLICY "Users can manage own chats" ON public.chats_livraison
 
 CREATE POLICY "Admins can manage all chats" ON public.chats_livraison
     FOR ALL TO authenticated USING (
-        (auth.jwt()->'user_metadata'->>'role') = 'admin'
+        (auth.jwt()->'app_metadata'->>'role') = 'admin'
     );
 
 -- --- TRIGGER AUTOMATIQUE DE COMPTEUR DE DÉBLOCAGE ---
@@ -222,3 +240,27 @@ DROP TRIGGER IF EXISTS on_deblocage_created ON public.deblocages CASCADE;
 CREATE TRIGGER on_deblocage_created
     AFTER INSERT ON public.deblocages
     FOR EACH ROW EXECUTE FUNCTION public.increment_rider_contacts();
+
+-- --- FONCTION SÉCURISÉE DE SIMULATION DE PAIEMENT POUR UTILISATEURS DE PASSAGE (RPC) ---
+CREATE OR REPLACE FUNCTION public.simulate_payment_unlock(target_rider_id UUID)
+RETURNS void AS $$
+BEGIN
+    -- Vérifier si l'utilisateur est connecté
+    IF auth.uid() IS NULL THEN
+        RAISE EXCEPTION 'Non authentifié';
+    END IF;
+    
+    -- Insérer le déblocage en contournant le RLS (SECURITY DEFINER)
+    INSERT INTO public.deblocages (client_id, rider_id)
+    VALUES (auth.uid(), target_rider_id)
+    ON CONFLICT (client_id, rider_id) DO NOTHING;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- --- SÉCURISATION SUPPLÉMENTAIRE DES RÔLES : REVOKE EXECUTE DU SCHÉMA PUBLIC ---
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.increment_rider_contacts() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.simulate_payment_unlock(UUID) FROM PUBLIC;
+
+GRANT EXECUTE ON FUNCTION public.simulate_payment_unlock(UUID) TO authenticated;
+

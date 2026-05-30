@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 const user = session.user;
-                const role = user.user_metadata.role;
+                const role = user.app_metadata?.role || user.user_metadata?.role;
                 
                 if (role === 'client') {
                     const { data: dbClient } = await supabase.from('clients_livraison').select('*').eq('id', user.id).maybeSingle();
@@ -1056,7 +1056,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (unlockedRiderId) {
                     STATE.loggedClient.contactedDrivers.add(unlockedRiderId);
                     STATE.unlockedRiders.add(unlockedRiderId); // Ensure in unlocked set
-                    supabase.from('deblocages').insert([{ client_id: STATE.loggedClient.id, rider_id: unlockedRiderId }]).then();
+                    
+                    // Utiliser la fonction RPC sécurisée (simulate_payment_unlock) pour contourner la restriction RLS d'insertion directe
+                    supabase.rpc('simulate_payment_unlock', { target_rider_id: unlockedRiderId }).then();
                 }
                 updateClientDashboardView();
             }
@@ -3150,7 +3152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const user = authData.user;
-        const role = user.user_metadata.role;
+        const role = user.app_metadata?.role || user.user_metadata?.role;
 
         if (role === 'rider') {
             const { data: dbDriver, error: dbError } = await supabase.from('livreurs').select('*').eq('id', user.id).maybeSingle();
