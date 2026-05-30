@@ -2288,7 +2288,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </td>
                 <td style="font-weight:600;">${rider.phone}</td>
-                <td style="font-weight:600;">${rider.vehicle.split(' ')[0]}</td>
+                <td><button class="btn-table-action inspect-docs" data-id="${rider.id}" style="background-color: var(--color-primary-yellow-light) !important; color: var(--color-primary-brown) !important; border: 1.5px solid rgba(246, 205, 86, 0.45) !important; padding: 6px 12px; border-radius: 8px; font-weight:700; font-size:0.75rem; cursor:pointer;">🔍 Vérifier</button></td>
                 <td>${statusBadge}</td>
                 <td><div style="display:flex;">${actionButtons}</div></td>
             `;
@@ -2366,6 +2366,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+
+        // Add event listeners on document verification inspection
+        document.querySelectorAll('.btn-table-action.inspect-docs').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-id');
+                const rider = findRiderById(id);
+                if (rider) {
+                    openDocInspectorModal(rider);
+                }
+            });
+        });
     }
 
     function deleteRiderById(id) {
@@ -2377,6 +2388,93 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAdminDashboardStats();
         
         alert("Livreur supprimé définitivement de la plateforme.");
+    }
+
+    // --- ADMIN CANDIDATURE IDENTITY DOCUMENT INSPECTOR ---
+    const adminDocInspectorModal = document.getElementById('admin-doc-inspector-modal');
+    const btnCloseDocInspector = document.getElementById('btn-close-doc-inspector');
+    const adminDocRiderName = document.getElementById('admin-doc-rider-name');
+    const adminDocPreviewSelfie = document.getElementById('admin-doc-preview-selfie');
+    const adminDocPreviewRecto = document.getElementById('admin-doc-preview-recto');
+    const adminDocPreviewVerso = document.getElementById('admin-doc-preview-verso');
+    const adminDocStatusBadge = document.getElementById('admin-doc-status-badge');
+    const btnAdminDocApprove = document.getElementById('btn-admin-doc-approve');
+    const btnAdminDocReject = document.getElementById('btn-admin-doc-reject');
+
+    // Premium custom SVG placeholders for CNI/Selfie
+    const MOCK_SELFIE_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="16" fill="%23FAF5F0"/><circle cx="50" cy="40" r="18" fill="%238D5537"/><path d="M20 85c0-15 12-25 30-25s30 10 30 25z" fill="%238D5537"/><text x="50" y="92" font-family="sans-serif" font-size="6" font-weight="bold" fill="%238D5537" text-anchor="middle">PHOTO VERIFIEE</text></svg>`;
+    const MOCK_RECTO_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="250" height="150" viewBox="0 0 100 60" fill="none"><rect width="100" height="60" rx="8" fill="%23FAF5F0" stroke="%238D5537" stroke-width="0.8"/><rect x="8" y="12" width="16" height="20" rx="3" fill="%23A39387"/><line x1="30" y1="14" x2="85" y2="14" stroke="%238D5537" stroke-width="1.5" stroke-linecap="round"/><line x1="30" y1="20" x2="65" y2="20" stroke="%23A39387" stroke-width="0.8" stroke-linecap="round"/><line x1="30" y1="26" x2="75" y2="26" stroke="%23A39387" stroke-width="0.8" stroke-linecap="round"/><text x="50" y="52" font-family="sans-serif" font-size="5" font-weight="bold" fill="%2327AE60" text-anchor="middle">CNI RECTO — CERTIFIE</text></svg>`;
+    const MOCK_VERSO_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="250" height="150" viewBox="0 0 100 60" fill="none"><rect width="100" height="60" rx="8" fill="%23FAF5F0" stroke="%238D5537" stroke-width="0.8"/><rect x="8" y="10" width="84" height="15" fill="%23EFE9E2" rx="3"/><line x1="10" y1="36" x2="90" y2="36" stroke="%23A39387" stroke-width="0.8" stroke-linecap="round"/><line x1="10" y1="43" x2="70" y2="43" stroke="%23A39387" stroke-width="0.8" stroke-linecap="round"/><text x="50" y="53" font-family="sans-serif" font-size="5" font-weight="bold" fill="%2327AE60" text-anchor="middle">CNI VERSO — CERTIFIE</text></svg>`;
+
+    let activeInspectedRider = null;
+
+    function openDocInspectorModal(rider) {
+        activeInspectedRider = rider;
+        adminDocRiderName.innerText = rider.name;
+        
+        // Load Base64 images or show custom premium SVG placeholders
+        adminDocPreviewSelfie.src = rider.selfie || MOCK_SELFIE_SVG;
+        adminDocPreviewRecto.src = rider.cniRecto || MOCK_RECTO_SVG;
+        adminDocPreviewVerso.src = rider.cniVerso || MOCK_VERSO_SVG;
+        
+        // Status badge styling inside modal
+        adminDocStatusBadge.innerText = rider.status || 'actif';
+        if (rider.status === 'actif') {
+            adminDocStatusBadge.className = 'rider-status';
+            adminDocStatusBadge.style.backgroundColor = "var(--color-green-light)";
+            adminDocStatusBadge.style.color = "var(--color-green-soft)";
+        } else if (rider.status === 'en attente') {
+            adminDocStatusBadge.className = 'rider-status';
+            adminDocStatusBadge.style.backgroundColor = "rgba(246, 205, 86, 0.12)";
+            adminDocStatusBadge.style.color = "var(--color-primary-yellow-hover)";
+        } else {
+            adminDocStatusBadge.className = 'rider-status';
+            adminDocStatusBadge.style.backgroundColor = "var(--color-primary-red-light)";
+            adminDocStatusBadge.style.color = "var(--color-primary-red)";
+        }
+        
+        adminDocInspectorModal.classList.add('open');
+    }
+
+    function closeDocInspectorModal() {
+        adminDocInspectorModal.classList.remove('open');
+        activeInspectedRider = null;
+    }
+
+    // Bind Document Inspector modal actions
+    if (btnCloseDocInspector) {
+        btnCloseDocInspector.addEventListener('click', closeDocInspectorModal);
+    }
+    
+    if (btnAdminDocApprove) {
+        btnAdminDocApprove.addEventListener('click', () => {
+            if (activeInspectedRider) {
+                activeInspectedRider.status = 'actif';
+                // Sync with Supabase (applies RLS directly)
+                supabase.from('livreurs').update({ status: 'actif' }).eq('id', activeInspectedRider.id).then();
+                
+                renderRiders();
+                updateAdminDashboardDrivers();
+                closeDocInspectorModal();
+                alert(`🎉 Candidature de ${activeInspectedRider.name} approuvée et profil publié sur la carte !`);
+            }
+        });
+    }
+
+    if (btnAdminDocReject) {
+        btnAdminDocReject.addEventListener('click', () => {
+            if (activeInspectedRider) {
+                activeInspectedRider.status = 'suspendu';
+                activeInspectedRider.subscriptionPaid = false;
+                // Sync with Supabase (applies RLS directly)
+                supabase.from('livreurs').update({ status: 'suspendu', subscription_paid: false }).eq('id', activeInspectedRider.id).then();
+                
+                renderRiders();
+                updateAdminDashboardDrivers();
+                closeDocInspectorModal();
+                alert(`⚠️ Candidature de ${activeInspectedRider.name} suspendue et retirée de la carte.`);
+            }
+        });
     }
     
     function updateAdminDashboardChats() {
@@ -3062,7 +3160,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewsCount: 0,
                 rating: 5.0,
                 reviews: [],
-                status: 'actif'
+                status: 'actif',
+                cniRecto: previewCniRecto.src || null,
+                cniVerso: previewCniVerso.src || null,
+                selfie: previewSelfie.src || null
             };
             
             // Add to active city list
