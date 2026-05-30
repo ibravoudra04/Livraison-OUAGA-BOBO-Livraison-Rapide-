@@ -30,7 +30,10 @@
             <button class="btn btn-secondary hidden" id="btn-nav-find">Trouver un livreur</button>
             <button class="btn btn-primary" id="btn-nav-register">Devenir livreur</button>
             <button class="btn btn-secondary" id="btn-nav-login">Se connecter</button>
-            <button class="btn btn-secondary hidden" id="btn-nav-logout">Se déconnecter</button>
+            <button class="btn btn-secondary hidden" id="btn-nav-profile" style="padding: 8px 12px; display: flex; align-items: center; gap: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span>Mon Compte</span>
+            </button>
         </nav>
     </header>
 
@@ -156,9 +159,13 @@
         <div class="modal-overlay" id="payment-modal">
             <div class="payment-card">
                 
-                <div class="payment-header">
-                    <h3>Paiement Mobile Money</h3>
-                    <button class="btn-close-modal" id="btn-close-payment-modal" aria-label="Fermer">&times;</button>
+                <div class="payment-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
+                    <button class="btn-back-modal" id="btn-close-payment-modal" aria-label="Fermer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        Retour
+                    </button>
+                    <h3 style="margin: 0; font-size:1.1rem; font-weight:800;">Paiement Mobile Money</h3>
+                    <div style="width: 70px;"></div>
                 </div>
 
                 <div class="payment-body">
@@ -246,9 +253,13 @@
 
         <!-- Drawer d'inscription Livreur -->
         <div class="driver-drawer" id="driver-drawer">
-            <div class="drawer-header">
-                <h2>Rejoindre l'équipe</h2>
-                <button class="btn-close-drawer" id="btn-close-drawer" aria-label="Fermer le formulaire">&times;</button>
+            <div class="drawer-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <button class="btn-back-drawer" id="btn-close-drawer" aria-label="Fermer le formulaire">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Retour
+                </button>
+                <h2 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--color-primary-brown);">Rejoindre l'équipe</h2>
+                <div style="width: 70px;"></div>
             </div>
 
             <div class="drawer-body">
@@ -557,15 +568,19 @@
 
         <!-- Drawer de Chat en Direct avec Livreur -->
         <div class="chat-drawer" id="chat-drawer">
-            <div class="drawer-header">
-                <div class="chat-header-identity">
+            <div class="drawer-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <button class="btn-back-drawer" id="btn-close-chat" aria-label="Fermer la discussion">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Retour
+                </button>
+                <div class="chat-header-identity" style="margin: 0;">
                     <div class="chat-header-avatar" id="chat-driver-avatar">👤</div>
                     <div>
                         <h3 id="chat-driver-name">Marc Diallo</h3>
                         <span class="chat-header-status"><span class="chat-status-dot"></span>En ligne</span>
                     </div>
                 </div>
-                <button class="btn-close-drawer" id="btn-close-chat" aria-label="Fermer la discussion">&times;</button>
+                <div style="width: 70px;"></div>
             </div>
 
             <div class="chat-body" id="chat-messages">
@@ -591,12 +606,15 @@
 
         <!-- Drawer Espace Client -->
         <div class="driver-drawer" id="client-drawer">
-            <div class="drawer-header" style="background: var(--color-primary-brown-dark); color: white;">
-                <h2 style="display:flex; align-items:center; gap:8px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <div class="drawer-header" style="background: var(--color-primary-brown-dark); color: white; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <button class="btn-back-drawer" id="btn-close-client-drawer" style="background: rgba(255, 255, 255, 0.15) !important; color: white !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px;" aria-label="Fermer le menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Retour
+                </button>
+                <h2 style="display:flex; align-items:center; gap:8px; margin: 0; font-size:1.05rem;">
                     Mon Espace Client
                 </h2>
-                <button class="btn-close-drawer" id="btn-close-client-drawer" style="color: white;" aria-label="Fermer le menu">&times;</button>
+                <div style="width: 70px;"></div>
             </div>
 
             <div class="drawer-body" style="padding: 20px;">
@@ -672,9 +690,13 @@
         <!-- Modale d'Authentification Unique (Se connecter) -->
         <div class="modal-overlay" id="auth-modal">
             <div class="payment-card" style="max-width: 420px; width: 95%;">
-                <div class="payment-header">
-                    <h3>🔐 Connexion Unique</h3>
-                    <button class="btn-close-modal" id="btn-close-auth" aria-label="Fermer">&times;</button>
+                <div class="payment-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
+                    <button class="btn-back-modal" id="btn-close-auth" aria-label="Fermer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        Retour
+                    </button>
+                    <h3 style="margin: 0; font-size:1.1rem; font-weight:800;">🔐 Connexion Unique</h3>
+                    <div style="width: 70px;"></div>
                 </div>
                 
                 <div class="payment-body">
@@ -759,12 +781,16 @@
         <!-- Modale de Suivi Admin (Dashboard d'Administration) -->
         <div class="modal-overlay" id="admin-modal">
             <div class="admin-card" style="max-width: 900px; width: 95%;">
-                <div class="payment-header" style="background: var(--color-primary-brown-dark); color: white; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div class="payment-header" style="background: var(--color-primary-brown-dark); color: white; display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+                    <button class="btn-back-modal" id="btn-close-admin" style="background: rgba(255, 255, 255, 0.15) !important; color: white !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px;" aria-label="Fermer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        Retour
+                    </button>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <h3>🔑 Espace Administration</h3>
+                        <h3 style="margin: 0; font-size: 1.05rem;">🔑 Espace Administration</h3>
                         <button id="btn-admin-logout-session" style="font-size:0.75rem; background: rgba(255,255,255,0.18); border: none; color: white; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: var(--font-sans); transition: var(--transition-smooth);">Déconnexion</button>
                     </div>
-                    <button class="btn-close-modal" id="btn-close-admin" style="color: white;" aria-label="Fermer">&times;</button>
+                    <div style="width: 70px;"></div>
                 </div>
                 
                 <div class="admin-body" style="max-height: 80vh; overflow-y: auto;">
@@ -937,7 +963,14 @@
         <!-- Modale/Overlay de Sélection de Localisation (Villes & Quartiers) -->
         <div class="location-portal-overlay" id="location-portal">
             <div class="location-portal-card">
-                <button class="btn-close-modal" id="btn-close-location-portal" aria-label="Fermer">&times;</button>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; width: 100%;">
+                    <button class="btn-back-modal" id="btn-close-location-portal" aria-label="Fermer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        Retour
+                    </button>
+                    <h3 style="margin: 0; font-size:1.1rem; font-weight:800; color: var(--color-primary-brown);">📍 Localisation</h3>
+                    <div style="width: 70px;"></div>
+                </div>
                 
                 <!-- Étape 1 : Choix de la ville -->
                 <div id="loc-step-city">
@@ -1020,9 +1053,13 @@
         <!-- Modale des Avis clients (Reviews Modal Overlay) -->
         <div class="modal-overlay" id="reviews-modal">
             <div class="payment-card" style="max-width: 480px; width: 95%;">
-                <div class="payment-header">
-                    <h3>⭐ Notes & Avis Clients</h3>
-                    <button class="btn-close-modal" id="btn-close-reviews" aria-label="Fermer">&times;</button>
+                <div class="payment-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
+                    <button class="btn-back-modal" id="btn-close-reviews" aria-label="Fermer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        Retour
+                    </button>
+                    <h3 style="margin: 0; font-size:1.1rem; font-weight:800;">⭐ Notes & Avis Clients</h3>
+                    <div style="width: 70px;"></div>
                 </div>
                 <div class="payment-body" style="max-height: 70vh; overflow-y: auto; padding: 20px;">
                     <!-- Header summary with big rating value -->
@@ -1048,9 +1085,13 @@
         <!-- Modale d'Inspection des Documents du Livreur (Admin) -->
         <div class="modal-overlay" id="admin-doc-inspector-modal">
             <div class="payment-card" style="max-width: 520px; width: 95%;">
-                <div class="payment-header">
-                    <h3>🪪 Inspecteur de Documents — <span id="admin-doc-rider-name">Livreur</span></h3>
-                    <button class="btn-close-modal" id="btn-close-doc-inspector" aria-label="Fermer">&times;</button>
+                <div class="payment-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
+                    <button class="btn-back-modal" id="btn-close-doc-inspector" aria-label="Fermer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        Retour
+                    </button>
+                    <h3 style="margin: 0; font-size:1.05rem; font-weight:800;">🪪 Inspecteur — <span id="admin-doc-rider-name">Livreur</span></h3>
+                    <div style="width: 70px;"></div>
                 </div>
                 <div class="payment-body" style="max-height: 75vh; overflow-y: auto; padding: 20px;">
                     <div style="display:flex; flex-direction:column; gap:16px;">

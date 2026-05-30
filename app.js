@@ -767,13 +767,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update Top Navigation buttons depending on login state
     function updateNavButtons() {
         const loggedIn = STATE.loggedClient || STATE.loggedDriver || STATE.isAdmin;
-        const logoutBtn = document.getElementById('btn-nav-logout');
+        const profileBtn = document.getElementById('btn-nav-profile');
         if (loggedIn) {
             btnNavLogin.classList.add('hidden');
-            if (logoutBtn) logoutBtn.classList.remove('hidden');
+            if (profileBtn) profileBtn.classList.remove('hidden');
         } else {
             btnNavLogin.classList.remove('hidden');
-            if (logoutBtn) logoutBtn.classList.add('hidden');
+            if (profileBtn) profileBtn.classList.add('hidden');
         }
     }
 
@@ -1368,134 +1368,256 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!STATE.loggedDriver) return;
         
         const driver = STATE.loggedDriver;
-        document.getElementById('driver-dash-name').innerText = `Bonjour, ${driver.name.split(' ')[0]} !`;
-        document.getElementById('driver-dash-vehicle').innerText = ` Moyen de transport : ${driver.vehicle}`;
-        
         const contacts = driver.contactsCount || 0;
         const views = driver.viewsCount || 0;
         const isPaid = driver.subscriptionPaid || false;
         
-        document.getElementById('driver-dash-contacts').innerText = `${contacts} / 4`;
-        document.getElementById('driver-dash-views').innerText = views;
-        
-        const statusTextEl = document.getElementById('driver-dash-status');
-        const visibilityEl = document.getElementById('driver-dash-visibility');
-        const subTextEl = document.getElementById('driver-dash-sub-text');
-        const payBtnEl = document.getElementById('btn-driver-pay-sub');
+        // Define status theme
+        let statusBadgeText = "";
+        let statusBg = "";
+        let statusColor = "";
+        let visibilityText = "";
+        let visibilityColor = "";
+        let subTextHTML = "";
+        let showPayBtn = false;
         
         if (contacts < 5) {
-            statusTextEl.innerText = "Gratuit (Essai)";
-            statusTextEl.className = "rider-status";
-            statusTextEl.style.backgroundColor = "var(--color-green-light)";
-            statusTextEl.style.color = "var(--color-green-soft)";
-            
-            visibilityEl.innerText = "🟢 En ligne & Visible";
-            visibilityEl.style.color = "var(--color-green-soft)";
-            
-            subTextEl.innerHTML = `Votre compte est en période d'essai gratuite. Les 4 premières mises en relation sont offertes. Vous êtes à <strong>${contacts}/4</strong>.`;
-            payBtnEl.style.display = "none";
+            statusBadgeText = "Essai Gratuit";
+            statusBg = "var(--color-green-light)";
+            statusColor = "var(--color-green-soft)";
+            visibilityText = "🟢 En ligne & Visible";
+            visibilityColor = "var(--color-green-soft)";
+            subTextHTML = `Période d'essai active. 4 relations offertes (vous êtes à <strong>${contacts}/4</strong>).`;
         } else if (isPaid) {
-            statusTextEl.innerText = "Abonné (Actif)";
-            statusTextEl.className = "rider-status";
-            statusTextEl.style.backgroundColor = "var(--color-green-light)";
-            statusTextEl.style.color = "var(--color-green-soft)";
-            
-            visibilityEl.innerText = "🟢 En ligne & Visible";
-            visibilityEl.style.color = "var(--color-green-soft)";
-            
-            subTextEl.innerHTML = `Votre abonnement hebdomadaire de 500 FCFA est actif ! Merci de faire confiance à Livraison Rapide.`;
-            payBtnEl.style.display = "none";
+            statusBadgeText = "Abonné Actif";
+            statusBg = "var(--color-green-light)";
+            statusColor = "var(--color-green-soft)";
+            visibilityText = "🟢 En ligne & Visible";
+            visibilityColor = "var(--color-green-soft)";
+            subTextHTML = "Votre abonnement hebdomadaire de 500 FCFA est actif ! Merci pour votre confiance.";
         } else {
-            statusTextEl.innerText = "Abonnement Requis";
-            statusTextEl.className = "rider-status";
-            statusTextEl.style.backgroundColor = "var(--color-primary-red-light)";
-            statusTextEl.style.color = "var(--color-primary-red)";
-            
-            visibilityEl.innerText = "🔴 Hors ligne (Masqué)";
-            visibilityEl.style.color = "var(--color-primary-red)";
-            
-            subTextEl.innerHTML = `Vous avez atteint <strong>${contacts} relations clients</strong> ! Pour réactiver votre visibilité sur la carte, veuillez régler votre abonnement hebdomadaire de 500 FCFA.`;
-            payBtnEl.style.display = "block";
+            statusBadgeText = "Abonnement Requis";
+            statusBg = "var(--color-primary-red-light)";
+            statusColor = "var(--color-primary-red)";
+            visibilityText = "🔴 Hors ligne (Masqué)";
+            visibilityColor = "var(--color-primary-red)";
+            subTextHTML = `Relations atteintes (<strong>${contacts} clics</strong>). Réglez votre abonnement (500 F) pour réapparaître sur la carte.`;
+            showPayBtn = true;
         }
-        
-        // Populate Reviews & Comments
-        const ratingValEl = document.getElementById('driver-dash-rating-val');
-        const reviewsCountEl = document.getElementById('driver-dash-reviews-count');
-        const reviewsListEl = document.getElementById('driver-reviews-list');
-        
-        if (ratingValEl && reviewsListEl) {
-            reviewsListEl.innerHTML = '';
-            const rating = driver.rating || 5.0;
-            const reviews = driver.reviews || [];
-            
-            ratingValEl.innerText = rating.toFixed(1);
-            reviewsCountEl.innerText = `Basé sur ${reviews.length} avis`;
-            
-            if (reviews.length === 0) {
-                reviewsListEl.innerHTML = '<p style="font-size:0.75rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun avis pour le moment.</p>';
-            } else {
-                reviews.forEach(rev => {
-                    const revEl = document.createElement('div');
-                    revEl.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
-                    revEl.style.paddingBottom = '6px';
-                    revEl.style.fontSize = '0.75rem';
-                    revEl.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-weight:600;">
-                            <span style="color:var(--color-primary-yellow)">${'★'.repeat(Math.round(rev.stars))}</span>
+
+        // Render reviews HTML
+        const rating = driver.rating || 5.0;
+        const reviews = driver.reviews || [];
+        let reviewsHTML = '';
+        if (reviews.length === 0) {
+            reviewsHTML = '<p style="font-size:0.75rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun avis reçu pour le moment.</p>';
+        } else {
+            reviews.forEach(rev => {
+                reviewsHTML += `
+                    <div class="rider-review-bubble" style="margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-weight:700;">
+                            <span style="color:var(--color-primary-yellow); font-size:0.8rem;">${'★'.repeat(Math.round(rev.stars))}</span>
                             <span style="color:var(--color-charcoal-muted); font-size:0.6rem;">${rev.date}</span>
                         </div>
-                        <p style="margin:0; color:var(--color-charcoal-light); font-style:italic;">"${rev.text}"</p>
-                    `;
-                    reviewsListEl.appendChild(revEl);
-                });
-            }
+                        <p style="margin:0; color:var(--color-charcoal-light); font-size:0.75rem; font-style:italic; line-height:1.35;">"${escapeHTML(rev.text)}"</p>
+                    </div>
+                `;
+            });
         }
-        
-        // Populate Messenger chat threads
-        const chatsListEl = document.getElementById('driver-dash-chats-list');
-        if (chatsListEl) {
-            chatsListEl.innerHTML = '';
-            
-            // Check if there are active chats for this driver
-            const activeChats = [];
-            
-            // For live simulator, let's look up if this driver has chats in STATE.chats
-            if (STATE.chats[driver.id] && STATE.chats[driver.id].length > 0) {
-                activeChats.push({
-                    name: 'Client (+226 76 00 00 01)',
-                    snippet: STATE.chats[driver.id][STATE.chats[driver.id].length - 1].text,
-                    time: STATE.chats[driver.id][STATE.chats[driver.id].length - 1].time
-                });
+
+        // Render messenger chat HTML
+        let chatsHTML = '';
+        if (STATE.chats[driver.id] && STATE.chats[driver.id].length > 0) {
+            const lastMsg = STATE.chats[driver.id][STATE.chats[driver.id].length - 1];
+            chatsHTML = `
+                <div class="client-history-item" id="driver-chat-row" style="margin-top: 8px;">
+                    <div class="client-history-avatar">💬</div>
+                    <div class="client-history-info">
+                        <div class="client-history-name">Client (+226 76 00 00 01)</div>
+                        <div class="client-history-sub" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${escapeHTML(lastMsg.text)}</div>
+                    </div>
+                    <span class="client-history-action" style="font-size:0.65rem;">Clavarder</span>
+                </div>
+            `;
+        } else {
+            chatsHTML = '<p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun message reçu pour le moment.</p>';
+        }
+
+        // Render whole HTML inside driverDashboardPanel
+        driverDashboardPanel.innerHTML = `
+            <!-- Profil Card Savannah Clay Gradient -->
+            <div class="rider-dash-profile-card">
+                <div class="rider-dash-avatar-wrapper">${escapeHTML(driver.initial)}</div>
+                <div class="rider-dash-profile-info">
+                    <h3>${escapeHTML(driver.name)}</h3>
+                    <p>🏍️ Moyen : ${escapeHTML(driver.vehicle)}</p>
+                </div>
+            </div>
+
+            <!-- Visibilité & Statut -->
+            <div class="driver-status-card">
+                <div class="driver-status-row">
+                    <span class="form-label" style="margin:0; font-weight:700;">Compte :</span>
+                    <span class="rider-status" style="background-color:${statusBg}; color:${statusColor}; font-weight:800; font-size:0.72rem; padding:4px 10px; border-radius:100px;">${statusBadgeText}</span>
+                </div>
+                <div class="driver-status-row" style="margin-top:8px;">
+                    <span class="form-label" style="margin:0; font-weight:700;">Visibilité :</span>
+                    <span style="color:${visibilityColor}; font-weight:800; font-size:0.8rem;">${visibilityText}</span>
+                </div>
+            </div>
+
+            <!-- Position GPS en Direct widget -->
+            <div class="driver-status-card" style="border: 1.5px solid var(--color-primary-green); background-color: var(--color-primary-green-light); padding: 14px; text-align:left;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap: 8px;">
+                    <div>
+                        <h4 style="margin:0; font-size:0.85rem; font-weight:700; color:var(--color-primary-green-hover); display:flex; align-items:center; gap:4px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line></svg>
+                            Position en Direct
+                        </h4>
+                        <p style="margin:4px 0 0 0; font-size:0.7rem; color:var(--color-charcoal-light); line-height: 1.3;">Mettez à jour vos coordonnées GPS en un clic depuis votre téléphone.</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="btn-driver-update-location" style="width:auto; margin:0; padding:8px 12px; font-size:0.72rem; border-radius:10px; background-color:var(--color-primary-green); color: white; border: none; font-weight: 700; cursor: pointer; display:flex; align-items:center; gap:4px; box-shadow:none;">
+                        ⚡ Actualiser
+                    </button>
+                </div>
+                <div id="driver-location-update-status" style="margin-top:10px; font-size:0.72rem; font-weight:700; color:var(--color-green-soft); display: flex; align-items: center; gap: 4px;">
+                    <div class="pulse-dot" style="width:8px; height:8px; background-color:var(--color-primary-green);"></div>
+                    <span>Position active : ${driver.lat.toFixed(4)}, ${driver.lng.toFixed(4)}</span>
+                </div>
+            </div>
+
+            <!-- Grille de Stats -->
+            <div class="rider-dash-stat-grid" style="margin-top:16px;">
+                <div class="rider-dash-stat-card">
+                    <div class="rider-dash-stat-lbl">Relations</div>
+                    <div class="rider-dash-stat-val">${contacts} / 4</div>
+                    <div class="rider-dash-stat-desc">offertes</div>
+                </div>
+                <div class="rider-dash-stat-card">
+                    <div class="rider-dash-stat-lbl">Clics Profil</div>
+                    <div class="rider-dash-stat-val">${views}</div>
+                    <div class="rider-dash-stat-desc">visites</div>
+                </div>
+                <div class="rider-dash-stat-card">
+                    <div class="rider-dash-stat-lbl">Avis</div>
+                    <div class="rider-dash-stat-val">${rating.toFixed(1)}</div>
+                    <div class="rider-dash-stat-desc">${reviews.length} revues</div>
+                </div>
+            </div>
+
+            <!-- Messagerie -->
+            <div class="driver-terms-info" style="margin-top:15px; text-align:left; background:rgba(255,255,255,0.45); border-radius:16px; padding:14px; border:1px solid var(--color-border);">
+                <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary-brown);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    Messages Clients
+                </h4>
+                <div id="driver-dash-chats-list">
+                    ${chatsHTML}
+                </div>
+            </div>
+
+            <!-- Notes & Avis -->
+            <div class="driver-terms-info" style="margin-top:15px; text-align:left; background:rgba(255,255,255,0.45); border-radius:16px; padding:14px; border:1px solid var(--color-border);">
+                <h4 style="margin:0 0 10px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary-brown);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    Avis & Évaluations
+                </h4>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; background:rgba(255,255,255,0.6); padding:8px 12px; border-radius:12px;">
+                    <span style="font-size:1.8rem; font-weight:800; color:var(--color-primary-yellow);">${rating.toFixed(1)}</span>
+                    <div>
+                        <div style="color:var(--color-primary-yellow); font-size:0.85rem;">${'★'.repeat(Math.round(rating))}</div>
+                        <div style="font-size:0.65rem; color:var(--color-charcoal-muted);">${reviews.length} avis reçus</div>
+                    </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    ${reviewsHTML}
+                </div>
+            </div>
+
+            <!-- Suivi Abonnement -->
+            <div class="driver-terms-info" style="margin-top:15px; text-align:left; background:rgba(255,255,255,0.45); border-radius:16px; padding:14px; border:1px solid var(--color-border);">
+                <h4 style="margin:0 0 6px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary-brown);"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                    Mon Abonnement (500 F / 7j)
+                </h4>
+                <p style="font-size:0.78rem; color:var(--color-charcoal-light); line-height:1.4; margin:0;">
+                    ${statusBadgeText === 'Essai Gratuit' ? 'Période d\'essai gratuite en cours.' : ''}
+                    ${subTextHTML}
+                </p>
+                <button class="btn-unlock" id="btn-driver-pay-sub" style="width:100%; margin-top:12px; padding:10px; font-size:0.85rem; display:${showPayBtn ? 'block' : 'none'};">
+                    💳 Payer mon abonnement (500 FCFA)
+                </button>
+            </div>
+
+            <!-- Actions de Simulation / Déconnexion -->
+            <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+                <button class="btn btn-secondary" id="btn-driver-simulate-contact" style="width:100%; padding:12px; border-radius:12px; font-size:0.8rem; background:rgba(141,85,55,0.04) !important; border:1px dashed rgba(141,85,55,0.2) !important; color:var(--color-primary-brown) !important;">
+                    🎯 Simuler +2 contacts clics
+                </button>
+                <button class="btn btn-secondary" id="btn-driver-logout" style="width:100%; padding:12px; border-radius:16px; font-weight:700;">
+                    🚪 Se déconnecter de ma session
+                </button>
+            </div>
+        `;
+
+        // Re-bind click event listeners of dynamically rendered buttons
+        document.getElementById('btn-driver-update-location').addEventListener('click', () => {
+            // Re-bind location update
+            document.getElementById('btn-driver-update-location').innerText = "⚡ Météo GPS...";
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                driver.lat = lat;
+                driver.lng = lng;
+                
+                // Sync with Supabase
+                supabase.from('livreurs').update({ lat: lat, lng: lng }).eq('id', driver.id).then();
+                
+                renderRiders();
+                updateDriverDashboardView();
+                alert("📍 Position GPS synchronisée en direct avec succès !");
+            }, err => {
+                alert("❌ Impossible de récupérer la localisation de votre appareil. Assurez-vous d'avoir activé le GPS.");
+                updateDriverDashboardView();
+            });
+        });
+
+        document.getElementById('btn-driver-simulate-contact').addEventListener('click', () => {
+            if (driver.contactsCount === undefined) {
+                driver.contactsCount = 0;
             }
+            driver.contactsCount += 2;
             
-            if (activeChats.length === 0) {
-                chatsListEl.innerHTML = '<p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun message reçu pour le moment.</p>';
-            } else {
-                activeChats.forEach(ch => {
-                    const row = document.createElement('div');
-                    row.className = 'session-item-row';
-                    row.style.background = 'white';
-                    row.style.borderRadius = '8px';
-                    row.style.padding = '8px';
-                    row.style.display = 'flex';
-                    row.style.justifyContent = 'space-between';
-                    row.style.alignItems = 'center';
-                    row.style.cursor = 'pointer';
-                    row.style.boxShadow = '0 2px 4px rgba(0,0,0,0.03)';
-                    row.innerHTML = `
-                        <div>
-                            <div style="font-weight:700; font-size:0.75rem;">${escapeHTML(ch.name)}</div>
-                            <div style="font-size:0.7rem; color:var(--color-charcoal-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;">${escapeHTML(ch.snippet)}</div>
-                        </div>
-                        <div style="font-size:0.65rem; color:var(--color-charcoal-muted);">${escapeHTML(ch.time)}</div>
-                    `;
-                    row.addEventListener('click', () => {
-                        // Open chat drawer for the driver!
-                        openChatDrawer(driver);
-                    });
-                    chatsListEl.appendChild(row);
-                });
-            }
+            // Sync with Supabase
+            supabase.from('livreurs').update({ contacts_count: driver.contactsCount }).eq('id', driver.id).then();
+            
+            renderRiders();
+            updateDriverDashboardView();
+            updateAdminDashboardDrivers();
+        });
+
+        document.getElementById('btn-driver-pay-sub').addEventListener('click', () => {
+            STATE.pendingSubscriptionUnlock = true;
+            openPaymentModal();
+        });
+
+        document.getElementById('btn-driver-logout').addEventListener('click', () => {
+            STATE.loggedDriver = null;
+            closeDriverDrawer();
+            STATE.unlockedRiders.clear();
+            STATE.clickedRiders.clear();
+            renderRiders();
+            updateMapBlurState();
+            updateNavButtons();
+            alert("Session déconnectée avec succès.");
+        });
+
+        // Chat row binding
+        const chatRow = document.getElementById('driver-chat-row');
+        if (chatRow) {
+            chatRow.addEventListener('click', () => {
+                openChatDrawer(driver);
+            });
         }
     }
 
@@ -1503,153 +1625,203 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!STATE.loggedClient) return;
         
         const client = STATE.loggedClient;
-        clientDashPhone.innerText = `Compte : ${client.phone}`;
-        
-        // Dynamically adjust premium badge and premium upgrade box depending on subscriptionPaid
-        const clientBadge = document.getElementById('client-dash-badge');
-        const premiumUpgradeBox = document.getElementById('client-premium-upgrade-box');
-        const clientSearchBox = document.getElementById('client-premium-search-box');
-        
-        if (client.subscriptionPaid === true) {
-            if (clientBadge) {
-                clientBadge.innerText = "Compte Premium 💎";
-                clientBadge.style.backgroundColor = "var(--color-primary-yellow-light)";
-                clientBadge.style.color = "var(--color-primary-brown)";
-            }
-            if (premiumUpgradeBox) {
-                premiumUpgradeBox.style.display = "none";
-            }
-            if (clientSearchBox) {
-                clientSearchBox.classList.remove('hidden');
-            }
-        } else {
-            if (clientBadge) {
-                clientBadge.innerText = "Compte Gratuit";
-                clientBadge.style.backgroundColor = "var(--color-green-light)";
-                clientBadge.style.color = "var(--color-green-soft)";
-            }
-            if (premiumUpgradeBox) {
-                premiumUpgradeBox.style.display = "block";
-            }
-            if (clientSearchBox) {
-                clientSearchBox.classList.add('hidden');
-            }
-        }
-        
-        // Viewed Drivers
-        clientViewedList.innerHTML = '';
+        const isPremium = client.subscriptionPaid === true;
+
+        // Render Viewed Drivers HTML
         const viewedIds = Array.from(client.viewedDrivers || []);
+        let viewedHTML = '';
         if (viewedIds.length === 0) {
-            clientViewedList.innerHTML = '<p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun livreur consulté pour le moment.</p>';
+            viewedHTML = '<p style="font-size:0.75rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun livreur consulté pour le moment.</p>';
         } else {
             viewedIds.forEach(id => {
                 const r = findRiderById(id);
                 if (!r) return;
-                const row = document.createElement('div');
-                row.style.background = 'white';
-                row.style.borderRadius = '8px';
-                row.style.padding = '8px 12px';
-                row.style.display = 'flex';
-                row.style.justifyContent = 'space-between';
-                row.style.alignItems = 'center';
-                row.style.cursor = 'pointer';
-                row.style.boxShadow = '0 2px 4px rgba(0,0,0,0.03)';
-                row.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-weight:700; width:24px; height:24px; border-radius:50%; background:var(--color-primary-yellow-light); display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:var(--color-primary-brown);">${r.initial}</span>
-                        <div>
-                            <div style="font-weight:700; font-size:0.75rem;">${r.name}</div>
-                            <div style="font-size:0.65rem; color:var(--color-charcoal-muted);">${r.vehicle}</div>
+                viewedHTML += `
+                    <div class="client-history-item" data-rider-id="${r.id}" style="margin-bottom:6px;">
+                        <div class="client-history-avatar">${r.initial}</div>
+                        <div class="client-history-info">
+                            <div class="client-history-name">${escapeHTML(r.name)}</div>
+                            <div class="client-history-sub">${escapeHTML(r.vehicle)}</div>
                         </div>
+                        <span class="client-history-action">Voir</span>
                     </div>
-                    <span style="font-size: 0.8rem; color: var(--color-primary-brown); font-weight: 700; display:flex; align-items:center; gap:4px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        Voir
-                    </span>
                 `;
-                row.addEventListener('click', () => {
-                    // Center and select rider
-                    closeClientDrawer();
-                    
-                    if (STATE.map) {
-                        STATE.map.setView([r.lat, r.lng], 15);
-                        setTimeout(() => {
-                            selectRider(r);
-                        }, 500);
-                    }
-                });
-                clientViewedList.appendChild(row);
             });
         }
 
-        // Contacted Drivers
-        clientContactedList.innerHTML = '';
+        // Render Contacted Drivers HTML
         const contactedIds = Array.from(client.contactedDrivers || []);
+        let contactedHTML = '';
         if (contactedIds.length === 0) {
-            clientContactedList.innerHTML = '<p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun contact débloqué.</p>';
+            contactedHTML = '<p style="font-size:0.75rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun contact débloqué.</p>';
         } else {
             contactedIds.forEach(id => {
                 const r = findRiderById(id);
                 if (!r) return;
-                const row = document.createElement('div');
-                row.style.background = 'white';
-                row.style.borderRadius = '8px';
-                row.style.padding = '8px 12px';
-                row.style.display = 'flex';
-                row.style.justifyContent = 'space-between';
-                row.style.alignItems = 'center';
-                row.style.boxShadow = '0 2px 4px rgba(0,0,0,0.03)';
-                row.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-weight:700; width:24px; height:24px; border-radius:50%; background:var(--color-primary-red-light); color:var(--color-primary-red); display:flex; align-items:center; justify-content:center; font-size:0.7rem;">${r.initial}</span>
-                        <div>
-                            <div style="font-weight:700; font-size:0.75rem;">${r.name}</div>
-                            <div style="font-size:0.65rem; color:var(--color-charcoal-light); font-weight:600;">${r.phone}</div>
+                contactedHTML += `
+                    <div class="client-history-item" style="margin-bottom:6px; cursor:default;">
+                        <div class="client-history-avatar" style="background-color:var(--color-primary-red-light); color:var(--color-primary-red);">${r.initial}</div>
+                        <div class="client-history-info">
+                            <div class="client-history-name">${escapeHTML(r.name)}</div>
+                            <div class="client-history-sub" style="font-weight:700; color:var(--color-charcoal);">${escapeHTML(r.phone)}</div>
                         </div>
+                        <a href="tel:${r.phone.replace(/\s+/g, '')}" class="client-history-action" style="background:var(--color-green-light); color:var(--color-green-soft); border-color:rgba(39,174,96,0.15); text-decoration:none; display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; padding:0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        </a>
                     </div>
-                    <a href="tel:${r.phone.replace(/\s+/g, '')}" style="background: var(--color-green-light); color:var(--color-green-soft); width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                    </a>
                 `;
-                clientContactedList.appendChild(row);
             });
         }
 
-        // Chat threads
-        clientChatsList.innerHTML = '';
+        // Render chats HTML
         const chatDriverIds = Object.keys(STATE.chats).filter(riderId => STATE.chats[riderId] && STATE.chats[riderId].length > 0);
+        let chatsHTML = '';
         if (chatDriverIds.length === 0) {
-            clientChatsList.innerHTML = '<p style="font-size:0.8rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucune discussion active.</p>';
+            chatsHTML = '<p style="font-size:0.75rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucune discussion active.</p>';
         } else {
             chatDriverIds.forEach(riderId => {
                 const r = findRiderById(riderId);
                 if (!r) return;
                 const messages = STATE.chats[riderId];
                 const lastMsg = messages[messages.length - 1];
-                const row = document.createElement('div');
-                row.className = 'session-item-row';
-                row.style.background = 'white';
-                row.style.borderRadius = '8px';
-                row.style.padding = '8px';
-                row.style.display = 'flex';
-                row.style.justifyContent = 'space-between';
-                row.style.alignItems = 'center';
-                row.style.cursor = 'pointer';
-                row.style.boxShadow = '0 2px 4px rgba(0,0,0,0.03)';
-                row.innerHTML = `
-                    <div>
-                        <div style="font-weight:700; font-size:0.75rem;">${escapeHTML(r.name)}</div>
-                        <div style="font-size:0.7rem; color:var(--color-charcoal-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;">${escapeHTML(lastMsg.text)}</div>
+                chatsHTML += `
+                    <div class="client-history-item" data-chat-rider-id="${r.id}" style="margin-bottom:6px;">
+                        <div class="client-history-avatar">${r.initial}</div>
+                        <div class="client-history-info">
+                            <div class="client-history-name">${escapeHTML(r.name)}</div>
+                            <div class="client-history-sub" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${escapeHTML(lastMsg.text)}</div>
+                        </div>
+                        <span class="client-history-action" style="font-size:0.65rem;">Ouvrir</span>
                     </div>
-                    <div style="font-size:0.65rem; color:var(--color-charcoal-muted);">${escapeHTML(lastMsg.time)}</div>
                 `;
-                row.addEventListener('click', () => {
-                    closeClientDrawer();
-                    openChatDrawer(r);
-                });
-                clientChatsList.appendChild(row);
             });
         }
+
+        const clientDrawerBody = document.getElementById('client-dashboard-panel');
+        clientDrawerBody.innerHTML = `
+            <!-- Client Membership Card -->
+            <div class="client-premium-badge-card">
+                <div class="client-premium-title">${isPremium ? '💎 Client Premium' : '⭐ Espace Client'}</div>
+                <div class="client-premium-sub">Numéro : ${escapeHTML(client.phone)}</div>
+            </div>
+
+            <!-- Premium Upgrade Option (Gratuit) -->
+            ${!isPremium ? `
+                <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,250,240,0.9); border: 1.5px solid var(--color-primary-yellow); border-radius:12px; padding:14px; text-align: left;">
+                    <h4 style="margin:0 0 6px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><polygon points="12 2 2 22 12 17 22 22 12 2"></polygon></svg>
+                        Devenir Client Premium !
+                    </h4>
+                    <p style="margin:0 0 10px 0; font-size:0.72rem; color:var(--color-charcoal-light); line-height: 1.35;">
+                        Débloquez tous les livreurs en illimité sans payer 200 FCFA par profil.
+                    </p>
+                    <button type="button" class="btn-unlock" id="btn-client-pay-premium" style="width:100%; padding:10px; font-size:0.82rem; border-radius:10px; box-shadow:none; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #D4AF37;"><path d="M6 3h12l4 6-10 13L2 9z"></path></svg>
+                        Activer le Premium (5 000 FCFA / mois)
+                    </button>
+                </div>
+            ` : `
+                <!-- Premium Live Auto-Search Button -->
+                <div style="margin-bottom: 20px;">
+                    <button type="button" class="btn-unlock" id="btn-client-premium-search" style="width:100%; padding:12px; font-size:0.85rem; border-radius:12px; font-weight:700; background: linear-gradient(135deg, var(--color-primary-green), var(--color-primary-green-hover)); box-shadow:none; color: white; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        Recherche Automatique en Direct
+                    </button>
+                </div>
+            `}
+
+            <!-- Livreurs Consultés -->
+            <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,255,255,0.45); border-radius:16px; padding:14px; border:1px solid var(--color-border); text-align:left;">
+                <h4 style="margin:0 0 10px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                    Livreurs Consultés
+                </h4>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    ${viewedHTML}
+                </div>
+            </div>
+
+            <!-- Contacts Débloqués -->
+            <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,255,255,0.45); border-radius:16px; padding:14px; border:1px solid var(--color-border); text-align:left;">
+                <h4 style="margin:0 0 10px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                    Contacts Débloqués
+                </h4>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    ${contactedHTML}
+                </div>
+            </div>
+
+            <!-- Discussions -->
+            <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,255,255,0.45); border-radius:16px; padding:14px; border:1px solid var(--color-border); text-align:left;">
+                <h4 style="margin:0 0 10px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    Discussions Actives
+                </h4>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    ${chatsHTML}
+                </div>
+            </div>
+
+            <!-- Actions de Déconnexion -->
+            <button class="btn btn-secondary" id="btn-client-logout" style="width:100%; padding:12px; border-radius:16px; margin-top:24px; font-weight:700;">
+                🚪 Se déconnecter de ma session
+            </button>
+        `;
+
+        // Re-bind click event listeners of dynamically rendered buttons
+        if (!isPremium) {
+            document.getElementById('btn-client-pay-premium').addEventListener('click', () => {
+                STATE.pendingPremiumUpgrade = true;
+                openPaymentModal();
+            });
+        } else {
+            document.getElementById('btn-client-premium-search').addEventListener('click', () => {
+                closeClientDrawer();
+                showMapView();
+                locateClientAndLaunchMap(document.getElementById('map-locate-btn'));
+            });
+        }
+
+        document.getElementById('btn-client-logout').addEventListener('click', () => {
+            STATE.loggedClient = null;
+            closeClientDrawer();
+            STATE.unlockedRiders.clear();
+            STATE.clickedRiders.clear();
+            renderRiders();
+            updateMapBlurState();
+            updateNavButtons();
+            alert("Session déconnectée avec succès.");
+        });
+
+        // Click on viewed item opens details
+        document.querySelectorAll('[data-rider-id]').forEach(el => {
+            el.addEventListener('click', () => {
+                const rId = el.getAttribute('data-rider-id');
+                const r = findRiderById(rId);
+                if (r) {
+                    closeClientDrawer();
+                    if (STATE.map) {
+                        STATE.map.setView([r.lat, r.lng], 15);
+                        setTimeout(() => {
+                            selectRider(r);
+                        }, 500);
+                    }
+                }
+            });
+        });
+
+        // Click on chat item opens chat
+        document.querySelectorAll('[data-chat-rider-id]').forEach(el => {
+            el.addEventListener('click', () => {
+                const rId = el.getAttribute('data-chat-rider-id');
+                const r = findRiderById(rId);
+                if (r) {
+                    closeClientDrawer();
+                    openChatDrawer(r);
+                }
+            });
+        });
     }
 
     function openClientDrawer() {
@@ -3547,28 +3719,27 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sector-active-toast').classList.remove('show');
     });
 
-    // Disconnect (Logout) Navigation Button Click Binding
-    const btnNavLogout = document.getElementById('btn-nav-logout');
-    if (btnNavLogout) {
-        btnNavLogout.addEventListener('click', () => {
-            STATE.loggedClient = null;
-            STATE.loggedDriver = null;
-            STATE.isAdmin = false;
-            
-            // Close any open drawers/views
-            closeClientDrawer();
-            closeDriverDrawer();
-            closeAdminModal();
-            
-            // Reset map locks
-            STATE.unlockedRiders.clear();
-            STATE.clickedRiders.clear();
-            
-            renderRiders();
-            updateMapBlurState();
-            updateNavButtons();
-            
-            alert("Session déconnectée avec succès.");
+    // Profile (Mon Compte) Navigation Button Click Binding
+    function openDriverDashboardDrawer() {
+        if (!STATE.loggedDriver) return;
+        driverDrawer.classList.add('open');
+        mainFooter.classList.add('hidden');
+        driverRegisterPanel.classList.add('hidden');
+        driverLoginPanel.classList.add('hidden');
+        driverDashboardPanel.classList.remove('hidden');
+        updateDriverDashboardView();
+    }
+
+    const btnNavProfile = document.getElementById('btn-nav-profile');
+    if (btnNavProfile) {
+        btnNavProfile.addEventListener('click', () => {
+            if (STATE.loggedClient) {
+                openClientDrawer();
+            } else if (STATE.loggedDriver) {
+                openDriverDashboardDrawer();
+            } else if (STATE.isAdmin) {
+                openAdminModal();
+            }
         });
     }
 

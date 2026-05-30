@@ -3497,3 +3497,302 @@ header {
         display: block !important; /* Keep the name visible on small screens */
     }
 }
+
+/* ==========================================================================
+   REFONTE VISUELLE PREMIUM & BOUTONS RETOUR UNIFIES (SAVANNAH GLASS)
+   ========================================================================== */
+
+/* Premium Header Profile Button */
+#btn-nav-profile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-weight: 700;
+    background: rgba(141, 85, 55, 0.08) !important;
+    color: var(--color-primary-brown) !important;
+    border: 1px solid rgba(141, 85, 55, 0.15) !important;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: var(--transition-smooth);
+}
+
+#btn-nav-profile:hover {
+    background: rgba(141, 85, 55, 0.15) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(141, 85, 55, 0.1);
+}
+
+#btn-nav-profile:active {
+    transform: scale(0.97);
+}
+
+/* Unified Premium Back/Retour Buttons */
+.btn-back-drawer, .btn-back-modal {
+    background: rgba(141, 85, 55, 0.08) !important;
+    color: var(--color-primary-brown) !important;
+    border: 1px solid rgba(141, 85, 55, 0.15) !important;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    transition: var(--transition-smooth);
+    box-shadow: none !important;
+}
+
+.btn-back-drawer:hover, .btn-back-modal:hover {
+    background: rgba(141, 85, 55, 0.15) !important;
+    transform: translateX(-2px);
+    color: var(--color-primary-brown-hover) !important;
+}
+
+.btn-back-drawer:active, .btn-back-modal:active {
+    transform: scale(0.96);
+}
+
+/* Rider Dashboard Profile Card & Upgrades */
+.rider-dash-profile-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.45)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 24px !important;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 12px 35px rgba(54, 42, 33, 0.06), inset 0 1px 2px rgba(255, 255, 255, 0.95);
+    text-align: left;
+}
+
+.rider-dash-avatar-wrapper {
+    position: relative;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary-yellow), var(--color-primary-brown)) !important;
+    border: 2px solid white;
+    box-shadow: var(--shadow-medium);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+    font-size: 1.45rem;
+    flex-shrink: 0;
+}
+
+.rider-dash-avatar-wrapper::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 14px;
+    height: 14px;
+    background-color: var(--color-primary-green);
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.rider-dash-profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rider-dash-profile-info h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-primary-brown-dark);
+    margin: 0;
+}
+
+.rider-dash-profile-info p {
+    font-size: 0.82rem;
+    color: var(--color-charcoal-light);
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Stats in Glassmorphism */
+.rider-dash-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.rider-dash-stat-card {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.55) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 18px;
+    padding: 12px 8px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(54, 42, 33, 0.03);
+    transition: var(--transition-smooth);
+}
+
+.rider-dash-stat-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.65) !important;
+    box-shadow: var(--shadow-soft);
+}
+
+.rider-dash-stat-lbl {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--color-charcoal-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.rider-dash-stat-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-primary-brown-dark);
+}
+
+.rider-dash-stat-desc {
+    font-size: 0.62rem;
+    color: var(--color-charcoal-light);
+    margin-top: 2px;
+}
+
+/* Reviews List Speech Bubbles */
+.rider-review-bubble {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: 18px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 15px rgba(54, 42, 33, 0.02);
+    text-align: left;
+    transition: var(--transition-smooth);
+}
+
+.rider-review-bubble:hover {
+    background: rgba(255, 255, 255, 0.7) !important;
+    transform: translateY(-1px);
+    border-color: rgba(141, 85, 55, 0.25);
+}
+
+/* Client Card upgrades */
+.client-premium-badge-card {
+    background: linear-gradient(135deg, var(--color-primary-brown), #A37050) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 24px !important;
+    padding: 20px;
+    color: white;
+    text-align: left;
+    box-shadow: 0 12px 35px rgba(141, 85, 55, 0.2);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.client-premium-badge-card::after {
+    content: '';
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+}
+
+.client-premium-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.2px;
+}
+
+.client-premium-sub {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Client History cards */
+.client-history-item {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: 16px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: var(--transition-smooth);
+    cursor: pointer;
+    text-align: left;
+}
+
+.client-history-item:hover {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-color: var(--color-primary-brown);
+    transform: translateY(-1.5px);
+    box-shadow: var(--shadow-soft);
+}
+
+.client-history-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background-color: var(--color-primary-brown-light);
+    color: var(--color-charcoal);
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(141, 85, 55, 0.15);
+}
+
+.client-history-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.client-history-name {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--color-charcoal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.client-history-sub {
+    font-size: 0.72rem;
+    color: var(--color-charcoal-light);
+    margin-top: 1px;
+}
+
+.client-history-action {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-primary-red);
+    background: rgba(232, 92, 74, 0.08);
+    border: 1px solid rgba(232, 92, 74, 0.15);
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: var(--transition-smooth);
+}
+
+.client-history-item:hover .client-history-action {
+    background: var(--color-primary-red);
+    color: white;
+}
+
