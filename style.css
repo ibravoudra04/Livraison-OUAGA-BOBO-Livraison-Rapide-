@@ -3369,6 +3369,57 @@ header {
     transform: translateY(-1px) !important;
 }
 
+/* Floating Service Button on Map */
+.map-service-btn {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.58) !important;
+    border: 1px solid rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(25px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+    box-shadow: 
+        0 16px 45px rgba(54, 42, 33, 0.1),
+        inset 0 1px 2px rgba(255, 255, 255, 0.95) !important;
+    color: var(--color-primary-brown-dark) !important;
+    padding: 10px 22px !important;
+    border-radius: 100px !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    z-index: 500;
+    transition: var(--transition-smooth);
+    border: 1.5px solid rgba(141, 85, 55, 0.22) !important;
+}
+
+.map-service-btn svg {
+    color: var(--color-primary-red) !important;
+}
+
+.map-service-btn:hover {
+    background: rgba(255, 255, 255, 0.85) !important;
+    transform: translateX(-50%) translateY(-2.5px) !important;
+    box-shadow: 
+        0 20px 50px rgba(54, 42, 33, 0.14),
+        inset 0 1px 2px rgba(255, 255, 255, 0.95) !important;
+}
+
+.map-service-btn:active {
+    transform: translateX(-50%) translateY(0.5px) !important;
+}
+
+/* Offset service button on mobile viewport when sheet is closed */
+@media (max-width: 768px) {
+    .map-service-btn {
+        bottom: 80px;
+    }
+}
+
 /* Responsive Media Queries for Elegant Header Buttons */
 @media (max-width: 768px) {
     header {

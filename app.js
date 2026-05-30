@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pendingServiceUnlock: null, // Rider that triggered the 5-profile limit unlock modal
         pendingSubscriptionUnlock: false, // Flag when a driver is paying their subscription
         pendingClientSubscriptionUnlock: false, // Flag when a client is paying their subscription
+        pendingDirectMapUnlock: false, // Flag when a client is unlocking the entire map
         loggedDriver: null, // The currently logged-in driver profile
         loggedClient: null, // The currently logged-in client profile
         isAdmin: false, // Flag showing if logged in as administrator
@@ -462,6 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnDriverUpdateLocation = document.getElementById('btn-driver-update-location');
     const driverLocationUpdateStatus = document.getElementById('driver-location-update-status');
     const mapHomeBtn = document.getElementById('map-home-btn');
+    const mapServiceBtn = document.getElementById('map-service-btn');
 
     // Onboarding file inputs & vehicle selection
     const uploadCniRecto = document.getElementById('upload-cni-recto');
@@ -867,6 +869,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Slide Open Bottom Sheet
         riderSheet.classList.add('open');
         
+        // Hide map service button when details are open
+        if (mapServiceBtn) mapServiceBtn.classList.add('hidden');
+        
         // Update map blur state
         updateMapBlurState();
     }
@@ -880,11 +885,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update map blur state
         updateMapBlurState();
+
+        // Restore map service button when details are closed if not premium or admin
+        const isPremiumClient = STATE.loggedClient && STATE.loggedClient.subscriptionPaid === true;
+        if (mapServiceBtn && !STATE.isAdmin && !isPremiumClient) {
+            mapServiceBtn.classList.remove('hidden');
+        }
     }
 
     // --- SIMULATED PAYMENT CONTROLLERS ---
     function openPaymentModal() {
-        if (!STATE.selectedRider && !STATE.pendingServiceUnlock && !STATE.pendingSubscriptionUnlock && !STATE.pendingClientSubscriptionUnlock) return;
+        if (!STATE.selectedRider && !STATE.pendingServiceUnlock && !STATE.pendingSubscriptionUnlock && !STATE.pendingClientSubscriptionUnlock && !STATE.pendingDirectMapUnlock) return;
 
         // Reset to first step
         paymentFormStep.style.display = 'block';
@@ -909,6 +920,9 @@ document.addEventListener('DOMContentLoaded', () => {
             amountEl.innerText = "500 FCFA";
         } else if (STATE.pendingServiceUnlock) {
             titleEl.innerText = "Déblocage du Service de Recherche";
+            amountEl.innerText = "200 FCFA";
+        } else if (STATE.pendingDirectMapUnlock) {
+            titleEl.innerText = "Déblocage Complet de la Carte";
             amountEl.innerText = "200 FCFA";
         } else {
             titleEl.innerText = "Déverrouillage Contact Livreur";
@@ -1040,6 +1054,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 STATE.totalUnlocks++;
                 STATE.totalRevenue += 200;
+            } else if (STATE.pendingDirectMapUnlock) {
+                // Unlock all current riders in the active city for this session
+                const cityRiders = STATE.riders[STATE.currentCity] || [];
+                cityRiders.forEach(r => {
+                    STATE.unlockedRiders.add(r.id);
+                    // Increment each driver's contactsCount dynamically
+                    if (r.contactsCount === undefined) r.contactsCount = 0;
+                    r.contactsCount++;
+                });
+                STATE.totalUnlocks++;
+                STATE.totalRevenue += 200;
             } else if (STATE.selectedRider) {
                 STATE.unlockedRiders.add(STATE.selectedRider.id);
                 
@@ -1058,13 +1083,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!STATE.loggedClient.contactedDrivers) {
                     STATE.loggedClient.contactedDrivers = new Set();
                 }
-                const unlockedRiderId = STATE.selectedRider ? STATE.selectedRider.id : (STATE.pendingServiceUnlock ? STATE.pendingServiceUnlock.id : '');
-                if (unlockedRiderId) {
-                    STATE.loggedClient.contactedDrivers.add(unlockedRiderId);
-                    STATE.unlockedRiders.add(unlockedRiderId); // Ensure in unlocked set
-                    
-                    // Utiliser la fonction RPC sécurisée (simulate_payment_unlock) pour contourner la restriction RLS d'insertion directe
-                    supabase.rpc('simulate_payment_unlock', { target_rider_id: unlockedRiderId }).then();
+                if (STATE.pendingDirectMapUnlock) {
+                    // Unlock all current riders in this city for the loggedClient
+                    const cityRiders = STATE.riders[STATE.currentCity] || [];
+                    cityRiders.forEach(r => {
+                        STATE.loggedClient.contactedDrivers.add(r.id);
+                        supabase.rpc('simulate_payment_unlock', { target_rider_id: r.id }).then();
+                    });
+                } else {
+                    const unlockedRiderId = STATE.selectedRider ? STATE.selectedRider.id : (STATE.pendingServiceUnlock ? STATE.pendingServiceUnlock.id : '');
+                    if (unlockedRiderId) {
+                        STATE.loggedClient.contactedDrivers.add(unlockedRiderId);
+                        STATE.unlockedRiders.add(unlockedRiderId); // Ensure in unlocked set
+                        
+                        // Utiliser la fonction RPC sécurisée (simulate_payment_unlock) pour contourner la restriction RLS d'insertion directe
+                        supabase.rpc('simulate_payment_unlock', { target_rider_id: unlockedRiderId }).then();
+                    }
                 }
                 updateClientDashboardView();
             }
@@ -1093,6 +1127,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const riderToView = STATE.pendingServiceUnlock;
             STATE.pendingServiceUnlock = null;
             selectRider(riderToView);
+        } else if (STATE.pendingDirectMapUnlock) {
+            STATE.pendingDirectMapUnlock = false;
+            // Hide the floating button since they just unlocked the entire map
+            if (mapServiceBtn) mapServiceBtn.classList.add('hidden');
+            updateMapBlurState();
         } else if (STATE.selectedRider) {
             selectRider(STATE.selectedRider);
         }
@@ -1779,6 +1818,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Apply map blur depending on payment/unlock state
         updateMapBlurState();
+
+        // Show floating service button if not premium or admin and map is blurred
+        const isPremiumClient = STATE.loggedClient && STATE.loggedClient.subscriptionPaid === true;
+        if (mapServiceBtn) {
+            if (STATE.isAdmin || isPremiumClient || STATE.unlockedRiders.size > 0) {
+                mapServiceBtn.classList.add('hidden');
+            } else {
+                mapServiceBtn.classList.remove('hidden');
+            }
+        }
     }
 
     function returnToWelcomePortal() {
@@ -1796,6 +1845,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Hide floating home/return button
         if (mapHomeBtn) mapHomeBtn.classList.add('hidden');
+        
+        // Hide floating service button
+        if (mapServiceBtn) mapServiceBtn.classList.add('hidden');
         
         closeRiderSheet();
         if (driverDrawer.classList.contains('open')) {
@@ -3429,6 +3481,14 @@ document.addEventListener('DOMContentLoaded', () => {
             showMapView();
             // Trigger robust live geolocation
             locateClientAndLaunchMap(document.getElementById('map-locate-btn'));
+        });
+    }
+
+    // Global Map Service Button Click Binding (Direct Unlock)
+    if (mapServiceBtn) {
+        mapServiceBtn.addEventListener('click', () => {
+            STATE.pendingDirectMapUnlock = true;
+            openPaymentModal();
         });
     }
 
