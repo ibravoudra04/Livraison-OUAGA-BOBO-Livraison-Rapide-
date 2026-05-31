@@ -611,9 +611,9 @@
 
         <!-- Drawer Espace Client -->
         <div class="driver-drawer" id="client-drawer">
-            <div class="drawer-header" style="background: var(--color-primary-brown-dark); color: white; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                <button class="btn-back-drawer" id="btn-close-client-drawer" style="background: rgba(255, 255, 255, 0.15) !important; color: white !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px;" aria-label="Fermer le menu">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <div class="drawer-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <button class="btn-back-drawer" id="btn-close-client-drawer" aria-label="Fermer le menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                     Retour
                 </button>
                 <h2 style="display:flex; align-items:center; gap:8px; margin: 0; font-size:1.05rem;">
@@ -640,14 +640,14 @@
                     <!-- Option de passage au Premium pour le Client -->
                     <div id="client-premium-upgrade-box" class="driver-terms-info" style="margin-top: 15px; background: rgba(255,250,240,0.9); border: 1.5px solid var(--color-primary-yellow); border-radius:12px; padding:12px; text-align: left;">
                         <h4 style="margin:0 0 6px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><polygon points="12 2 2 22 12 17 22 22 12 2"></polygon></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown); fill: var(--color-primary-brown);"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
                             Devenir Client Premium !
                         </h4>
                         <p style="margin:0 0 10px 0; font-size:0.72rem; color:var(--color-charcoal-light); line-height: 1.35;">
                             Recherchez et débloquez en illimité les livreurs sans payer 200 FCFA par profil.
                         </p>
                         <button type="button" class="btn-unlock" id="btn-client-pay-premium" style="width:100%; padding:10px; font-size:0.82rem; border-radius:10px; box-shadow:none; display:flex; align-items:center; justify-content:center; gap:6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #D4AF37;"><path d="M6 3h12l4 6-10 13L2 9z"></path></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #F6CD56; fill: #F6CD56;"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
                             Activer le Premium (5 000 FCFA / mois)
                         </button>
                     </div>
@@ -773,8 +773,9 @@
                                     </button>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary" id="btn-submit-client-register" style="width: 100%; padding: 14px; border-radius: 16px; margin-top: 15px; font-weight:700;">
-                                💎 Créer mon compte Premium (5 000 FCFA / mois)
+                            <button type="submit" class="btn btn-primary" id="btn-submit-client-register" style="width: 100%; padding: 14px; border-radius: 16px; margin-top: 15px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #F6CD56; fill: #F6CD56;"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
+                                Créer mon compte Premium (5 000 FCFA / mois)
                             </button>
                         </form>
                         <p class="driver-login-link" style="text-align:center; margin-top:15px; font-size:0.85rem;">Déjà un compte ? <a href="#" id="link-to-login-panel" style="font-weight:700; color:var(--color-primary-red);">Se connecter</a></p>
@@ -786,14 +787,17 @@
         <!-- Modale de Suivi Admin (Dashboard d'Administration) -->
         <div class="modal-overlay" id="admin-modal">
             <div class="admin-card" style="max-width: 900px; width: 95%;">
-                <div class="payment-header" style="background: var(--color-primary-brown-dark); color: white; display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
-                    <button class="btn-back-modal" id="btn-close-admin" style="background: rgba(255, 255, 255, 0.15) !important; color: white !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px;" aria-label="Fermer">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <div class="payment-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+                    <button class="btn-back-modal" id="btn-close-admin" aria-label="Fermer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                         Retour
                     </button>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <h3 style="margin: 0; font-size: 1.05rem;">🔑 Espace Administration</h3>
-                        <button id="btn-admin-logout-session" style="font-size:0.75rem; background: rgba(255,255,255,0.18); border: none; color: white; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: var(--font-sans); transition: var(--transition-smooth);">Déconnexion</button>
+                        <h3 style="margin: 0; font-size: 1.05rem; display:flex; align-items:center; gap:6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            Espace Administration
+                        </h3>
+                        <button id="btn-admin-logout-session" style="font-size:0.75rem; background: rgba(232, 92, 74, 0.08); border: 1px solid rgba(232, 92, 74, 0.15); color: var(--color-primary-red); padding: 5px 10px; border-radius: 8px; cursor: pointer; font-weight: 700; font-family: var(--font-sans); transition: var(--transition-smooth);">Déconnexion</button>
                     </div>
                     <div style="width: 70px;"></div>
                 </div>
@@ -970,7 +974,14 @@
             <div class="location-portal-card">
                 <!-- Étape 1 : Choix de la ville -->
                 <div id="loc-step-city">
-                    <div class="loc-header">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; width: 100%;">
+                        <button class="btn-back-modal" id="btn-close-location-portal" aria-label="Retour">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                            Retour
+                        </button>
+                    </div>
+                    
+                    <div class="loc-header" style="margin-top:0;">
                         <img src="burkina_map.png" alt="Carte du Burkina Faso" class="burkina-map-badge">
                         <h3>Dans quelle ville êtes-vous ?</h3>
                         <p>Choisissez votre ville pour localiser les livreurs disponibles autour de vous.</p>
@@ -995,14 +1006,6 @@
                             <h4>Bobo-Dioulasso</h4>
                             <span class="city-desc">6 livreurs actifs</span>
                         </div>
-                    </div>
-                    
-                    <!-- Bouton Retour tout en bas à côté/en dessous de Bobo-Dioulasso -->
-                    <div style="display:flex; justify-content:center; margin-top:24px;">
-                        <button class="btn-back-modal" id="btn-close-location-portal" style="width:100%; max-width:200px; justify-content:center;" aria-label="Retour">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                            Retour
-                        </button>
                     </div>
                 </div>
                 

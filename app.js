@@ -1551,11 +1551,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <!-- Actions de Simulation / Déconnexion -->
             <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
-                <button class="btn btn-secondary" id="btn-driver-simulate-contact" style="width:100%; padding:12px; border-radius:12px; font-size:0.8rem; background:rgba(141,85,55,0.04) !important; border:1px dashed rgba(141,85,55,0.2) !important; color:var(--color-primary-brown) !important;">
-                    🎯 Simuler +2 contacts clics
+                <button class="btn btn-secondary" id="btn-driver-simulate-contact" style="width:100%; padding:12px; border-radius:12px; font-size:0.8rem; background:rgba(141,85,55,0.04) !important; border:1px dashed rgba(141,85,55,0.2) !important; color:var(--color-primary-brown) !important; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                    Simuler +2 contacts clics
                 </button>
-                <button class="btn btn-secondary" id="btn-driver-logout" style="width:100%; padding:12px; border-radius:16px; font-weight:700;">
-                    🚪 Se déconnecter de ma session
+                <button class="btn btn-secondary" id="btn-driver-logout" style="width:100%; padding:12px; border-radius:16px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Se déconnecter de ma session
                 </button>
             </div>
         `;
@@ -1700,23 +1702,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const clientDrawerBody = document.getElementById('client-dashboard-panel');
         clientDrawerBody.innerHTML = `
             <!-- Client Membership Card -->
-            <div class="client-premium-badge-card">
-                <div class="client-premium-title">${isPremium ? '💎 Client Premium' : '⭐ Espace Client'}</div>
-                <div class="client-premium-sub">Numéro : ${escapeHTML(client.phone)}</div>
+            <div class="client-premium-badge-card" style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                <div style="flex: 1;">
+                    <div class="client-premium-title" style="display: flex; align-items: center; gap: 8px;">
+                        ${isPremium ? `
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #F6CD56; fill: #F6CD56; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
+                            Client Premium
+                        ` : `
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #F6CD56; fill: #F6CD56; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            Espace Client
+                        `}
+                    </div>
+                    <div class="client-premium-sub">Numéro : ${escapeHTML(client.phone)}</div>
+                </div>
+                ${isPremium ? `
+                    <div class="premium-sparkle-badge" style="background: rgba(255, 255, 255, 0.2); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.3); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: white;">PRO</div>
+                ` : `
+                    <div class="premium-sparkle-badge" style="background: rgba(0, 0, 0, 0.2); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: white;">Gratuit</div>
+                `}
             </div>
 
             <!-- Premium Upgrade Option (Gratuit) -->
             ${!isPremium ? `
                 <div class="driver-terms-info" style="margin-top: 15px; background: rgba(255,250,240,0.9); border: 1.5px solid var(--color-primary-yellow); border-radius:12px; padding:14px; text-align: left;">
                     <h4 style="margin:0 0 6px 0; font-size:0.85rem; font-weight:700; color:var(--color-primary-brown); display:flex; align-items:center; gap:6px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown);"><polygon points="12 2 2 22 12 17 22 22 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown); fill: var(--color-primary-brown);"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
                         Devenir Client Premium !
                     </h4>
                     <p style="margin:0 0 10px 0; font-size:0.72rem; color:var(--color-charcoal-light); line-height: 1.35;">
                         Débloquez tous les livreurs en illimité sans payer 200 FCFA par profil.
                     </p>
                     <button type="button" class="btn-unlock" id="btn-client-pay-premium" style="width:100%; padding:10px; font-size:0.82rem; border-radius:10px; box-shadow:none; display:flex; align-items:center; justify-content:center; gap:6px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #D4AF37;"><path d="M6 3h12l4 6-10 13L2 9z"></path></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #F6CD56; fill: #F6CD56;"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
                         Activer le Premium (5 000 FCFA / mois)
                     </button>
                 </div>
@@ -1764,8 +1781,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
 
             <!-- Actions de Déconnexion -->
-            <button class="btn btn-secondary" id="btn-client-logout" style="width:100%; padding:12px; border-radius:16px; margin-top:24px; font-weight:700;">
-                🚪 Se déconnecter de ma session
+            <button class="btn btn-secondary" id="btn-client-logout" style="width:100%; padding:12px; border-radius:16px; margin-top:24px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Se déconnecter de ma session
             </button>
         `;
 
@@ -3591,7 +3609,7 @@ document.addEventListener('DOMContentLoaded', () => {
         STATE.pendingClientSubscriptionUnlock = true;
         closeAuthModal();
         openPaymentModal();
-        alert("💎 Pour activer votre Compte Client Premium, veuillez procéder au paiement de 5 000 FCFA (simulation).");
+        alert("Pour activer votre Compte Client Premium, veuillez procéder au paiement de 5 000 FCFA (simulation).");
     });
 
     // Client Dashboard elements upgrade Premium
