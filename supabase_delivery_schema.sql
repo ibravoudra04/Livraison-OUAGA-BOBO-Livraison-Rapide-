@@ -118,6 +118,8 @@ CREATE OR REPLACE VIEW public.livreurs_view AS
 SELECT 
     id, name, vehicle, lat, lng, initial, contacts_count, subscription_paid, status, views_count, rating, city, created_at,
     CASE 
+        -- Période de gratuité de 30 jours (du 1er juin au 1er juillet 2026 inclus)
+        WHEN now() < '2026-07-02 00:00:00+00'::timestamptz THEN phone
         -- Règle 1 : Le connecté est le livreur lui-même
         WHEN (select auth.uid()) = id THEN phone
         -- Règle 2 : Le connecté a débloqué ce livreur
@@ -135,6 +137,8 @@ SELECT
             END
     END as phone_display,
     CASE 
+        -- Période de gratuité de 30 jours
+        WHEN now() < '2026-07-02 00:00:00+00'::timestamptz THEN true
         WHEN (select auth.uid()) = id 
            OR EXISTS (
                SELECT 1 FROM public.deblocages d 
@@ -209,7 +213,10 @@ CREATE POLICY "Anyone can read reviews" ON public.avis
 CREATE POLICY "Unlocked clients can post reviews" ON public.avis
     FOR INSERT TO authenticated WITH CHECK (
         auth.uid() = client_id
-        AND EXISTS (SELECT 1 FROM public.deblocages d WHERE d.client_id = auth.uid() AND d.rider_id = rider_id)
+        AND (
+            now() < '2026-07-02 00:00:00+00'::timestamptz
+            OR EXISTS (SELECT 1 FROM public.deblocages d WHERE d.client_id = auth.uid() AND d.rider_id = rider_id)
+        )
     );
 
 -- 4. Politiques RLS de Messagerie (Chats)

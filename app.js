@@ -3,6 +3,10 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- 30-DAY FREE PERIOD TRIAL ---
+    // The current time is 2026-06-01. The free trial period is valid for 30 days until 2026-07-01 23:59:59 UTC.
+    const IS_FREE_PERIOD = new Date() < new Date('2026-07-02T00:00:00Z');
+
     const escapeHTML = (str) => {
         if (typeof str !== 'string') return str;
         return str
@@ -543,6 +547,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Filter out drivers based on active status
         let visibleRiders = cityRiders.filter(rider => {
+            // Keep all drivers visible and active during the free trial period
+            if (IS_FREE_PERIOD) {
+                rider.status = 'actif';
+                return true;
+            }
             const count = rider.contactsCount || 0;
             const paid = rider.subscriptionPaid || false;
             
@@ -736,6 +745,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const mapEl = document.getElementById('map');
         if (!mapEl) return;
         
+        // Disable blur during free trial period
+        if (IS_FREE_PERIOD) {
+            mapEl.classList.remove('map-blurred');
+            return;
+        }
+        
         const isPremiumClient = STATE.loggedClient && STATE.loggedClient.subscriptionPaid === true;
         
         if (STATE.isAdmin || isPremiumClient) {
@@ -794,7 +809,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Check if already unlocked (admins and subscribed clients access everything for free!)
-        const isUnlocked = STATE.unlockedRiders.has(rider.id) || STATE.isAdmin || (STATE.loggedClient && STATE.loggedClient.subscriptionPaid === true);
+        const isUnlocked = IS_FREE_PERIOD || STATE.unlockedRiders.has(rider.id) || STATE.isAdmin || (STATE.loggedClient && STATE.loggedClient.subscriptionPaid === true);
         
         if (!isUnlocked && !STATE.clickedRiders.has(rider.id)) {
             if (STATE.clickedRiders.size >= 5) {
@@ -888,7 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Restore map service button when details are closed if not premium or admin
         const isPremiumClient = STATE.loggedClient && STATE.loggedClient.subscriptionPaid === true;
-        if (mapServiceBtn && !STATE.isAdmin && !isPremiumClient) {
+        if (mapServiceBtn && !IS_FREE_PERIOD && !STATE.isAdmin && !isPremiumClient) {
             mapServiceBtn.classList.remove('hidden');
         }
     }
@@ -1370,7 +1385,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const driver = STATE.loggedDriver;
         const contacts = driver.contactsCount || 0;
         const views = driver.viewsCount || 0;
-        const isPaid = driver.subscriptionPaid || false;
+        let isPaid = driver.subscriptionPaid || false;
+        
+        // Enable active subscription status automatically during the free trial period
+        if (IS_FREE_PERIOD) {
+            isPaid = true;
+        }
         
         // Define status theme
         let statusBadgeText = "";
@@ -1627,7 +1647,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!STATE.loggedClient) return;
         
         const client = STATE.loggedClient;
-        const isPremium = client.subscriptionPaid === true;
+        let isPremium = client.subscriptionPaid === true;
+        
+        // Enable client premium access automatically during the free trial period
+        if (IS_FREE_PERIOD) {
+            isPremium = true;
+        }
 
         // Render Viewed Drivers HTML
         const viewedIds = Array.from(client.viewedDrivers || []);
@@ -2012,7 +2037,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show floating service button if not premium or admin and map is blurred
         const isPremiumClient = STATE.loggedClient && STATE.loggedClient.subscriptionPaid === true;
         if (mapServiceBtn) {
-            if (STATE.isAdmin || isPremiumClient || STATE.unlockedRiders.size > 0) {
+            if (IS_FREE_PERIOD || STATE.isAdmin || isPremiumClient || STATE.unlockedRiders.size > 0) {
                 mapServiceBtn.classList.add('hidden');
             } else {
                 mapServiceBtn.classList.remove('hidden');
