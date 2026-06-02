@@ -23,7 +23,7 @@ L'application repose sur une architecture sans framework lourds à l'avant-garde
 * **Backend & Base de données** :
   * **Supabase** : Intégration de la base PostgreSQL, de l'authentification (Sessions persistantes JWT) et de la messagerie en temps réel.
 * **Hébergement & Déploiement** :
-  * **Vercel** : Déploiement automatique continu à chaque commit sur GitHub.
+  * **Vercel** : Déploiement automatique continu à chaque commit sur GitHub. URL de production : [livraisonrapide.app](https://livraisonrapide.app).
 
 ---
 
