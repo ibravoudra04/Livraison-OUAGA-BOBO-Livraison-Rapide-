@@ -4,15 +4,15 @@
   "description": "Mettez-vous en contact instantanément avec des livreurs indépendants à Ouagadougou et Bobo-Dioulasso.",
   "icons": [
     {
-      "src": "delivery_logo.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any maskable"
+      "src": "delivery_logo_premium.jpg",
+      "type": "image/jpeg",
+      "sizes": "192x192"
     },
     {
       "src": "delivery_logo_premium.jpg",
       "type": "image/jpeg",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "./index.html",
