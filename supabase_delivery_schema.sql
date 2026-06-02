@@ -1,15 +1,13 @@
--- 0. Nettoyer le schéma existant pour repartir sur des bases saines
+-- 0. Nettoyer les objets de code (triggers, fonctions, vues) sans toucher aux données
+-- ⚠️ NE JAMAIS UTILISER « DROP TABLE » EN PRODUCTION — cela détruit toutes les données !
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users CASCADE;
+DROP TRIGGER IF EXISTS on_deblocage_created ON public.deblocages CASCADE;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS public.increment_rider_contacts() CASCADE;
 DROP VIEW IF EXISTS public.livreurs_view CASCADE;
-DROP TABLE IF EXISTS public.avis CASCADE;
-DROP TABLE IF EXISTS public.deblocages CASCADE;
-DROP TABLE IF EXISTS public.chats_livraison CASCADE;
-DROP TABLE IF EXISTS public.livreurs CASCADE;
-DROP TABLE IF EXISTS public.clients_livraison CASCADE;
 
 -- 1. Table des clients de livraison
-CREATE TABLE public.clients_livraison (
+CREATE TABLE IF NOT EXISTS public.clients_livraison (
     id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
     phone TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
@@ -18,7 +16,7 @@ CREATE TABLE public.clients_livraison (
 );
 
 -- 2. Table des livreurs (riders)
-CREATE TABLE public.livreurs (
+CREATE TABLE IF NOT EXISTS public.livreurs (
     id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
     name TEXT NOT NULL,
     vehicle TEXT NOT NULL,
@@ -39,7 +37,7 @@ CREATE TABLE public.livreurs (
 );
 
 -- 3. Table des déblocages (relations clients-livreurs)
-CREATE TABLE public.deblocages (
+CREATE TABLE IF NOT EXISTS public.deblocages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID REFERENCES public.clients_livraison(id) ON DELETE CASCADE,
     rider_id UUID REFERENCES public.livreurs(id) ON DELETE CASCADE,
@@ -48,7 +46,7 @@ CREATE TABLE public.deblocages (
 );
 
 -- 4. Table des avis et revues de livreurs
-CREATE TABLE public.avis (
+CREATE TABLE IF NOT EXISTS public.avis (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     rider_id UUID REFERENCES public.livreurs(id) ON DELETE CASCADE,
     text TEXT NOT NULL,
@@ -58,7 +56,7 @@ CREATE TABLE public.avis (
 );
 
 -- 5. Table des messages (chats)
-CREATE TABLE public.chats_livraison (
+CREATE TABLE IF NOT EXISTS public.chats_livraison (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     rider_id UUID REFERENCES public.livreurs(id) ON DELETE CASCADE,
     client_id UUID REFERENCES public.clients_livraison(id) ON DELETE CASCADE,
