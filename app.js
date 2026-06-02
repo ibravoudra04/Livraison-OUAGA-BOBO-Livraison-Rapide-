@@ -3811,4 +3811,150 @@ document.addEventListener('DOMContentLoaded', () => {
     initMainMap();
     mapInitialized = true;
     updateNavButtons();
+
+    // --- PROGRESSIVE WEB APP (PWA) INSTALLATION ---
+    let deferredPrompt = null;
+    const pwaInstallBanner = document.getElementById('pwa-install-banner');
+    const btnPwaInstall = document.getElementById('btn-pwa-install');
+    const btnPwaClose = document.getElementById('btn-pwa-close');
+    const btnClientInstallPwa = document.getElementById('btn-client-install-pwa');
+    const btnDriverInstallPwa = document.getElementById('btn-driver-install-pwa');
+    const pwaIosModal = document.getElementById('pwa-ios-modal');
+    const btnClosePwaIos = document.getElementById('btn-close-pwa-ios');
+
+    function isAppInstalled() {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
+
+    function isIos() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+
+    function isSafari() {
+        return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    }
+
+    function setupInstallUI() {
+        if (isAppInstalled()) return;
+
+        if (isIos() && isSafari()) {
+            if (btnClientInstallPwa) {
+                btnClientInstallPwa.classList.remove('hidden');
+                btnClientInstallPwa.style.display = 'flex';
+            }
+            if (btnDriverInstallPwa) {
+                btnDriverInstallPwa.classList.remove('hidden');
+                btnDriverInstallPwa.style.display = 'flex';
+            }
+        }
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        if (!sessionStorage.getItem('pwa-banner-dismissed') && !isAppInstalled()) {
+            if (pwaInstallBanner) {
+                pwaInstallBanner.classList.remove('hidden');
+                pwaInstallBanner.classList.add('visible');
+            }
+        }
+
+        if (btnClientInstallPwa) {
+            btnClientInstallPwa.classList.remove('hidden');
+            btnClientInstallPwa.style.display = 'flex';
+        }
+        if (btnDriverInstallPwa) {
+            btnDriverInstallPwa.classList.remove('hidden');
+            btnDriverInstallPwa.style.display = 'flex';
+        }
+    });
+
+    function triggerPwaInstall() {
+        if (!deferredPrompt) return;
+        
+        if (pwaInstallBanner) {
+            pwaInstallBanner.classList.remove('visible');
+            pwaInstallBanner.classList.add('hidden');
+        }
+
+        deferredPrompt.prompt();
+
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the PWA install prompt');
+            } else {
+                console.log('User dismissed the PWA install prompt');
+            }
+            deferredPrompt = null;
+        });
+    }
+
+    if (btnPwaInstall) {
+        btnPwaInstall.addEventListener('click', triggerPwaInstall);
+    }
+
+    if (btnClientInstallPwa) {
+        btnClientInstallPwa.addEventListener('click', () => {
+            if (deferredPrompt) {
+                triggerPwaInstall();
+            } else if (isIos() && isSafari()) {
+                if (pwaIosModal) {
+                    pwaIosModal.classList.remove('hidden');
+                    pwaIosModal.classList.add('visible');
+                }
+            } else {
+                window.alert("ℹ️ L'installation n'est pas supportée sur ce navigateur ou est déjà complétée.");
+            }
+        });
+    }
+
+    if (btnDriverInstallPwa) {
+        btnDriverInstallPwa.addEventListener('click', () => {
+            if (deferredPrompt) {
+                triggerPwaInstall();
+            } else if (isIos() && isSafari()) {
+                if (pwaIosModal) {
+                    pwaIosModal.classList.remove('hidden');
+                    pwaIosModal.classList.add('visible');
+                }
+            } else {
+                window.alert("ℹ️ L'installation n'est pas supportée sur ce navigateur ou est déjà complétée.");
+            }
+        });
+    }
+
+    if (btnPwaClose) {
+        btnPwaClose.addEventListener('click', () => {
+            if (pwaInstallBanner) {
+                pwaInstallBanner.classList.remove('visible');
+                pwaInstallBanner.classList.add('hidden');
+            }
+            sessionStorage.setItem('pwa-banner-dismissed', 'true');
+        });
+    }
+
+    if (btnClosePwaIos) {
+        btnClosePwaIos.addEventListener('click', () => {
+            if (pwaIosModal) {
+                pwaIosModal.classList.remove('visible');
+                pwaIosModal.classList.add('hidden');
+            }
+        });
+    }
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./service-worker.js')
+                .then((registration) => {
+                    console.log('ServiceWorker registered with scope: ', registration.scope);
+                })
+                .catch((err) => {
+                    console.error('ServiceWorker registration failed: ', err);
+                });
+        });
+    }
+
+    setupInstallUI();
 });

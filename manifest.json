@@ -1,0 +1,23 @@
+{
+  "short_name": "Livraison Rapide",
+  "name": "Livraison Rapide — Ouaga & Bobo",
+  "description": "Mettez-vous en contact instantanément avec des livreurs indépendants à Ouagadougou et Bobo-Dioulasso.",
+  "icons": [
+    {
+      "src": "delivery_logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "delivery_logo_premium.jpg",
+      "type": "image/jpeg",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#FAF6F2",
+  "theme_color": "#8D5537",
+  "display": "standalone",
+  "orientation": "portrait"
+}
