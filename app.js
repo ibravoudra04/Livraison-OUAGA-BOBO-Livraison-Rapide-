@@ -789,12 +789,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // If client is geolocated, ONLY show drivers in proximity (e.g. within 5 km)
         if (STATE.clientCoordinates) {
-            visibleRiders = visibleRiders.filter(rider => {
-                const dist = getDistance(STATE.clientCoordinates.lat, STATE.clientCoordinates.lng, rider.lat, rider.lng);
-                // Save computed distance dynamically for bottom sheet display
-                rider.distance = `${dist.toFixed(1)} km`;
-                return dist <= 5.0; // Proximity filter radius
-            });
+            // Calculer la distance entre le client et le centre de la ville en cours de consultation
+            const distToCityCenter = getDistance(
+                STATE.clientCoordinates.lat,
+                STATE.clientCoordinates.lng,
+                STATE.cityCenters[STATE.currentCity].lat,
+                STATE.cityCenters[STATE.currentCity].lng
+            );
+
+            // Si le client est dans la ville active (rayon de 15 km autour du centre de cette ville)
+            if (distToCityCenter <= 15.0) {
+                const proximityRiders = visibleRiders.filter(rider => {
+                    const dist = getDistance(STATE.clientCoordinates.lat, STATE.clientCoordinates.lng, rider.lat, rider.lng);
+                    // Save computed distance dynamically for bottom sheet display
+                    rider.distance = `${dist.toFixed(1)} km`;
+                    return dist <= 5.0; // Proximity filter radius
+                });
+
+                // Repli : si aucun livreur n'est dans le rayon de 5 km, mais qu'il y a des livreurs actifs dans la ville
+                if (proximityRiders.length > 0) {
+                    visibleRiders = proximityRiders;
+                } else {
+                    // Calculer la distance pour tous les livreurs de la ville afin de l'afficher dans les détails
+                    visibleRiders.forEach(rider => {
+                        const dist = getDistance(STATE.clientCoordinates.lat, STATE.clientCoordinates.lng, rider.lat, rider.lng);
+                        rider.distance = `${dist.toFixed(1)} km`;
+                    });
+                    console.log("Aucun livreur dans un rayon de 5 km. Repli sur les livreurs de la ville.");
+                }
+            } else {
+                // Si le client regarde une autre ville, on n'applique pas la restriction de 5 km
+                visibleRiders.forEach(rider => {
+                    const dist = getDistance(STATE.clientCoordinates.lat, STATE.clientCoordinates.lng, rider.lat, rider.lng);
+                    rider.distance = `${dist.toFixed(1)} km`;
+                });
+            }
         }
         
         // Update Counter with active drivers
