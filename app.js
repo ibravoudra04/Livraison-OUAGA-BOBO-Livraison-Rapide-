@@ -325,8 +325,24 @@ document.addEventListener('DOMContentLoaded', () => {
             // Mise à jour de l'interface
             renderRiders();
             updateAdminDashboardStats();
+            updateCityActiveCounts();
         } catch (err) {
             console.error("Error loading data from Supabase:", err);
+        }
+    }
+
+    function updateCityActiveCounts() {
+        const activeOuaga = STATE.riders.ouaga.filter(r => r.status === 'actif').length;
+        const activeBobo = STATE.riders.bobo.filter(r => r.status === 'actif').length;
+        
+        const cityDescOuaga = document.getElementById('city-desc-ouaga');
+        const cityDescBobo = document.getElementById('city-desc-bobo');
+        
+        if (cityDescOuaga) {
+            cityDescOuaga.innerText = `${activeOuaga} livreur${activeOuaga > 1 ? 's' : ''} actif${activeOuaga > 1 ? 's' : ''}`;
+        }
+        if (cityDescBobo) {
+            cityDescBobo.innerText = `${activeBobo} livreur${activeBobo > 1 ? 's' : ''} actif${activeBobo > 1 ? 's' : ''}`;
         }
     }
 
@@ -3094,6 +3110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         updateAdminDashboardDrivers();
                     }
+                    updateCityActiveCounts();
                     alert(`🎉 Candidature de ${rider.name} approuvée et profil publié sur la carte !`);
                 }
             });
@@ -3111,6 +3128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     renderRiders();
                     updateAdminDashboardDrivers();
+                    updateCityActiveCounts();
                     alert(`⚠️ Profil de ${rider.name} suspendu et masqué de la carte.`);
                 }
             });
@@ -3128,6 +3146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (container.id === 'admin-table-pending-list') {
                         updateAdminPendingCandidates();
                     }
+                    updateCityActiveCounts();
                 }
             });
         });
@@ -3275,6 +3294,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 renderRiders();
                 updateAdminDashboardDrivers();
+                updateCityActiveCounts();
                 closeDocInspectorModal();
                 alert(`🎉 Candidature de ${activeInspectedRider.name} approuvée et profil publié sur la carte !`);
             }
@@ -3291,6 +3311,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 renderRiders();
                 updateAdminDashboardDrivers();
+                updateCityActiveCounts();
                 closeDocInspectorModal();
                 alert(`⚠️ Candidature de ${activeInspectedRider.name} suspendue et retirée de la carte.`);
             }
@@ -4066,6 +4087,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Switch main city focus to display the new driver pin instantly
             switchCity(targetCity);
             renderRiders();
+            updateCityActiveCounts();
 
             // Hide Form panel, Show confirmation success panel
             driverRegisterPanel.classList.add('hidden');
