@@ -764,6 +764,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Filter out drivers based on active status
         let visibleRiders = cityRiders.filter(rider => {
+            // A logged-in driver can always see their own pin on the map
+            if (STATE.loggedDriver && rider.id === STATE.loggedDriver.id) return true;
+
             // Pending candidates are never visible on the map
             if (rider.status === 'en attente') return false;
             
@@ -1669,7 +1672,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let subTextHTML = "";
         let showPayBtn = false;
         
-        if (contacts < 5) {
+        if (driver.status === 'en attente') {
+            statusBadgeText = "En attente";
+            statusBg = "var(--color-primary-yellow-light)";
+            statusColor = "var(--color-primary-brown)";
+            visibilityText = "🔴 En attente de validation (Masqué)";
+            visibilityColor = "var(--color-primary-red)";
+            subTextHTML = "Votre profil est en cours de validation par notre équipe d'administration. Vous serez visible sur la carte dès approbation.";
+        } else if (contacts < 5) {
             statusBadgeText = "Essai Gratuit";
             statusBg = "var(--color-green-light)";
             statusColor = "var(--color-green-soft)";
