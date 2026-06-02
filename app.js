@@ -483,6 +483,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateNavButtons();
                 updateMapBlurState();
                 renderRiders();
+                // Restore Supabase Auth session for admin in the background
+                checkActiveSession();
             } else {
                 checkActiveSession();
             }
@@ -3186,9 +3188,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Error loading CNI documents:", error);
                 adminDocPreviewRecto.src = MOCK_RECTO_SVG;
                 adminDocPreviewVerso.src = MOCK_VERSO_SVG;
-            } else if (data) {
-                adminDocPreviewRecto.src = data.cni_recto || MOCK_RECTO_SVG;
-                adminDocPreviewVerso.src = data.cni_verso || MOCK_VERSO_SVG;
+            } else {
+                adminDocPreviewRecto.src = (data && data.cni_recto) || MOCK_RECTO_SVG;
+                adminDocPreviewVerso.src = (data && data.cni_verso) || MOCK_VERSO_SVG;
             }
         });
         
