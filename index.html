@@ -584,7 +584,7 @@
                         <h4>⚠️ Règles de visibilité importantes :</h4>
                         <ul style="margin: 0; padding-left: 0;">
                             <li>Les <strong>4 premières mises en relation</strong> avec des clients sont 100% offertes.</li>
-                            <li>À partir de la <strong>4ème ou 5ème livraison</strong> (mises en relation), ou à partir du <strong>7ème jour</strong> de présence sur la plateforme, un abonnement de <strong>500 FCFA par 7 jours</strong> sera requis pour rester visible sur la carte.</li>
+                            <li id="driver-success-rule-sub">À partir de la <strong>4ème ou 5ème livraison</strong> (mises en relation), ou à partir du <strong>7ème jour</strong> de présence sur la plateforme, un abonnement de <strong>500 FCFA par 7 jours</strong> sera requis pour rester visible sur la carte.</li>
                             <li>Vous pouvez vous connecter à votre <strong>Espace Livreur</strong> à tout moment pour suivre votre statut et régler votre abonnement.</li>
                         </ul>
                     </div>
@@ -669,7 +669,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary-brown); fill: var(--color-primary-brown);"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
                             Devenir Client Premium !
                         </h4>
-                        <p style="margin:0 0 10px 0; font-size:0.72rem; color:var(--color-charcoal-light); line-height: 1.35;">
+                        <p id="client-upgrade-desc" style="margin:0 0 10px 0; font-size:0.72rem; color:var(--color-charcoal-light); line-height: 1.35;">
                             Recherchez et débloquez en illimité les livreurs sans payer 200 FCFA par profil.
                         </p>
                         <button type="button" class="btn-unlock" id="btn-client-pay-premium" style="width:100%; padding:10px; font-size:0.82rem; border-radius:10px; box-shadow:none; display:flex; align-items:center; justify-content:center; gap:6px;">
@@ -775,7 +775,7 @@
 
                     <!-- Panel Inscription Client -->
                     <div class="hidden" id="auth-client-register-section">
-                        <p class="form-subtitle" style="margin-bottom: 20px; text-align: center; font-size:0.85rem; color:var(--color-charcoal-light);">
+                        <p id="client-register-desc" class="form-subtitle" style="margin-bottom: 20px; text-align: center; font-size:0.85rem; color:var(--color-charcoal-light);">
                             Créez votre compte Client Premium (5 000 FCFA / mois) pour accéder à la recherche et messagerie directe illimitées.
                         </p>
                         <form id="auth-client-register-form">
@@ -852,6 +852,14 @@
                                 <p><span id="admin-menu-drivers-count">0</span> inscrit(s)</p>
                             </div>
                         </button>
+
+                        <button class="admin-menu-card" id="btn-menu-clients">
+                            <span class="menu-card-icon">👤</span>
+                            <div class="menu-card-info">
+                                <h4>Gestion des Clients</h4>
+                                <p><span id="admin-menu-clients-count">0</span> client(s)</p>
+                            </div>
+                        </button>
                         
                         <button class="admin-menu-card" id="btn-menu-pending">
                             <span class="menu-card-icon">🪪</span>
@@ -875,6 +883,14 @@
                             <div class="menu-card-info">
                                 <h4>Statistiques Plateforme</h4>
                                 <p>Revenus, clics et visites</p>
+                            </div>
+                        </button>
+
+                        <button class="admin-menu-card" id="btn-menu-settings">
+                            <span class="menu-card-icon">⚙️</span>
+                            <div class="menu-card-info">
+                                <h4>Configuration & Tarifs</h4>
+                                <p>Modifier les frais & options</p>
                             </div>
                         </button>
                     </div>
@@ -932,6 +948,33 @@
                         </div>
                     </div>
 
+                    <!-- Section Clients -->
+                    <div class="admin-sub-view hidden" id="sub-view-clients">
+                        <div class="sub-view-header">
+                            <button class="btn-back-menu" id="btn-back-menu-clients">⬅️ Retour</button>
+                            <h3>👤 Gestion des Clients</h3>
+                        </div>
+                        <p class="admin-subtitle">Lister tous les clients inscrits, suivre leur statut Premium et gérer leur compte.</p>
+                        <div class="admin-content-section" id="admin-clients-section">
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Téléphone</th>
+                                            <th>Abonnement</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-table-clients-list">
+                                        <!-- Rempli en JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 3. Section Candidatures -->
                     <div class="admin-sub-view hidden" id="sub-view-pending">
                         <div class="sub-view-header">
@@ -965,7 +1008,7 @@
                             <button class="btn-back-menu" id="btn-back-menu-subs">⬅️ Retour</button>
                             <h3>💳 Suivi des Abonnements</h3>
                         </div>
-                        <p class="admin-subtitle">Historique des transactions d'abonnements premium pour clients (5 000 FCFA/mois) et livreurs (500 FCFA/7j).</p>
+                        <p id="admin-subs-sub-view-subtitle" class="admin-subtitle">Historique des transactions d'abonnements premium pour clients (5 000 FCFA/mois) et livreurs (500 FCFA/7j).</p>
                         <div class="admin-content-section" id="admin-subs-section">
                             <div class="admin-table-container">
                                 <table class="admin-table">
@@ -1074,6 +1117,43 @@
                                     <div class="stat-desc">Utilisateurs en ligne</div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Configuration & Tarifs -->
+                    <div class="admin-sub-view hidden" id="sub-view-settings">
+                        <div class="sub-view-header">
+                            <button class="btn-back-menu" id="btn-back-menu-settings">⬅️ Retour</button>
+                            <h3>⚙️ Configuration & Tarifs</h3>
+                        </div>
+                        <p class="admin-subtitle">Modifiez les tarifs de la plateforme appliqués en temps réel à tous les utilisateurs.</p>
+                        <div class="admin-content-section" id="admin-settings-section">
+                            <form id="admin-settings-form" style="display:flex; flex-direction:column; gap:16px; max-width:480px; margin-top:12px;">
+                                <div class="form-group" style="text-align:left;">
+                                    <label for="settings-unlock-fee" class="form-label" style="font-weight:700;">🔓 Frais de Déblocage (FCFA) *</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="settings-unlock-fee" class="form-input" min="0" required>
+                                    </div>
+                                    <p style="font-size:0.75rem; color:var(--color-charcoal-muted); margin-top:4px;">Montant facturé au client pour débloquer le numéro direct d'un livreur.</p>
+                                </div>
+                                <div class="form-group" style="text-align:left;">
+                                    <label for="settings-client-sub" class="form-label" style="font-weight:700;">👑 Abonnement Premium Client (FCFA/mois) *</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="settings-client-sub" class="form-input" min="0" required>
+                                    </div>
+                                    <p style="font-size:0.75rem; color:var(--color-charcoal-muted); margin-top:4px;">Tarif mensuel pour accéder en illimité à tous les contacts livreurs.</p>
+                                </div>
+                                <div class="form-group" style="text-align:left;">
+                                    <label for="settings-rider-sub" class="form-label" style="font-weight:700;">🚴 Abonnement Hebdomadaire Livreur (FCFA/7j) *</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="settings-rider-sub" class="form-input" min="0" required>
+                                    </div>
+                                    <p style="font-size:0.75rem; color:var(--color-charcoal-muted); margin-top:4px;">Frais payés par le livreur pour rester visible sur la carte publique.</p>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="padding:12px; border-radius:12px; font-weight:700; margin-top:8px;">
+                                    Enregistrer la Configuration
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

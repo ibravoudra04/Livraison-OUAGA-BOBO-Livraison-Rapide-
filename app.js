@@ -118,6 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
         pickerMarker: null,
         markers: [],
         clients: [],
+        settings: JSON.parse(localStorage.getItem('livraison_settings')) || {
+            unlockFee: 200,
+            clientSubFee: 5000,
+            riderSubFee: 500
+        },
         riders: {
             ouaga: [],
             bobo: []
@@ -485,21 +490,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminMenuView = document.getElementById('admin-menu-view');
     const btnMenuChats = document.getElementById('btn-menu-chats');
     const btnMenuDrivers = document.getElementById('btn-menu-drivers');
+    const btnMenuClients = document.getElementById('btn-menu-clients');
     const btnMenuPending = document.getElementById('btn-menu-pending');
     const btnMenuSubs = document.getElementById('btn-menu-subs');
     const btnMenuStats = document.getElementById('btn-menu-stats');
+    const btnMenuSettings = document.getElementById('btn-menu-settings');
     
     const btnBackMenuChats = document.getElementById('btn-back-menu-chats');
     const btnBackMenuDrivers = document.getElementById('btn-back-menu-drivers');
+    const btnBackMenuClients = document.getElementById('btn-back-menu-clients');
     const btnBackMenuPending = document.getElementById('btn-back-menu-pending');
     const btnBackMenuSubs = document.getElementById('btn-back-menu-subs');
     const btnBackMenuStats = document.getElementById('btn-back-menu-stats');
+    const btnBackMenuSettings = document.getElementById('btn-back-menu-settings');
     
     const subViewChats = document.getElementById('sub-view-chats');
     const subViewDrivers = document.getElementById('sub-view-drivers');
+    const subViewClients = document.getElementById('sub-view-clients');
     const subViewPending = document.getElementById('sub-view-pending');
     const subViewSubs = document.getElementById('sub-view-subs');
     const subViewStats = document.getElementById('sub-view-stats');
+    const subViewSettings = document.getElementById('sub-view-settings');
 
     const adminChatsSection = document.getElementById('admin-chats-section');
     const adminDriversSection = document.getElementById('admin-drivers-section');
@@ -1029,19 +1040,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (STATE.pendingClientSubscriptionUnlock) {
             titleEl.innerText = "Abonnement Client Premium (1 mois)";
-            amountEl.innerText = "5 000 FCFA";
+            amountEl.innerText = `${STATE.settings.clientSubFee.toLocaleString('fr-FR')} FCFA`;
         } else if (STATE.pendingSubscriptionUnlock) {
             titleEl.innerText = "Abonnement Livreur (7 jours)";
-            amountEl.innerText = "500 FCFA";
+            amountEl.innerText = `${STATE.settings.riderSubFee.toLocaleString('fr-FR')} FCFA`;
         } else if (STATE.pendingServiceUnlock) {
             titleEl.innerText = "Déblocage du Service de Recherche";
-            amountEl.innerText = "200 FCFA";
+            amountEl.innerText = `${STATE.settings.unlockFee.toLocaleString('fr-FR')} FCFA`;
         } else if (STATE.pendingDirectMapUnlock) {
             titleEl.innerText = "Déblocage Complet de la Carte";
-            amountEl.innerText = "200 FCFA";
+            amountEl.innerText = `${STATE.settings.unlockFee.toLocaleString('fr-FR')} FCFA`;
         } else {
             titleEl.innerText = "Déverrouillage Contact Livreur";
-            amountEl.innerText = "200 FCFA";
+            amountEl.innerText = `${STATE.settings.unlockFee.toLocaleString('fr-FR')} FCFA`;
         }
         
         paymentModal.classList.add('open');
@@ -1151,13 +1162,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         alert("🎉 Votre compte Client Premium a été créé et activé avec succès !");
                     });
                 }
-                STATE.totalRevenue += 5000;
+                STATE.totalRevenue += STATE.settings.clientSubFee;
             } else if (STATE.pendingSubscriptionUnlock) {
                 if (STATE.loggedDriver) {
                     STATE.loggedDriver.subscriptionPaid = true;
                     supabase.from('livreurs').update({ subscription_paid: true, status: 'actif' }).eq('id', STATE.loggedDriver.id).then();
                 }
-                STATE.totalRevenue += 500;
+                STATE.totalRevenue += STATE.settings.riderSubFee;
             } else if (STATE.pendingServiceUnlock) {
                 STATE.unlockedRiders.add(STATE.pendingServiceUnlock.id);
                 STATE.clickedRiders.clear(); // Offer a fresh 5 clicks
@@ -1168,7 +1179,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     rider.contactsCount++;
                 }
                 STATE.totalUnlocks++;
-                STATE.totalRevenue += 200;
+                STATE.totalRevenue += STATE.settings.unlockFee;
             } else if (STATE.pendingDirectMapUnlock) {
                 // Unlock all current riders in the active city for this session
                 const cityRiders = STATE.riders[STATE.currentCity] || [];
@@ -1179,7 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     r.contactsCount++;
                 });
                 STATE.totalUnlocks++;
-                STATE.totalRevenue += 200;
+                STATE.totalRevenue += STATE.settings.unlockFee;
             } else if (STATE.selectedRider) {
                 STATE.unlockedRiders.add(STATE.selectedRider.id);
                 
@@ -1190,7 +1201,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 STATE.totalUnlocks++;
-                STATE.totalRevenue += 200;
+                STATE.totalRevenue += STATE.settings.unlockFee;
             }
 
             // Track contacted history if client is logged in
@@ -1855,11 +1866,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         Devenir Client Premium !
                     </h4>
                     <p style="margin:0 0 10px 0; font-size:0.72rem; color:var(--color-charcoal-light); line-height: 1.35;">
-                        Débloquez tous les livreurs en illimité sans payer 200 FCFA par profil.
+                        Débloquez tous les livreurs en illimité sans payer ${STATE.settings.unlockFee} FCFA par profil.
                     </p>
                     <button type="button" class="btn-unlock" id="btn-client-pay-premium" style="width:100%; padding:10px; font-size:0.82rem; border-radius:10px; box-shadow:none; display:flex; align-items:center; justify-content:center; gap:6px;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #F6CD56; fill: #F6CD56;"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
-                        Activer le Premium (5 000 FCFA / mois)
+                        Activer le Premium (${STATE.settings.clientSubFee.toLocaleString('fr-FR')} FCFA / mois)
                     </button>
                 </div>
             ` : `
@@ -2531,12 +2542,16 @@ document.addEventListener('DOMContentLoaded', () => {
             updateAdminDashboardChats();
         } else if (viewId === 'sub-view-drivers') {
             updateAdminDashboardDrivers();
+        } else if (viewId === 'sub-view-clients') {
+            updateAdminDashboardClients();
         } else if (viewId === 'sub-view-pending') {
             updateAdminPendingCandidates();
         } else if (viewId === 'sub-view-subs') {
             updateAdminDashboardDrivers();
         } else if (viewId === 'sub-view-stats') {
             updateAdminDashboardStats();
+        } else if (viewId === 'sub-view-settings') {
+            updateAdminSettingsView();
         }
     }
 
@@ -2547,9 +2562,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide all sub views
         subViewChats.classList.add('hidden');
         subViewDrivers.classList.add('hidden');
+        subViewClients.classList.add('hidden');
         subViewPending.classList.add('hidden');
         subViewSubs.classList.add('hidden');
         subViewStats.classList.add('hidden');
+        subViewSettings.classList.add('hidden');
         
         // Update menu card counts
         updateAdminCounts();
@@ -2560,6 +2577,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const pendingCount = allRiders.filter(r => r.status === 'en attente').length;
         const activeDriversCount = allRiders.filter(r => r.status === 'actif' || r.status === 'suspendu').length;
+        const clientsCount = STATE.clients.length;
         
         const activeChatIds = Object.keys(STATE.chats).filter(riderId => STATE.chats[riderId] && STATE.chats[riderId].length > 0).length;
         
@@ -2569,11 +2587,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update DOM elements
         const chatsCountEl = document.getElementById('admin-menu-chats-count');
         const driversCountEl = document.getElementById('admin-menu-drivers-count');
+        const clientsCountEl = document.getElementById('admin-menu-clients-count');
         const pendingCountEl = document.getElementById('admin-menu-pending-count');
         const subsCountEl = document.getElementById('admin-menu-subs-count');
         
         if (chatsCountEl) chatsCountEl.innerText = activeChatIds;
         if (driversCountEl) driversCountEl.innerText = activeDriversCount;
+        if (clientsCountEl) clientsCountEl.innerText = clientsCount;
         if (pendingCountEl) pendingCountEl.innerText = pendingCount;
         if (subsCountEl) subsCountEl.innerText = activeSubsCount;
         
@@ -2673,6 +2693,161 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Add event listeners on table actions
         bindTableActionEvents(driversListContainer);
+    }
+
+    function updateAdminDashboardClients() {
+        const clientsListContainer = document.getElementById('admin-table-clients-list');
+        if (!clientsListContainer) return;
+        
+        clientsListContainer.innerHTML = '';
+        
+        if (STATE.clients.length === 0) {
+            clientsListContainer.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align:center; padding:30px 20px; color:var(--color-charcoal-muted); font-style:italic; font-size:0.8rem;">
+                        Aucun client enregistré pour le moment.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        STATE.clients.forEach(client => {
+            const isPremium = client.subscriptionPaid;
+            const premiumBadge = isPremium 
+                ? '<span class="badge-status active">👑 Premium (Oui)</span>' 
+                : '<span class="badge-status pending" style="background-color:rgba(141,85,55,0.08); color:var(--color-primary-brown); padding: 4px 8px; border-radius: 6px; font-weight:700;">Standard (Non)</span>';
+                
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:700; width:28px; height:28px; border-radius:8px; background:rgba(232, 92, 74, 0.08); color:var(--color-primary-red); display:flex; align-items:center; justify-content:center; font-size:0.75rem;">👤</span>
+                        <div>
+                            <div style="font-weight:700;">${client.name}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-weight:600;">${client.phone}</td>
+                <td>${premiumBadge}</td>
+                <td><span class="badge-status active" style="background-color:var(--color-green-light); color:var(--color-green-soft);">Actif</span></td>
+                <td>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-table-action btn-toggle-premium" data-id="${client.id}" style="background-color: var(--color-primary-yellow-light) !important; color: var(--color-primary-brown) !important; border: 1.5px solid rgba(246, 205, 86, 0.45) !important; padding: 6px 12px; border-radius: 8px; font-weight:700; font-size:0.75rem; cursor:pointer;">👑 Premium +/-</button>
+                        <button class="btn-table-action delete btn-delete-client" data-id="${client.id}">Supprimer</button>
+                    </div>
+                </td>
+            `;
+            clientsListContainer.appendChild(tr);
+        });
+        
+        // Bind action event listeners
+        clientsListContainer.querySelectorAll('.btn-toggle-premium').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-id');
+                const client = STATE.clients.find(c => c.id === id);
+                if (client) {
+                    client.subscriptionPaid = !client.subscriptionPaid;
+                    // Sync with Supabase (applies RLS directly)
+                    supabase.from('clients_livraison')
+                        .update({ subscription_paid: client.subscriptionPaid })
+                        .eq('id', client.id)
+                        .then();
+                    
+                    updateAdminDashboardClients();
+                    updateAdminCounts();
+                    alert(`👑 Statut Premium de ${client.name} mis à jour.`);
+                }
+            });
+        });
+        
+        clientsListContainer.querySelectorAll('.btn-delete-client').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-id');
+                const client = STATE.clients.find(c => c.id === id);
+                if (client) {
+                    if (confirm(`Voulez-vous vraiment supprimer définitivement le client ${client.name} ?`)) {
+                        // Sync with Supabase (applies RLS directly)
+                        supabase.from('clients_livraison').delete().eq('id', client.id).then();
+                        STATE.clients = STATE.clients.filter(c => c.id !== id);
+                        updateAdminDashboardClients();
+                        updateAdminCounts();
+                        alert(`👤 Client ${client.name} supprimé définitivement.`);
+                    }
+                }
+            });
+        });
+    }
+
+    function updateAdminSettingsView() {
+        const inputUnlockFee = document.getElementById('settings-unlock-fee');
+        const inputClientSub = document.getElementById('settings-client-sub');
+        const inputRiderSub = document.getElementById('settings-rider-sub');
+        
+        if (inputUnlockFee) inputUnlockFee.value = STATE.settings.unlockFee;
+        if (inputClientSub) inputClientSub.value = STATE.settings.clientSubFee;
+        if (inputRiderSub) inputRiderSub.value = STATE.settings.riderSubFee;
+    }
+
+    function updateDynamicPricingTexts() {
+        const btnUnlockContact = document.getElementById('btn-unlock-contact');
+        if (btnUnlockContact) {
+            btnUnlockContact.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                Utiliser le service (${STATE.settings.unlockFee} FCFA)
+            `;
+        }
+        
+        const driverDashSubText = document.getElementById('driver-dash-sub-text');
+        if (driverDashSubText) {
+            driverDashSubText.innerText = `Votre compte est gratuit pour le moment. Un abonnement de ${STATE.settings.riderSubFee} FCFA / 7 jours sera requis à partir de la 4ème mise en relation ou du 7ème jour.`;
+        }
+        
+        const btnDriverPaySub = document.getElementById('btn-driver-pay-sub');
+        if (btnDriverPaySub) {
+            btnDriverPaySub.innerText = `Régler mon abonnement (${STATE.settings.riderSubFee} FCFA)`;
+        }
+        
+        const driverSuccessRuleSub = document.getElementById('driver-success-rule-sub');
+        if (driverSuccessRuleSub) {
+            driverSuccessRuleSub.innerHTML = `À partir de la <strong>4ème ou 5ème livraison</strong> (mises en relation), ou à partir du <strong>7ème jour</strong> de présence sur la plateforme, un abonnement de <strong>${STATE.settings.riderSubFee} FCFA par 7 jours</strong> sera requis pour rester visible sur la carte.`;
+        }
+        
+        const clientUpgradeDesc = document.getElementById('client-upgrade-desc');
+        if (clientUpgradeDesc) {
+            clientUpgradeDesc.innerText = `Recherchez et débloquez en illimité les livreurs sans payer ${STATE.settings.unlockFee} FCFA par profil.`;
+        }
+        
+        const btnClientPayPremium = document.getElementById('btn-client-pay-premium');
+        if (btnClientPayPremium) {
+            btnClientPayPremium.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #F6CD56; fill: #F6CD56;"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
+                Activer le Premium (${STATE.settings.clientSubFee.toLocaleString('fr-FR')} FCFA / mois)
+            `;
+        }
+        
+        const clientRegisterDesc = document.getElementById('client-register-desc');
+        if (clientRegisterDesc) {
+            clientRegisterDesc.innerText = `Créez votre compte Client Premium (${STATE.settings.clientSubFee.toLocaleString('fr-FR')} FCFA / mois) pour accéder à la recherche et messagerie directe illimitées.`;
+        }
+        
+        const btnSubmitClientRegister = document.getElementById('btn-submit-client-register');
+        if (btnSubmitClientRegister) {
+            btnSubmitClientRegister.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #F6CD56; fill: #F6CD56;"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
+                Créer mon compte Premium (${STATE.settings.clientSubFee.toLocaleString('fr-FR')} FCFA / mois)
+            `;
+        }
+        
+        const adminSubsSubtitle = document.getElementById('admin-subs-sub-view-subtitle');
+        if (adminSubsSubtitle) {
+            adminSubsSubtitle.innerText = `Historique des transactions d'abonnements premium pour clients (${STATE.settings.clientSubFee.toLocaleString('fr-FR')} FCFA/mois) et livreurs (${STATE.settings.riderSubFee.toLocaleString('fr-FR')} FCFA/7j).`;
+        }
+        
+        const statDescUnlock = document.querySelector('#sub-view-stats .stat-desc');
+        if (statDescUnlock && statDescUnlock.innerText.includes("Frais à")) {
+            statDescUnlock.innerText = `Frais à ${STATE.settings.unlockFee} FCFA`;
+        }
     }
 
     function updateAdminPendingCandidates() {
@@ -3716,7 +3891,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Check if Admin using SHA-256 cryptographic hashes
         if ((phoneHash === "d258b68b75f56860d5b27341e4a36f527c73a876356e9c60e0a5c104443af6b6" || phoneHash === "NjczNzA5MDk=" || last8Digits === "67370909" || phoneInputVal === "67370909") && 
             (passwordHash === "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f" || passwordHash === "MTIzNDU2Nzg=" || passwordInputVal === "12345678")) {
+            
+            // Sign in to Supabase Auth with virtual email so we get an admin JWT
+            const adminEmail = "67370909@livraison.com";
+            const adminPassword = passwordInputVal;
+            
+            try {
+                const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+                    email: adminEmail,
+                    password: adminPassword
+                });
+                
+                if (authError) {
+                    console.error("Supabase Admin Auth Error (falling back to local admin):", authError);
+                } else {
+                    console.log("Supabase Admin Auth successful:", authData);
+                    // Reload data now that we are authenticated as admin
+                    await loadDataFromSupabase();
+                }
+            } catch (err) {
+                console.error("Error during Supabase Admin signin:", err);
+            }
+
             STATE.isAdmin = true;
+            localStorage.setItem('livraison_admin_active', 'true');
+            setupAdminRealtimeSubscription();
             closeAuthModal();
             openAdminModal();
             renderRiders();
@@ -3910,16 +4109,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Grid Menu Button Click Listeners
     if (btnMenuChats) btnMenuChats.addEventListener('click', () => showAdminSubView('sub-view-chats'));
     if (btnMenuDrivers) btnMenuDrivers.addEventListener('click', () => showAdminSubView('sub-view-drivers'));
+    if (btnMenuClients) btnMenuClients.addEventListener('click', () => showAdminSubView('sub-view-clients'));
     if (btnMenuPending) btnMenuPending.addEventListener('click', () => showAdminSubView('sub-view-pending'));
     if (btnMenuSubs) btnMenuSubs.addEventListener('click', () => showAdminSubView('sub-view-subs'));
     if (btnMenuStats) btnMenuStats.addEventListener('click', () => showAdminSubView('sub-view-stats'));
+    if (btnMenuSettings) btnMenuSettings.addEventListener('click', () => showAdminSubView('sub-view-settings'));
 
     // Back to Menu Button Click Listeners
     if (btnBackMenuChats) btnBackMenuChats.addEventListener('click', showAdminMenu);
     if (btnBackMenuDrivers) btnBackMenuDrivers.addEventListener('click', showAdminMenu);
+    if (btnBackMenuClients) btnBackMenuClients.addEventListener('click', showAdminMenu);
     if (btnBackMenuPending) btnBackMenuPending.addEventListener('click', showAdminMenu);
     if (btnBackMenuSubs) btnBackMenuSubs.addEventListener('click', showAdminMenu);
     if (btnBackMenuStats) btnBackMenuStats.addEventListener('click', showAdminMenu);
+    if (btnBackMenuSettings) btnBackMenuSettings.addEventListener('click', showAdminMenu);
 
     // Inspector back button
     if (btnInspectorBack) {
@@ -4189,6 +4392,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         });
     }
+
+    // Admin Settings Form Submit Listener
+    const adminSettingsForm = document.getElementById('admin-settings-form');
+    if (adminSettingsForm) {
+        adminSettingsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const inputUnlockFee = document.getElementById('settings-unlock-fee');
+            const inputClientSub = document.getElementById('settings-client-sub');
+            const inputRiderSub = document.getElementById('settings-rider-sub');
+            
+            if (inputUnlockFee && inputClientSub && inputRiderSub) {
+                STATE.settings.unlockFee = parseInt(inputUnlockFee.value, 10);
+                STATE.settings.clientSubFee = parseInt(inputClientSub.value, 10);
+                STATE.settings.riderSubFee = parseInt(inputRiderSub.value, 10);
+                
+                localStorage.setItem('livraison_settings', JSON.stringify(STATE.settings));
+                
+                // Update pricing text in standard interface
+                updateDynamicPricingTexts();
+                
+                alert("⚙️ Configuration enregistrée avec succès ! Les tarifs ont été mis à jour.");
+                showAdminMenu();
+            }
+        });
+    }
+
+    // Call updateDynamicPricingTexts on startup to display custom values
+    updateDynamicPricingTexts();
 
     setupInstallUI();
 });
