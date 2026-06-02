@@ -289,7 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         rating: Number(r.rating),
                         reviews: [],
                         isUnlocked: r.is_unlocked,
-                        selfie: r.selfie || null
+                        selfie: r.selfie || null,
+                        city: r.city
                     };
                     if (r.city === 'ouaga') {
                         STATE.riders.ouaga.push(riderObj);
@@ -3164,6 +3165,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnAdminDocApprove = document.getElementById('btn-admin-doc-approve');
     const btnAdminDocReject = document.getElementById('btn-admin-doc-reject');
 
+    // CV detail elements
+    const adminDocRiderFullname = document.getElementById('admin-doc-rider-fullname');
+    const adminDocRiderPhone = document.getElementById('admin-doc-rider-phone');
+    const adminDocRiderVehicle = document.getElementById('admin-doc-rider-vehicle');
+    const adminDocRiderCity = document.getElementById('admin-doc-rider-city');
+    const adminDocRiderCoords = document.getElementById('admin-doc-rider-coords');
+    const adminDocRiderStats = document.getElementById('admin-doc-rider-stats');
+
     // Premium custom SVG placeholders for CNI/Selfie
     const MOCK_SELFIE_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="16" fill="%23FAF5F0"/><circle cx="50" cy="40" r="18" fill="%238D5537"/><path d="M20 85c0-15 12-25 30-25s30 10 30 25z" fill="%238D5537"/><text x="50" y="92" font-family="sans-serif" font-size="6" font-weight="bold" fill="%238D5537" text-anchor="middle">PHOTO VERIFIEE</text></svg>`;
     const MOCK_RECTO_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="250" height="150" viewBox="0 0 100 60" fill="none"><rect width="100" height="60" rx="8" fill="%23FAF5F0" stroke="%238D5537" stroke-width="0.8"/><rect x="8" y="12" width="16" height="20" rx="3" fill="%23A39387"/><line x1="30" y1="14" x2="85" y2="14" stroke="%238D5537" stroke-width="1.5" stroke-linecap="round"/><line x1="30" y1="20" x2="65" y2="20" stroke="%23A39387" stroke-width="0.8" stroke-linecap="round"/><line x1="30" y1="26" x2="75" y2="26" stroke="%23A39387" stroke-width="0.8" stroke-linecap="round"/><text x="50" y="52" font-family="sans-serif" font-size="5" font-weight="bold" fill="%2327AE60" text-anchor="middle">CNI RECTO — CERTIFIE</text></svg>`;
@@ -3175,6 +3184,40 @@ document.addEventListener('DOMContentLoaded', () => {
         activeInspectedRider = rider;
         adminDocRiderName.innerText = rider.name;
         
+        // Fill CV text elements
+        if (adminDocRiderFullname) adminDocRiderFullname.innerText = rider.name || '—';
+        if (adminDocRiderPhone) adminDocRiderPhone.innerText = rider.phone || '—';
+        
+        // Format vehicle nicely with icon
+        let vehicleDisplay = '🏍️ Moto';
+        if (rider.vehicle === 'Tricycle') vehicleDisplay = '🛺 Tricycle';
+        else if (rider.vehicle === 'Voiture') vehicleDisplay = '🚗 Voiture';
+        else if (rider.vehicle) vehicleDisplay = `🏍️ ${rider.vehicle}`;
+        if (adminDocRiderVehicle) adminDocRiderVehicle.innerText = vehicleDisplay;
+        
+        // Format city name nicely
+        let cityNameDisplay = 'Ouagadougou';
+        if (rider.city === 'bobo') {
+            cityNameDisplay = 'Bobo-Dioulasso';
+        } else if (rider.city === 'ouaga') {
+            cityNameDisplay = 'Ouagadougou';
+        } else {
+            // Find which array contains the rider to guess city if missing
+            const inOuaga = STATE.riders.ouaga.some(r => r.id === rider.id);
+            cityNameDisplay = inOuaga ? 'Ouagadougou' : 'Bobo-Dioulasso';
+        }
+        if (adminDocRiderCity) adminDocRiderCity.innerText = cityNameDisplay;
+        
+        // Coordinates format
+        if (adminDocRiderCoords) {
+            adminDocRiderCoords.innerText = (rider.lat && rider.lng) ? `${Number(rider.lat).toFixed(5)}, ${Number(rider.lng).toFixed(5)}` : 'Non renseigné';
+        }
+        
+        // Stats format
+        if (adminDocRiderStats) {
+            adminDocRiderStats.innerText = `⭐ ${rider.rating || 5.0} • ${rider.contactsCount || 0} clics`;
+        }
+
         // Load Base64 images or show custom premium SVG placeholders
         adminDocPreviewSelfie.src = rider.selfie || MOCK_SELFIE_SVG;
         
@@ -4010,7 +4053,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 status: 'en attente',
                 cniRecto: previewCniRecto.src || null,
                 cniVerso: previewCniVerso.src || null,
-                selfie: previewSelfie.src || null
+                selfie: previewSelfie.src || null,
+                city: targetCity
             };
             
             // Add to active city list
