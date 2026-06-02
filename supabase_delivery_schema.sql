@@ -32,6 +32,9 @@ CREATE TABLE public.livreurs (
     views_count INTEGER NOT NULL DEFAULT 0,
     rating NUMERIC NOT NULL DEFAULT 4.8,
     city TEXT NOT NULL CHECK (city IN ('ouaga', 'bobo')),
+    cni_recto TEXT,
+    cni_verso TEXT,
+    selfie TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -81,7 +84,7 @@ BEGIN
             phone = EXCLUDED.phone,
             name = EXCLUDED.name;
     ELSIF (new.raw_user_meta_data->>'role') = 'rider' THEN
-        INSERT INTO public.livreurs (id, name, vehicle, phone, lat, lng, initial, contacts_count, subscription_paid, status, rating, city)
+        INSERT INTO public.livreurs (id, name, vehicle, phone, lat, lng, initial, contacts_count, subscription_paid, status, rating, city, cni_recto, cni_verso, selfie)
         VALUES (
             new.id,
             COALESCE(new.raw_user_meta_data->>'name', 'Livreur'),
@@ -94,7 +97,10 @@ BEGIN
             COALESCE((new.raw_user_meta_data->>'subscription_paid')::boolean, false),
             COALESCE(new.raw_user_meta_data->>'status', 'en attente'),
             5.0,
-            COALESCE(new.raw_user_meta_data->>'city', 'ouaga')
+            COALESCE(new.raw_user_meta_data->>'city', 'ouaga'),
+            COALESCE(new.raw_user_meta_data->>'cni_recto', null),
+            COALESCE(new.raw_user_meta_data->>'cni_verso', null),
+            COALESCE(new.raw_user_meta_data->>'selfie', null)
         )
         ON CONFLICT (id) DO UPDATE SET
             phone = EXCLUDED.phone,
@@ -103,7 +109,10 @@ BEGIN
             lat = EXCLUDED.lat,
             lng = EXCLUDED.lng,
             initial = EXCLUDED.initial,
-            city = EXCLUDED.city;
+            city = EXCLUDED.city,
+            cni_recto = EXCLUDED.cni_recto,
+            cni_verso = EXCLUDED.cni_verso,
+            selfie = EXCLUDED.selfie;
     END IF;
     RETURN new;
 END;
@@ -113,10 +122,9 @@ CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- --- VUE SÉCURISÉE AVEC MASQUAGE DYNAMIQUE (POSTGRES SIDE) ---
 CREATE OR REPLACE VIEW public.livreurs_view AS
 SELECT 
-    id, name, vehicle, lat, lng, initial, contacts_count, subscription_paid, status, views_count, rating, city, created_at,
+    id, name, vehicle, lat, lng, initial, contacts_count, subscription_paid, status, views_count, rating, city, created_at, selfie,
     CASE 
         -- Période de gratuité de 30 jours (du 1er juin au 1er juillet 2026 inclus)
         WHEN now() < '2026-07-02 00:00:00+00'::timestamptz THEN phone

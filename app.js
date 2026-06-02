@@ -17,6 +17,42 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/'/g, "&#039;");
     };
 
+    const compressImage = (file, maxDim, quality, callback) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                // Maintain aspect ratio while resizing
+                if (width > height) {
+                    if (width > maxDim) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    }
+                } else {
+                    if (height > maxDim) {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Export as JPEG with chosen quality
+                const base64Data = canvas.toDataURL('image/jpeg', quality);
+                callback(base64Data);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
     const hashSHA256 = async (str) => {
         if (typeof str !== 'string') return '';
         try {
@@ -140,7 +176,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 { name: 'Gounghin', lat: 12.3601, lng: -1.5212, riderId: 'o8' },
                 { name: 'Pissy', lat: 12.3582, lng: -1.5540, riderId: 'o6' },
                 { name: 'Zogona', lat: 12.3391, lng: -1.5304, riderId: 'o3' },
-                { name: 'Tampouy', lat: 12.3854, lng: -1.5412, riderId: 'o4' }
+                { name: 'Tampouy', lat: 12.3854, lng: -1.5412, riderId: 'o4' },
+                { name: 'Cissin', lat: 12.3480, lng: -1.5420 },
+                { name: 'Kalgondin', lat: 12.3580, lng: -1.4920 },
+                { name: 'Dagnoën', lat: 12.3690, lng: -1.4880 },
+                { name: 'Dassasgho', lat: 12.3780, lng: -1.4820 },
+                { name: 'Wayalghin', lat: 12.3910, lng: -1.4720 },
+                { name: 'Tanghin', lat: 12.3950, lng: -1.5210 },
+                { name: 'Kilwin', lat: 12.4080, lng: -1.5580 },
+                { name: 'Larlé', lat: 12.3790, lng: -1.5390 },
+                { name: 'Ouidi', lat: 12.3780, lng: -1.5310 },
+                { name: 'Dapoya', lat: 12.3790, lng: -1.5190 },
+                { name: 'Karpala', lat: 12.3250, lng: -1.4850 },
+                { name: 'Paglayiri', lat: 12.3390, lng: -1.5490 },
+                { name: 'Samandin', lat: 12.3630, lng: -1.5330 },
+                { name: 'Bilbalogo', lat: 12.3650, lng: -1.5260 },
+                { name: 'Hamdalaye', lat: 12.3720, lng: -1.5590 },
+                { name: 'Saaba', lat: 12.3750, lng: -1.4250 },
+                { name: 'Kamboinsin', lat: 12.4480, lng: -1.5280 },
+                { name: 'Yagma', lat: 12.4550, lng: -1.5850 },
+                { name: 'Nioko I', lat: 12.4180, lng: -1.4390 },
+                { name: 'Bonheur-ville', lat: 12.3150, lng: -1.5650 },
+                { name: 'Nagrin', lat: 12.3020, lng: -1.5350 },
+                { name: 'Balkuy', lat: 12.2980, lng: -1.4950 },
+                { name: 'Tengandogo', lat: 12.2850, lng: -1.5450 }
             ],
             bobo: [
                 { name: 'Belleville', lat: 11.1852, lng: -4.3214, riderId: 'b5' },
@@ -148,7 +207,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 { name: 'Bolomakoté', lat: 11.1685, lng: -4.2854, riderId: 'b2' },
                 { name: 'Colma', lat: 11.1620, lng: -4.2995, riderId: 'b6' },
                 { name: 'Sarfalao', lat: 11.1942, lng: -4.3120, riderId: 'b3' },
-                { name: 'Koko', lat: 11.1714, lng: -4.3054, riderId: 'b4' }
+                { name: 'Koko', lat: 11.1714, lng: -4.3054, riderId: 'b4' },
+                { name: 'Tounouma', lat: 11.1750, lng: -4.2950 },
+                { name: 'Diarradougou', lat: 11.1800, lng: -4.2820 },
+                { name: 'Farakan', lat: 11.1690, lng: -4.2920 },
+                { name: 'Saint-Étienne', lat: 11.1900, lng: -4.2800 },
+                { name: 'Dogona', lat: 11.1950, lng: -4.2600 },
+                { name: 'Sikasso-Cira', lat: 11.1650, lng: -4.3080 },
+                { name: 'Bindougousso', lat: 11.1550, lng: -4.2750 },
+                { name: 'Lafiabougou', lat: 11.1580, lng: -4.3300 },
+                { name: 'Niéneta', lat: 11.2050, lng: -4.2950 },
+                { name: 'Bobo-2000', lat: 11.1500, lng: -4.3100 },
+                { name: 'Ouezzinville', lat: 11.1400, lng: -4.3500 }
             ]
         }
     };
@@ -194,7 +264,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         viewsCount: r.views_count,
                         rating: Number(r.rating),
                         reviews: [],
-                        isUnlocked: r.is_unlocked // Inviolable source of truth from Database
+                        isUnlocked: r.is_unlocked, // Inviolable source of truth from Database
+                        selfie: r.selfie || null
                     };
                     if (r.city === 'ouaga') {
                         STATE.riders.ouaga.push(riderObj);
@@ -271,7 +342,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             viewsCount: newRider.views_count,
                             rating: Number(newRider.rating),
                             reviews: [],
-                            isUnlocked: true
+                            isUnlocked: true,
+                            selfie: newRider.selfie || null
                         };
                         if (newRider.city === 'ouaga') {
                             STATE.riders.ouaga.unshift(riderObj);
@@ -637,7 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 iconAnchor: [10, 10]
             });
             
-            L.marker([STATE.clientCoordinates.lat, STATE.clientCoordinates.lng], {
+            STATE.clientBeaconMarker = L.marker([STATE.clientCoordinates.lat, STATE.clientCoordinates.lng], {
                 icon: beaconIcon
             }).addTo(STATE.map).bindPopup("<b>📍 Vous êtes ici</b><br>Recherche de livreurs autour de vous.");
         }
@@ -692,12 +764,16 @@ document.addEventListener('DOMContentLoaded', () => {
         onlineCounterText.innerText = `${visibleRiders.length} livreurs disponibles`;
 
         visibleRiders.forEach(rider => {
-            // Elegant green glowing pulse dot
+            // Elegant pulsing halo with driver's selfie background image or initials
+            const markerHtml = rider.selfie 
+                ? `<div class="rider-pin" id="marker-${rider.id}" style="background-image: url('${rider.selfie}')"></div>` 
+                : `<div class="rider-pin" id="marker-${rider.id}">${rider.initial}</div>`;
+
             const customIcon = L.divIcon({
                 className: 'custom-marker-wrapper',
-                html: `<div class="rider-pin" id="marker-${rider.id}"></div>`,
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
+                html: markerHtml,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
             });
 
             const marker = L.marker([rider.lat, rider.lng], { icon: customIcon }).addTo(STATE.map);
@@ -811,12 +887,17 @@ document.addEventListener('DOMContentLoaded', () => {
             maxZoom: 19
         }).addTo(STATE.pickerMap);
 
-        // Add a red terracotta pin
+        // Add a red terracotta pin showing rider's selfie if logged in
+        let pickerHtml = '<div class="rider-pin rider-pin-active"></div>';
+        if (STATE.loggedDriver && STATE.loggedDriver.selfie) {
+            pickerHtml = `<div class="rider-pin rider-pin-active" style="background-image: url('${STATE.loggedDriver.selfie}')"></div>`;
+        }
+
         const redPinIcon = L.divIcon({
             className: 'custom-marker-picker',
-            html: `<div class="rider-pin rider-pin-active"></div>`,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
+            html: pickerHtml,
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
         });
 
         STATE.pickerMarker = L.marker([targetLat, targetLng], {
@@ -947,7 +1028,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Fill Bottom Sheet fields
-        sheetAvatar.innerText = rider.initial;
+        if (rider.selfie) {
+            sheetAvatar.innerText = '';
+            sheetAvatar.style.backgroundImage = `url('${rider.selfie}')`;
+        } else {
+            sheetAvatar.innerText = rider.initial;
+            sheetAvatar.style.backgroundImage = 'none';
+        }
         sheetName.innerText = rider.name;
         sheetVehicle.innerText = rider.vehicle;
         sheetDistance.innerText = `À ${rider.distance} de vous`;
@@ -2073,17 +2160,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Handle Upload Preview files
-    function setupUploadPreview(input, box, preview) {
+    // Handle Upload Preview files with automatic client-side canvas compression
+    function setupUploadPreview(input, box, preview, maxDim, quality) {
         input.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    preview.src = event.target.result;
+                compressImage(file, maxDim, quality, (compressedBase64) => {
+                    preview.src = compressedBase64;
                     box.classList.add('has-file');
-                };
-                reader.readAsDataURL(file);
+                });
             }
         });
     }
@@ -2271,7 +2356,13 @@ document.addEventListener('DOMContentLoaded', () => {
         closeRiderSheet();
         
         // Populate header details
-        chatDriverAvatar.innerText = rider.initial;
+        if (rider.selfie) {
+            chatDriverAvatar.innerText = '';
+            chatDriverAvatar.style.backgroundImage = `url('${rider.selfie}')`;
+        } else {
+            chatDriverAvatar.innerText = rider.initial;
+            chatDriverAvatar.style.backgroundImage = 'none';
+        }
         chatDriverName.innerText = rider.name;
         chatDriverNameSystem.innerText = rider.name;
         chatInput.value = '';
@@ -3000,8 +3091,22 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Load Base64 images or show custom premium SVG placeholders
         adminDocPreviewSelfie.src = rider.selfie || MOCK_SELFIE_SVG;
-        adminDocPreviewRecto.src = rider.cniRecto || MOCK_RECTO_SVG;
-        adminDocPreviewVerso.src = rider.cniVerso || MOCK_VERSO_SVG;
+        
+        // Show placeholders initially while loading CNI from database on-demand
+        adminDocPreviewRecto.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="250" height="150" viewBox="0 0 100 60" fill="none"><rect width="100" height="60" rx="8" fill="%23FAF5F0" stroke="%238D5537" stroke-width="0.8"/><text x="50" y="32" font-family="sans-serif" font-size="5" fill="%23A39387" text-anchor="middle">Chargement...</text></svg>';
+        adminDocPreviewVerso.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="250" height="150" viewBox="0 0 100 60" fill="none"><rect width="100" height="60" rx="8" fill="%23FAF5F0" stroke="%238D5537" stroke-width="0.8"/><text x="50" y="32" font-family="sans-serif" font-size="5" fill="%23A39387" text-anchor="middle">Chargement...</text></svg>';
+        
+        // Fetch CNI documents on-demand from public.livreurs table (excluded from main view)
+        supabase.from('livreurs').select('cni_recto, cni_verso').eq('id', rider.id).maybeSingle().then(({ data, error }) => {
+            if (error) {
+                console.error("Error loading CNI documents:", error);
+                adminDocPreviewRecto.src = MOCK_RECTO_SVG;
+                adminDocPreviewVerso.src = MOCK_VERSO_SVG;
+            } else if (data) {
+                adminDocPreviewRecto.src = data.cni_recto || MOCK_RECTO_SVG;
+                adminDocPreviewVerso.src = data.cni_verso || MOCK_VERSO_SVG;
+            }
+        });
         
         // Status badge styling inside modal
         adminDocStatusBadge.innerText = rider.status || 'actif';
@@ -3302,6 +3407,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (originalText) triggerButton.innerHTML = originalText;
             }
             STATE.clientCoordinates = null;
+            if (STATE.clientBeaconMarker) {
+                STATE.map.removeLayer(STATE.clientBeaconMarker);
+                STATE.clientBeaconMarker = null;
+            }
             switchCity(portalSelectedCity);
             showMapView();
             closeLocationPortal();
@@ -3376,6 +3485,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 STATE.clientCoordinates = null;
+                if (STATE.clientBeaconMarker) {
+                    STATE.map.removeLayer(STATE.clientBeaconMarker);
+                    STATE.clientBeaconMarker = null;
+                }
                 alert("ℹ️ Autorisation GPS refusée ou signal indisponible. Chargement de la carte par défaut.");
 
                 switchCity(portalSelectedCity);
@@ -3660,10 +3773,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Bind uploads
-    setupUploadPreview(uploadCniRecto, boxUploadCniRecto, previewCniRecto);
-    setupUploadPreview(uploadCniVerso, boxUploadCniVerso, previewCniVerso);
-    setupUploadPreview(uploadSelfie, boxUploadSelfie, previewSelfie);
+    // Bind uploads with specific dimensions (1024px for CNI cards, 400px for profile selfie)
+    setupUploadPreview(uploadCniRecto, boxUploadCniRecto, previewCniRecto, 1024, 0.75);
+    setupUploadPreview(uploadCniVerso, boxUploadCniVerso, previewCniVerso, 1024, 0.75);
+    setupUploadPreview(uploadSelfie, boxUploadSelfie, previewSelfie, 400, 0.75);
 
     btnRemoveCniRecto.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3745,7 +3858,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     initial: firstInitials,
                     city: targetCity,
                     subscription_paid: false,
-                    status: 'en attente'
+                    status: 'en attente',
+                    cni_recto: previewCniRecto.src || null,
+                    cni_verso: previewCniVerso.src || null,
+                    selfie: previewSelfie.src || null
                 }
             }
         }).then(({ data: signUpData, error: signUpError }) => {

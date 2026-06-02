@@ -412,15 +412,20 @@ main {
 .rider-avatar {
     width: 52px;
     height: 52px;
-    border-radius: 16px;
-    background: var(--color-primary-yellow-light);
+    border-radius: 50%; /* Make avatar circular and sleek */
+    background-color: var(--color-primary-yellow-light);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     color: var(--color-charcoal);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
     font-weight: 700;
-    border: 1px solid rgba(246, 205, 86, 0.3);
+    border: 2px solid var(--color-card-white);
+    box-shadow: 0 4px 10px rgba(54, 42, 33, 0.12);
+    overflow: hidden;
 }
 
 .rider-identity h3 {
@@ -1741,6 +1746,9 @@ footer {
     height: 36px;
     border-radius: 50%;
     background-color: var(--color-primary-yellow-light);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     color: var(--color-charcoal);
     display: flex;
     align-items: center;
@@ -1748,6 +1756,7 @@ footer {
     font-weight: 700;
     font-size: 1.1rem;
     border: 1px solid rgba(246, 205, 86, 0.3);
+    box-shadow: 0 2px 6px rgba(54, 42, 33, 0.1);
 }
 
 .chat-header-status {
@@ -4199,6 +4208,106 @@ header {
     }
     .admin-menu-card {
         padding: 16px;
+    }
+}
+
+/* ==========================================================================
+   LEAFLET CUSTOM MARKER STYLES (Selfies, Avatars & Pulse Halos)
+   ========================================================================= */
+
+.custom-marker-wrapper {
+    overflow: visible !important;
+}
+
+.rider-pin {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--color-card-white);
+    box-shadow: 0 4px 12px rgba(54, 42, 33, 0.22);
+    background-color: var(--color-primary-yellow-light);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--color-charcoal);
+    position: relative;
+    transition: var(--transition-smooth);
+}
+
+.rider-pin::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--color-primary-green);
+    animation: marker-pulse 1.8s infinite ease-in-out;
+    z-index: -1;
+    pointer-events: none;
+}
+
+@keyframes marker-pulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
+.rider-pin-active {
+    border-color: var(--color-primary-brown) !important;
+    transform: scale(1.15);
+    box-shadow: 0 8px 20px rgba(141, 85, 55, 0.35);
+    z-index: 1000 !important;
+}
+
+/* Beacon client styling */
+.client-location-beacon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible !important;
+}
+
+.client-beacon-core {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #007AFF; /* Brilliant blue core */
+    border: 2px solid var(--color-card-white);
+    box-shadow: 0 0 10px rgba(0, 122, 255, 0.8);
+    z-index: 2;
+}
+
+.client-beacon-pulse {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: rgba(0, 122, 255, 0.4);
+    animation: beacon-pulsing 2s infinite ease-out;
+    z-index: 1;
+}
+
+@keyframes beacon-pulsing {
+    0% {
+        transform: scale(0.6);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2.2);
+        opacity: 0;
     }
 }
 
