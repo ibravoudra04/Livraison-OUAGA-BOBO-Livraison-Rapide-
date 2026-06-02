@@ -3387,53 +3387,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const geoOptions = {
             enableHighAccuracy: true,
-            timeout: 15000,
+            timeout: 10000,
             maximumAge: 0
         };
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
+        const tryGeo = (options, isFallback = false) => {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
 
-                // Save coordinates into inputs
-                driverLatInput.value = lat;
-                driverLngInput.value = lng;
-                hasGpsLocation = true;
+                    // Save coordinates into inputs
+                    driverLatInput.value = lat;
+                    driverLngInput.value = lng;
+                    hasGpsLocation = true;
 
-                // Update Geolocation status card visual to success
-                geoLoader.classList.add('hidden');
-                btnGeoLocate.classList.remove('hidden');
-                btnGeoLocate.innerText = "✓ Recalibrer";
-                btnGeoLocate.style.backgroundColor = "var(--color-primary-green)";
-                btnGeoLocate.style.borderColor = "var(--color-primary-green)";
-                
-                geoStatusCard.classList.add('success-style');
-                document.getElementById('geo-status-title').innerText = "✓ Position GPS Enregistrée";
-                document.getElementById('geo-status-text').innerText = `Vos coordonnées (${lat.toFixed(5)}, ${lng.toFixed(5)}) ont été verrouillées avec succès.`;
+                    // Update Geolocation status card visual to success
+                    geoLoader.classList.add('hidden');
+                    btnGeoLocate.classList.remove('hidden');
+                    btnGeoLocate.innerText = "✓ Recalibrer";
+                    btnGeoLocate.style.backgroundColor = "var(--color-primary-green)";
+                    btnGeoLocate.style.borderColor = "var(--color-primary-green)";
+                    
+                    geoStatusCard.classList.add('success-style');
+                    document.getElementById('geo-status-title').innerText = "✓ Position GPS Enregistrée";
+                    document.getElementById('geo-status-text').innerText = `Vos coordonnées (${lat.toFixed(5)}, ${lng.toFixed(5)}) ont été verrouillées avec succès.`;
 
-                // Present confirmation map wrapper
-                mapPickerWrapper.classList.remove('hidden');
-                gpsFallbackHint.classList.add('hidden');
+                    // Present confirmation map wrapper
+                    mapPickerWrapper.classList.remove('hidden');
+                    gpsFallbackHint.classList.add('hidden');
 
-                // Initialize picker map and center at this position
-                setTimeout(() => {
-                    initPickerMap(lat, lng, true); // true = locked/read-only
-                }, 100);
-            },
-            (error) => {
-                let errorMsg = "Impossible d'accéder à votre signal GPS.";
-                if (error.code === error.PERMISSION_DENIED) {
-                    errorMsg = "Autorisation GPS refusée. Veuillez autoriser la localisation ou utiliser la sélection de secours.";
-                } else if (error.code === error.POSITION_UNAVAILABLE) {
-                    errorMsg = "Signal GPS indisponible. Veuillez utiliser le repérage de secours.";
-                } else if (error.code === error.TIMEOUT) {
-                    errorMsg = "Délai d'attente GPS dépassé. Veuillez utiliser le repérage de secours.";
-                }
-                handleGeoError(errorMsg);
-            },
-            geoOptions
-        );
+                    // Initialize picker map and center at this position
+                    setTimeout(() => {
+                        initPickerMap(lat, lng, true); // true = locked/read-only
+                    }, 100);
+                },
+                (error) => {
+                    if (!isFallback && (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE)) {
+                        console.warn("Driver high-accuracy GPS timed out or unavailable. Trying low-accuracy fallback...");
+                        tryGeo({
+                            enableHighAccuracy: false,
+                            timeout: 8000,
+                            maximumAge: 10000
+                        }, true);
+                        return;
+                    }
+
+                    let errorMsg = "Impossible d'accéder à votre signal GPS.";
+                    if (error.code === error.PERMISSION_DENIED) {
+                        errorMsg = "Autorisation GPS refusée. Veuillez autoriser la localisation ou utiliser la sélection de secours.";
+                    } else if (error.code === error.POSITION_UNAVAILABLE) {
+                        errorMsg = "Signal GPS indisponible. Veuillez utiliser le repérage de secours.";
+                    } else if (error.code === error.TIMEOUT) {
+                        errorMsg = "Délai d'attente GPS dépassé. Veuillez utiliser le repérage de secours.";
+                    }
+                    handleGeoError(errorMsg);
+                },
+                options
+            );
+        };
+
+        tryGeo(geoOptions);
     }
 
     function handleGeoError(msg) {
@@ -3501,90 +3515,113 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
+        const tryGeolocation = (options, isFallbackAttempt = false) => {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
 
-                // 1. Calculate distances to the centers of Ouagadougou and Bobo-Dioulasso
-                const distToOuaga = getDistance(lat, lng, 12.3714, -1.5197);
-                const distToBobo = getDistance(lat, lng, 11.1774, -4.2983);
-                
-                let detectedCity = 'ouaga';
-                if (distToBobo < distToOuaga) {
-                    detectedCity = 'bobo';
-                }
-
-                // 2. High-end Developer Experience Simulator Check (testers outside Burkina Faso)
-                const closestCenterDist = Math.min(distToOuaga, distToBobo);
-                if (closestCenterDist > 150) {
-                    // Simulate coordinate right next to active drivers for a beautiful proximity demonstration
-                    if (detectedCity === 'ouaga') {
-                        STATE.clientCoordinates = { lat: 12.3702, lng: -1.5185 };
-                    } else {
-                        STATE.clientCoordinates = { lat: 11.1782, lng: -4.2995 };
+                    // 1. Calculate distances to the centers of Ouagadougou and Bobo-Dioulasso
+                    const distToOuaga = getDistance(lat, lng, 12.3714, -1.5197);
+                    const distToBobo = getDistance(lat, lng, 11.1774, -4.2983);
+                    
+                    let detectedCity = 'ouaga';
+                    if (distToBobo < distToOuaga) {
+                        detectedCity = 'bobo';
                     }
-                } else {
-                    STATE.clientCoordinates = { lat: lat, lng: lng };
-                }
 
-                // Restore trigger buttons
-                if (triggerButton) {
-                    triggerButton.style.pointerEvents = 'auto';
-                    if (triggerButton.id === 'loc-btn-map' && iconEl) iconEl.innerHTML = originalIcon;
-                    else if (originalText) triggerButton.innerHTML = originalText;
-                }
+                    // 2. High-end Developer Experience Simulator Check (testers outside Burkina Faso)
+                    const closestCenterDist = Math.min(distToOuaga, distToBobo);
+                    if (closestCenterDist > 150) {
+                        // Simulate coordinate right next to active drivers for a beautiful proximity demonstration
+                        if (detectedCity === 'ouaga') {
+                            STATE.clientCoordinates = { lat: 12.3702, lng: -1.5185 };
+                        } else {
+                            STATE.clientCoordinates = { lat: 11.1782, lng: -4.2995 };
+                        }
+                    } else {
+                        STATE.clientCoordinates = { lat: lat, lng: lng };
+                    }
 
-                // 3. Switch active city automatically and launch map centered on coordinates
-                switchCity(detectedCity);
-                portalSelectedCity = detectedCity;
-                
-                showMapView();
-                closeLocationPortal();
+                    // Restore trigger buttons
+                    if (triggerButton) {
+                        triggerButton.style.pointerEvents = 'auto';
+                        if (triggerButton.id === 'loc-btn-map' && iconEl) iconEl.innerHTML = originalIcon;
+                        else if (originalText) triggerButton.innerHTML = originalText;
+                    }
 
-                if (STATE.map) {
-                    STATE.map.setView([STATE.clientCoordinates.lat, STATE.clientCoordinates.lng], 15, {
-                        animate: true,
-                        pan: { duration: 0.8 }
-                    });
-                }
+                    // 3. Switch active city automatically and launch map centered on coordinates
+                    switchCity(detectedCity);
+                    portalSelectedCity = detectedCity;
+                    
+                    showMapView();
+                    closeLocationPortal();
 
-                // 4. Present elegant dynamic geolocation confirmation toast badge
-                const toast = document.getElementById('sector-active-toast');
-                const cityName = detectedCity === 'ouaga' ? 'Ouagadougou' : 'Bobo-Dioulasso';
-                document.getElementById('sector-toast-text').innerText = `📍 Position détectée à ${cityName} !`;
-                toast.classList.add('show');
-                
-                // Auto-hide the toast after 4.5 seconds
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 4500);
-            },
-            (error) => {
-                // Restore trigger buttons on error
-                if (triggerButton) {
-                    triggerButton.style.pointerEvents = 'auto';
-                    if (triggerButton.id === 'loc-btn-map' && iconEl) iconEl.innerHTML = originalIcon;
-                    else if (originalText) triggerButton.innerHTML = originalText;
-                }
-                
-                STATE.clientCoordinates = null;
-                if (STATE.clientBeaconMarker) {
-                    STATE.map.removeLayer(STATE.clientBeaconMarker);
-                    STATE.clientBeaconMarker = null;
-                }
-                alert("ℹ️ Autorisation GPS refusée ou signal indisponible. Chargement de la carte par défaut.");
+                    if (STATE.map) {
+                        STATE.map.setView([STATE.clientCoordinates.lat, STATE.clientCoordinates.lng], 15, {
+                            animate: true,
+                            pan: { duration: 0.8 }
+                        });
+                    }
 
-                switchCity(portalSelectedCity);
-                showMapView();
-                closeLocationPortal();
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 12000,
-                maximumAge: 0
-            }
-        );
+                    // 4. Present elegant dynamic geolocation confirmation toast badge
+                    const toast = document.getElementById('sector-active-toast');
+                    const cityName = detectedCity === 'ouaga' ? 'Ouagadougou' : 'Bobo-Dioulasso';
+                    document.getElementById('sector-toast-text').innerText = `📍 Position détectée à ${cityName} !`;
+                    toast.classList.add('show');
+                    
+                    // Auto-hide the toast after 4.5 seconds
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                    }, 4500);
+                },
+                (error) => {
+                    // Fallback to low accuracy cellular/Wi-Fi positioning if high accuracy failed or timed out
+                    if (!isFallbackAttempt && (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE)) {
+                        console.warn("Client high-accuracy GPS timed out or unavailable. Trying low-accuracy fallback...");
+                        tryGeolocation({
+                            enableHighAccuracy: false,
+                            timeout: 8000,
+                            maximumAge: 10000 // allow cached location
+                        }, true);
+                        return;
+                    }
+
+                    // Restore trigger buttons on error
+                    if (triggerButton) {
+                        triggerButton.style.pointerEvents = 'auto';
+                        if (triggerButton.id === 'loc-btn-map' && iconEl) iconEl.innerHTML = originalIcon;
+                        else if (originalText) triggerButton.innerHTML = originalText;
+                    }
+                    
+                    STATE.clientCoordinates = null;
+                    if (STATE.clientBeaconMarker) {
+                        STATE.map.removeLayer(STATE.clientBeaconMarker);
+                        STATE.clientBeaconMarker = null;
+                    }
+
+                    let errMsg = "Autorisation GPS refusée ou signal indisponible. Chargement de la carte par défaut.";
+                    if (error.code === error.PERMISSION_DENIED) {
+                        errMsg = "ℹ️ Autorisation GPS refusée ou services de localisation désactivés sur votre téléphone. Chargement de la carte par défaut.";
+                    } else if (error.code === error.TIMEOUT) {
+                        errMsg = "ℹ️ Temps d'attente GPS dépassé (signal faible). Chargement de la carte par défaut.";
+                    }
+
+                    alert(errMsg);
+
+                    switchCity(portalSelectedCity);
+                    showMapView();
+                    closeLocationPortal();
+                },
+                options
+            );
+        };
+
+        tryGeolocation({
+            enableHighAccuracy: true,
+            timeout: 12000,
+            maximumAge: 0
+        });
     }
 
     function resetPortalSearchState() {
