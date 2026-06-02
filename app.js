@@ -229,6 +229,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let adminRealtimeChannel = null;
+    function setupAdminRealtimeSubscription() {
+        if (!STATE.isAdmin) {
+            if (adminRealtimeChannel) {
+                supabase.removeChannel(adminRealtimeChannel);
+                adminRealtimeChannel = null;
+            }
+            return;
+        }
+        
+        if (adminRealtimeChannel) return; // already subscribed
+        
+        adminRealtimeChannel = supabase.channel('admin-candidate-notifications')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'livreurs' },
+                (payload) => {
+                    const newRider = payload.new;
+                    
+                    // Add the new rider to our local state if it's not already there
+                    const exists = findRiderById(newRider.id);
+                    if (!exists) {
+                        const riderObj = {
+                            id: newRider.id,
+                            name: newRider.name,
+                            vehicle: newRider.vehicle,
+                            distance: 'à proximité',
+                            phone: newRider.phone,
+                            lat: Number(newRider.lat),
+                            lng: Number(newRider.lng),
+                            initial: newRider.initial,
+                            contactsCount: newRider.contacts_count,
+                            subscriptionPaid: newRider.subscription_paid,
+                            status: newRider.status,
+                            viewsCount: newRider.views_count,
+                            rating: Number(newRider.rating),
+                            reviews: [],
+                            isUnlocked: true
+                        };
+                        if (newRider.city === 'ouaga') {
+                            STATE.riders.ouaga.unshift(riderObj);
+                        } else {
+                            STATE.riders.bobo.unshift(riderObj);
+                        }
+                    }
+                    
+                    // Toast notification for admin
+                    alert(`🔔 Nouvelle candidature de livreur : ${newRider.name} vient de s'inscrire !`);
+                    
+                    // Refresh counts and tables if admin modal is open
+                    if (adminModal && adminModal.classList.contains('open')) {
+                        updateAdminCounts();
+                        // If pending sub-view is open, refresh it
+                        if (subViewPending && !subViewPending.classList.contains('hidden')) {
+                            updateAdminPendingCandidates();
+                        }
+                    }
+                }
+            )
+            .subscribe();
+    }
+
     // Secure Session Persistence Checking Function on page startup
     async function checkActiveSession() {
         try {
@@ -237,7 +299,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const user = session.user;
                 const role = user.app_metadata?.role || user.user_metadata?.role;
                 
-                if (role === 'client') {
+                if (role === 'admin') {
+                    STATE.isAdmin = true;
+                    localStorage.setItem('livraison_admin_active', 'true');
+                    setupAdminRealtimeSubscription();
+                    updateNavButtons();
+                    updateMapBlurState();
+                    renderRiders();
+                } else if (role === 'client') {
                     const { data: dbClient } = await supabase.from('clients_livraison').select('*').eq('id', user.id).maybeSingle();
                     if (dbClient) {
                         let client = {
@@ -304,9 +373,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Call load initial data asynchronously and check active session
     loadDataFromSupabase().then(() => {
-        checkActiveSession();
+        if (localStorage.getItem('livraison_admin_active') === 'true') {
+            STATE.isAdmin = true;
+            setupAdminRealtimeSubscription();
+            updateNavButtons();
+            updateMapBlurState();
+            renderRiders();
+        } else {
+            checkActiveSession();
+        }
     });
-
     // --- DOM ELEMENTS ---
     const welcomePortal = document.getElementById('welcome-portal');
     const mainFooter = document.getElementById('main-footer');
@@ -404,12 +480,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminChatBadge = document.getElementById('admin-chat-badge') || document.createElement('div');
     const adminModal = document.getElementById('admin-modal');
     const btnCloseAdmin = document.getElementById('btn-close-admin');
-    const tabChats = document.getElementById('tab-chats');
-    const tabDrivers = document.getElementById('tab-drivers');
-    const tabStats = document.getElementById('tab-stats');
+    
+    // Admin Sub-Views & Menu declarations
+    const adminMenuView = document.getElementById('admin-menu-view');
+    const btnMenuChats = document.getElementById('btn-menu-chats');
+    const btnMenuDrivers = document.getElementById('btn-menu-drivers');
+    const btnMenuPending = document.getElementById('btn-menu-pending');
+    const btnMenuSubs = document.getElementById('btn-menu-subs');
+    const btnMenuStats = document.getElementById('btn-menu-stats');
+    
+    const btnBackMenuChats = document.getElementById('btn-back-menu-chats');
+    const btnBackMenuDrivers = document.getElementById('btn-back-menu-drivers');
+    const btnBackMenuPending = document.getElementById('btn-back-menu-pending');
+    const btnBackMenuSubs = document.getElementById('btn-back-menu-subs');
+    const btnBackMenuStats = document.getElementById('btn-back-menu-stats');
+    
+    const subViewChats = document.getElementById('sub-view-chats');
+    const subViewDrivers = document.getElementById('sub-view-drivers');
+    const subViewPending = document.getElementById('sub-view-pending');
+    const subViewSubs = document.getElementById('sub-view-subs');
+    const subViewStats = document.getElementById('sub-view-stats');
+
     const adminChatsSection = document.getElementById('admin-chats-section');
     const adminDriversSection = document.getElementById('admin-drivers-section');
+    const adminPendingSection = document.getElementById('admin-pending-section');
+    const adminSubsSection = document.getElementById('admin-subs-section');
     const adminStatsSection = document.getElementById('admin-stats-section');
+    
     const adminChatSessions = document.getElementById('admin-chat-sessions');
     const adminInspector = document.getElementById('admin-inspector');
     const btnInspectorBack = document.getElementById('btn-inspector-back');
@@ -547,7 +644,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Filter out drivers based on active status
         let visibleRiders = cityRiders.filter(rider => {
-            // Keep all drivers visible and active during the free trial period
+            // Pending candidates are never visible on the map
+            if (rider.status === 'en attente') return false;
+            
+            // Keep all validated drivers visible and active during the free trial period
             if (IS_FREE_PERIOD) {
                 rider.status = 'actif';
                 return true;
@@ -2399,10 +2499,8 @@ document.addEventListener('DOMContentLoaded', () => {
         STATE.unreadAdminCount = 0;
         adminChatBadge.classList.add('hidden');
         
-        // Render advanced dashboard stats & tables
-        updateAdminDashboardDrivers();
-        updateAdminDashboardStats();
-        switchAdminTab('chats');
+        // Show main admin menu and update counts
+        showAdminMenu();
         
         // Close chats drawer if open to avoid visual overlaps
         chatDrawer.classList.remove('open');
@@ -2412,40 +2510,82 @@ document.addEventListener('DOMContentLoaded', () => {
         adminModal.classList.remove('open');
     }
     
-    function switchAdminTab(tab) {
-        if (tab === 'chats') {
-            tabChats.classList.add('active');
-            tabDrivers.classList.remove('active');
-            tabStats.classList.remove('active');
-            adminChatsSection.classList.remove('hidden');
-            adminDriversSection.classList.add('hidden');
-            adminStatsSection.classList.add('hidden');
-            
-            // Go back in inspector if it was open
+    function showAdminSubView(viewId) {
+        // Hide menu grid
+        adminMenuView.classList.add('hidden');
+        
+        // Hide all sub views
+        subViewChats.classList.add('hidden');
+        subViewDrivers.classList.add('hidden');
+        subViewPending.classList.add('hidden');
+        subViewSubs.classList.add('hidden');
+        subViewStats.classList.add('hidden');
+        
+        // Show selected view
+        const targetView = document.getElementById(viewId);
+        if (targetView) targetView.classList.remove('hidden');
+        
+        // Load data for specific view
+        if (viewId === 'sub-view-chats') {
             closeAdminConversationInspector();
-            
-            // Populate chat sessions
             updateAdminDashboardChats();
-        } else if (tab === 'drivers') {
-            tabDrivers.classList.add('active');
-            tabChats.classList.remove('active');
-            tabStats.classList.remove('active');
-            adminDriversSection.classList.remove('hidden');
-            adminChatsSection.classList.add('hidden');
-            adminStatsSection.classList.add('hidden');
-            
-            // Populate drivers list
+        } else if (viewId === 'sub-view-drivers') {
             updateAdminDashboardDrivers();
-        } else {
-            tabStats.classList.add('active');
-            tabChats.classList.remove('active');
-            tabDrivers.classList.remove('active');
-            adminStatsSection.classList.remove('hidden');
-            adminChatsSection.classList.add('hidden');
-            adminDriversSection.classList.add('hidden');
-            
-            // Populate stats
+        } else if (viewId === 'sub-view-pending') {
+            updateAdminPendingCandidates();
+        } else if (viewId === 'sub-view-subs') {
+            updateAdminDashboardDrivers();
+        } else if (viewId === 'sub-view-stats') {
             updateAdminDashboardStats();
+        }
+    }
+
+    function showAdminMenu() {
+        // Show menu grid
+        adminMenuView.classList.remove('hidden');
+        
+        // Hide all sub views
+        subViewChats.classList.add('hidden');
+        subViewDrivers.classList.add('hidden');
+        subViewPending.classList.add('hidden');
+        subViewSubs.classList.add('hidden');
+        subViewStats.classList.add('hidden');
+        
+        // Update menu card counts
+        updateAdminCounts();
+    }
+
+    function updateAdminCounts() {
+        const allRiders = [...STATE.riders.ouaga, ...STATE.riders.bobo];
+        
+        const pendingCount = allRiders.filter(r => r.status === 'en attente').length;
+        const activeDriversCount = allRiders.filter(r => r.status === 'actif' || r.status === 'suspendu').length;
+        
+        const activeChatIds = Object.keys(STATE.chats).filter(riderId => STATE.chats[riderId] && STATE.chats[riderId].length > 0).length;
+        
+        const activeSubsCount = allRiders.filter(r => r.subscriptionPaid && r.status !== 'en attente').length + 
+                                STATE.clients.filter(c => c.subscriptionPaid).length;
+                                
+        // Update DOM elements
+        const chatsCountEl = document.getElementById('admin-menu-chats-count');
+        const driversCountEl = document.getElementById('admin-menu-drivers-count');
+        const pendingCountEl = document.getElementById('admin-menu-pending-count');
+        const subsCountEl = document.getElementById('admin-menu-subs-count');
+        
+        if (chatsCountEl) chatsCountEl.innerText = activeChatIds;
+        if (driversCountEl) driversCountEl.innerText = activeDriversCount;
+        if (pendingCountEl) pendingCountEl.innerText = pendingCount;
+        if (subsCountEl) subsCountEl.innerText = activeSubsCount;
+        
+        // Notification badge on pending candidate card
+        const pendingBadge = document.getElementById('admin-pending-badge');
+        if (pendingBadge) {
+            if (pendingCount > 0) {
+                pendingBadge.classList.remove('hidden');
+                pendingBadge.innerText = pendingCount;
+            } else {
+                pendingBadge.classList.add('hidden');
+            }
         }
     }
 
@@ -2458,36 +2598,25 @@ document.addEventListener('DOMContentLoaded', () => {
         subsListContainer.innerHTML = '';
         
         const allRiders = [...STATE.riders.ouaga, ...STATE.riders.bobo];
+        const registeredRiders = allRiders.filter(r => r.status === 'actif' || r.status === 'suspendu');
         
         // Render registered drivers list table
-        allRiders.forEach(rider => {
+        registeredRiders.forEach(rider => {
             const count = rider.contactsCount || 0;
             const paid = rider.subscriptionPaid || false;
-            
-            if (!rider.status) {
-                if (count >= 5 && !paid) {
-                    rider.status = 'suspendu';
-                } else {
-                    rider.status = 'actif';
-                }
-            }
             
             let statusBadge = '';
             if (rider.status === 'actif') {
                 statusBadge = '<span class="badge-status active">Actif</span>';
-            } else if (rider.status === 'en attente') {
-                statusBadge = '<span class="badge-status pending">En attente</span>';
             } else {
                 statusBadge = '<span class="badge-status suspended">Suspendu</span>';
             }
             
             let actionButtons = '';
-            if (rider.status === 'en attente') {
-                actionButtons += `<button class="btn-table-action validate" data-id="${rider.id}">Valider</button>`;
-            } else if (rider.status === 'actif') {
+            if (rider.status === 'actif') {
                 actionButtons += `<button class="btn-table-action suspend" data-id="${rider.id}">Suspendre</button>`;
             } else if (rider.status === 'suspendu') {
-                actionButtons += `<button class="btn-table-action validate" data-id="${rider.id}">Valider</button>`;
+                actionButtons += `<button class="btn-table-action validate" data-id="${rider.id}">Activer</button>`;
             }
             actionButtons += `<button class="btn-table-action delete" data-id="${rider.id}">Supprimer</button>`;
             
@@ -2503,7 +2632,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </td>
                 <td style="font-weight:600;">${rider.phone}</td>
-                <td><button class="btn-table-action inspect-docs" data-id="${rider.id}" style="background-color: var(--color-primary-yellow-light) !important; color: var(--color-primary-brown) !important; border: 1.5px solid rgba(246, 205, 86, 0.45) !important; padding: 6px 12px; border-radius: 8px; font-weight:700; font-size:0.75rem; cursor:pointer;">🔍 Vérifier</button></td>
+                <td><button class="btn-table-action inspect-docs" data-id="${rider.id}" style="background-color: var(--color-primary-yellow-light) !important; color: var(--color-primary-brown) !important; border: 1.5px solid rgba(246, 205, 86, 0.45) !important; padding: 6px 12px; border-radius: 8px; font-weight:700; font-size:0.75rem; cursor:pointer;">🔍 Inspecter</button></td>
                 <td>${statusBadge}</td>
                 <td><div style="display:flex;">${actionButtons}</div></td>
             `;
@@ -2543,47 +2672,114 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // Add event listeners on table actions
-        document.querySelectorAll('.btn-table-action.validate').forEach(btn => {
+        bindTableActionEvents(driversListContainer);
+    }
+
+    function updateAdminPendingCandidates() {
+        const pendingListContainer = document.getElementById('admin-table-pending-list');
+        if (!pendingListContainer) return;
+        
+        pendingListContainer.innerHTML = '';
+        
+        const allRiders = [...STATE.riders.ouaga, ...STATE.riders.bobo];
+        const pendingRiders = allRiders.filter(r => r.status === 'en attente');
+        
+        if (pendingRiders.length === 0) {
+            pendingListContainer.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align:center; padding:30px 20px; color:var(--color-charcoal-muted); font-style:italic; font-size:0.8rem;">
+                        Aucune candidature en attente de vérification.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        pendingRiders.forEach(rider => {
+            let statusBadge = '<span class="badge-status pending">En attente</span>';
+            let actionButtons = `
+                <button class="btn-table-action validate" data-id="${rider.id}">Valider</button>
+                <button class="btn-table-action delete" data-id="${rider.id}">Rejeter</button>
+            `;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:700; width:28px; height:28px; border-radius:8px; background:var(--color-primary-brown-light); color:var(--color-charcoal); display:flex; align-items:center; justify-content:center; font-size:0.75rem;">${rider.initial}</span>
+                        <div>
+                            <div style="font-weight:700;">${rider.name}</div>
+                            <div style="font-size:0.65rem; color:var(--color-charcoal-muted);">${rider.vehicle}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-weight:600;">${rider.phone}</td>
+                <td><button class="btn-table-action inspect-docs" data-id="${rider.id}" style="background-color: var(--color-primary-yellow-light) !important; color: var(--color-primary-brown) !important; border: 1.5px solid rgba(246, 205, 86, 0.45) !important; padding: 6px 12px; border-radius: 8px; font-weight:700; font-size:0.75rem; cursor:pointer;">🔍 Inspecter</button></td>
+                <td>${statusBadge}</td>
+                <td><div style="display:flex;">${actionButtons}</div></td>
+            `;
+            pendingListContainer.appendChild(tr);
+        });
+        
+        // Add event listeners on table actions
+        bindTableActionEvents(pendingListContainer);
+    }
+
+    function bindTableActionEvents(container) {
+        container.querySelectorAll('.btn-table-action.validate').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.getAttribute('data-id');
                 const rider = findRiderById(id);
                 if (rider) {
                     rider.status = 'actif';
-                    if (rider.contactsCount >= 5) {
-                        rider.subscriptionPaid = true; // Auto consider paid when validated
-                    }
+                    // Sync with Supabase (applies RLS directly)
+                    supabase.from('livreurs').update({ status: 'actif' }).eq('id', rider.id).then();
+                    
                     renderRiders();
-                    updateAdminDashboardDrivers();
-                    alert(`Profil de ${rider.name} validé et publié sur la carte !`);
+                    if (container.id === 'admin-table-pending-list') {
+                        updateAdminPendingCandidates();
+                    } else {
+                        updateAdminDashboardDrivers();
+                    }
+                    alert(`🎉 Candidature de ${rider.name} approuvée et profil publié sur la carte !`);
                 }
             });
         });
         
-        document.querySelectorAll('.btn-table-action.suspend').forEach(btn => {
+        container.querySelectorAll('.btn-table-action.suspend').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.getAttribute('data-id');
                 const rider = findRiderById(id);
                 if (rider) {
                     rider.status = 'suspendu';
                     rider.subscriptionPaid = false;
+                    // Sync with Supabase (applies RLS directly)
+                    supabase.from('livreurs').update({ status: 'suspendu', subscription_paid: false }).eq('id', rider.id).then();
+                    
                     renderRiders();
                     updateAdminDashboardDrivers();
-                    alert(`Profil de ${rider.name} suspendu et masqué de la carte.`);
+                    alert(`⚠️ Profil de ${rider.name} suspendu et masqué de la carte.`);
                 }
             });
         });
         
-        document.querySelectorAll('.btn-table-action.delete').forEach(btn => {
+        container.querySelectorAll('.btn-table-action.delete').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.getAttribute('data-id');
-                if (confirm("Voulez-vous vraiment supprimer définitivement ce livreur de la plateforme ?")) {
+                const rider = findRiderById(id);
+                const name = rider ? rider.name : "ce livreur";
+                if (confirm(`Voulez-vous vraiment supprimer définitivement ${name} de la plateforme ?`)) {
+                    // Sync with Supabase (applies RLS directly)
+                    supabase.from('livreurs').delete().eq('id', id).then();
                     deleteRiderById(id);
+                    if (container.id === 'admin-table-pending-list') {
+                        updateAdminPendingCandidates();
+                    }
                 }
             });
         });
 
-        // Add event listeners on document verification inspection
-        document.querySelectorAll('.btn-table-action.inspect-docs').forEach(btn => {
+        container.querySelectorAll('.btn-table-action.inspect-docs').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.getAttribute('data-id');
                 const rider = findRiderById(id);
@@ -2597,10 +2793,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function deleteRiderById(id) {
         STATE.riders.ouaga = STATE.riders.ouaga.filter(r => r.id !== id);
         STATE.riders.bobo = STATE.riders.bobo.filter(r => r.id !== id);
-        
         renderRiders();
         updateAdminDashboardDrivers();
         updateAdminDashboardStats();
+                    
         
         alert("Livreur supprimé définitivement de la plateforme.");
     }
@@ -3318,6 +3514,27 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Veuillez d'abord définir votre position géographique en cliquant sur « Me géolocaliser » ou en sélectionnant votre ville et vos quartiers.");
             return;
         }
+
+        // City selection check
+        if (!driverRegisterCity.value) {
+            alert("Veuillez sélectionner manuellement votre ville.");
+            return;
+        }
+
+        // Neighborhood selection check
+        const checkedSectors = document.querySelectorAll('.driver-register-sector-checkbox:checked');
+        if (checkedSectors.length === 0) {
+            alert("Veuillez sélectionner au moins un quartier d'activité.");
+            return;
+        }
+
+        // Strict identity documents upload check
+        if (!boxUploadCniRecto.classList.contains('has-file') || 
+            !boxUploadCniVerso.classList.contains('has-file') || 
+            !boxUploadSelfie.classList.contains('has-file')) {
+            alert("Veuillez charger tous les documents de vérification requis (Photo CNI Recto, Photo CNI Verso et Photo Selfie) avant de soumettre.");
+            return;
+        }
         
         // Get Form Values (simulating submission)
         const name = document.getElementById('driver-name').value;
@@ -3352,7 +3569,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     lng: latLng.lng,
                     initial: firstInitials,
                     city: targetCity,
-                    subscription_paid: false
+                    subscription_paid: false,
+                    status: 'en attente'
                 }
             }
         }).then(({ data: signUpData, error: signUpError }) => {
@@ -3375,7 +3593,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewsCount: 0,
                 rating: 5.0,
                 reviews: [],
-                status: 'actif',
+                status: 'en attente',
                 cniRecto: previewCniRecto.src || null,
                 cniVerso: previewCniVerso.src || null,
                 selfie: previewSelfie.src || null
@@ -3673,8 +3891,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Admin Session Logout override
-    btnAdminLogoutSession.addEventListener('click', () => {
+    btnAdminLogoutSession.addEventListener('click', async () => {
+        await supabase.auth.signOut();
         STATE.isAdmin = false;
+        localStorage.removeItem('livraison_admin_active');
+        setupAdminRealtimeSubscription();
         renderRiders();
         closeAdminModal();
         updateNavButtons();
@@ -3682,15 +3903,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Close admin modal
-    btnCloseAdmin.addEventListener('click', closeAdminModal);
+    if (btnCloseAdmin) {
+        btnCloseAdmin.addEventListener('click', closeAdminModal);
+    }
 
-    // Admin Tabs switcher
-    tabChats.addEventListener('click', () => switchAdminTab('chats'));
-    tabDrivers.addEventListener('click', () => switchAdminTab('drivers'));
-    tabStats.addEventListener('click', () => switchAdminTab('stats'));
+    // Grid Menu Button Click Listeners
+    if (btnMenuChats) btnMenuChats.addEventListener('click', () => showAdminSubView('sub-view-chats'));
+    if (btnMenuDrivers) btnMenuDrivers.addEventListener('click', () => showAdminSubView('sub-view-drivers'));
+    if (btnMenuPending) btnMenuPending.addEventListener('click', () => showAdminSubView('sub-view-pending'));
+    if (btnMenuSubs) btnMenuSubs.addEventListener('click', () => showAdminSubView('sub-view-subs'));
+    if (btnMenuStats) btnMenuStats.addEventListener('click', () => showAdminSubView('sub-view-stats'));
+
+    // Back to Menu Button Click Listeners
+    if (btnBackMenuChats) btnBackMenuChats.addEventListener('click', showAdminMenu);
+    if (btnBackMenuDrivers) btnBackMenuDrivers.addEventListener('click', showAdminMenu);
+    if (btnBackMenuPending) btnBackMenuPending.addEventListener('click', showAdminMenu);
+    if (btnBackMenuSubs) btnBackMenuSubs.addEventListener('click', showAdminMenu);
+    if (btnBackMenuStats) btnBackMenuStats.addEventListener('click', showAdminMenu);
 
     // Inspector back button
-    btnInspectorBack.addEventListener('click', closeAdminConversationInspector);
+    if (btnInspectorBack) {
+        btnInspectorBack.addEventListener('click', closeAdminConversationInspector);
+    }
 
     // --- LOCATION SELECTION PORTAL EVENT BINDINGS ---
     

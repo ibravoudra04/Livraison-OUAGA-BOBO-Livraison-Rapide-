@@ -835,28 +835,64 @@
                 </div>
                 
                 <div class="admin-body" style="max-height: 80vh; overflow-y: auto;">
-                    <!-- Vue Tableau de Bord Admin -->
-                    <div id="admin-dashboard-view">
-                        <p class="admin-subtitle">
-                            Suivi en temps réel des discussions et échanges en cours sur la plateforme (session active).
-                        </p>
+                    <!-- Menu Principal de l'Admin (Grille de tuiles épurées) -->
+                    <div id="admin-menu-view" class="admin-menu-grid">
+                        <button class="admin-menu-card" id="btn-menu-chats">
+                            <span class="menu-card-icon">💬</span>
+                            <div class="menu-card-info">
+                                <h4>Discussions en Cours</h4>
+                                <p><span id="admin-menu-chats-count">0</span> session(s) active(s)</p>
+                            </div>
+                        </button>
                         
-                        <div class="admin-tabs">
-                            <button class="admin-tab active" id="tab-chats">Discussions en Cours</button>
-                            <button class="admin-tab" id="tab-drivers">Livreurs & Abonnements</button>
-                            <button class="admin-tab" id="tab-stats">Statistiques Plateforme</button>
-                        </div>
+                        <button class="admin-menu-card" id="btn-menu-drivers">
+                            <span class="menu-card-icon">👥</span>
+                            <div class="menu-card-info">
+                                <h4>Gestion des Livreurs</h4>
+                                <p><span id="admin-menu-drivers-count">0</span> inscrit(s)</p>
+                            </div>
+                        </button>
+                        
+                        <button class="admin-menu-card" id="btn-menu-pending">
+                            <span class="menu-card-icon">🪪</span>
+                            <div class="menu-card-info">
+                                <h4>Candidatures en Attente</h4>
+                                <p><span id="admin-menu-pending-count" style="color:var(--color-primary-red); font-weight:800;">0</span> à vérifier</p>
+                            </div>
+                            <span class="notification-badge hidden" id="admin-pending-badge">!</span>
+                        </button>
+                        
+                        <button class="admin-menu-card" id="btn-menu-subs">
+                            <span class="menu-card-icon">💳</span>
+                            <div class="menu-card-info">
+                                <h4>Suivi des Abonnements</h4>
+                                <p><span id="admin-menu-subs-count">0</span> actif(s)</p>
+                            </div>
+                        </button>
+                        
+                        <button class="admin-menu-card" id="btn-menu-stats">
+                            <span class="menu-card-icon">📈</span>
+                            <div class="menu-card-info">
+                                <h4>Statistiques Plateforme</h4>
+                                <p>Revenus, clics et visites</p>
+                            </div>
+                        </button>
+                    </div>
 
-                        <!-- Liste des discussions actives -->
+                    <!-- 1. Section Chats -->
+                    <div class="admin-sub-view hidden" id="sub-view-chats">
+                        <div class="sub-view-header">
+                            <button class="btn-back-menu" id="btn-back-menu-chats">⬅️ Retour</button>
+                            <h3>💬 Discussions en Cours</h3>
+                        </div>
+                        <p class="admin-subtitle">Suivi en temps réel des discussions et échanges en cours sur la plateforme (session active).</p>
                         <div class="admin-content-section" id="admin-chats-section">
                             <div class="chat-sessions-list" id="admin-chat-sessions">
-                                <!-- Les sessions de chat s'affichent ici dynamiquement -->
                                 <div class="no-session-placeholder">
                                     Aucun échange de chat enregistré pour le moment dans cette session.
                                 </div>
                             </div>
                             
-                            <!-- Inspecteur de conversation en direct -->
                             <div class="admin-conversation-inspector hidden" id="admin-inspector">
                                 <div class="inspector-header">
                                     <button class="btn-inspector-back" id="btn-inspector-back">&larr; Retour</button>
@@ -867,10 +903,16 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Liste des livreurs et abonnements -->
-                        <div class="admin-content-section hidden" id="admin-drivers-section">
-                            <h4 style="font-weight:700; margin-bottom:8px;">👥 Liste Complète des Livreurs Inscrits</h4>
+                    <!-- 2. Section Livreurs -->
+                    <div class="admin-sub-view hidden" id="sub-view-drivers">
+                        <div class="sub-view-header">
+                            <button class="btn-back-menu" id="btn-back-menu-drivers">⬅️ Retour</button>
+                            <h3>👥 Gestion des Livreurs</h3>
+                        </div>
+                        <p class="admin-subtitle">Activer, suspendre ou supprimer les livreurs déjà validés.</p>
+                        <div class="admin-content-section" id="admin-drivers-section">
                             <div class="admin-table-container">
                                 <table class="admin-table">
                                     <thead>
@@ -887,8 +929,44 @@
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
 
-                            <h4 style="font-weight:700; margin-top:24px; margin-bottom:8px;">💳 Liste de tous les Abonnements (Clients & Livreurs)</h4>
+                    <!-- 3. Section Candidatures -->
+                    <div class="admin-sub-view hidden" id="sub-view-pending">
+                        <div class="sub-view-header">
+                            <button class="btn-back-menu" id="btn-back-menu-pending">⬅️ Retour</button>
+                            <h3>🪪 Candidatures en Attente</h3>
+                        </div>
+                        <p class="admin-subtitle">Inspectez les documents CNI et selfie des nouveaux livreurs inscrits pour valider ou rejeter leur compte.</p>
+                        <div class="admin-content-section" id="admin-pending-section">
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Téléphone</th>
+                                            <th>Documents</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-table-pending-list">
+                                        <!-- Rempli en JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Section Abonnements -->
+                    <div class="admin-sub-view hidden" id="sub-view-subs">
+                        <div class="sub-view-header">
+                            <button class="btn-back-menu" id="btn-back-menu-subs">⬅️ Retour</button>
+                            <h3>💳 Suivi des Abonnements</h3>
+                        </div>
+                        <p class="admin-subtitle">Historique des transactions d'abonnements premium pour clients (5 000 FCFA/mois) et livreurs (500 FCFA/7j).</p>
+                        <div class="admin-content-section" id="admin-subs-section">
                             <div class="admin-table-container">
                                 <table class="admin-table">
                                     <thead>
@@ -906,10 +984,16 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Statistiques de la plateforme -->
-                        <div class="admin-content-section hidden" id="admin-stats-section">
-                            <!-- Chart Visiteurs -->
+                    <!-- 5. Section Statistiques -->
+                    <div class="admin-sub-view hidden" id="sub-view-stats">
+                        <div class="sub-view-header">
+                            <button class="btn-back-menu" id="btn-back-menu-stats">⬅️ Retour</button>
+                            <h3>📈 Statistiques Plateforme</h3>
+                        </div>
+                        <p class="admin-subtitle">Mesures d'utilisation en temps réel et revenus simulés.</p>
+                        <div class="admin-content-section" id="admin-stats-section">
                             <div class="stat-chart-container">
                                 <div class="chart-header">
                                     <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;">📈 Évolution des Visiteurs du Site</h4>
@@ -923,15 +1007,11 @@
                                                 <stop offset="100%" stop-color="var(--color-primary-red)" stop-opacity="0.0"></stop>
                                             </linearGradient>
                                         </defs>
-                                        <!-- Grid lines -->
                                         <line x1="0" y1="30" x2="500" y2="30" stroke="var(--color-border)" stroke-dasharray="4"></line>
                                         <line x1="0" y1="70" x2="500" y2="70" stroke="var(--color-border)" stroke-dasharray="4"></line>
                                         <line x1="0" y1="110" x2="500" y2="110" stroke="var(--color-border)" stroke-dasharray="4"></line>
-                                        <!-- Area under the curve -->
                                         <path d="M 0 150 Q 80 110 160 80 T 320 40 T 480 30 L 500 30 L 500 150 Z" fill="url(#chart-grad-red)"></path>
-                                        <!-- Line path -->
                                         <path d="M 0 150 Q 80 110 160 80 T 320 40 T 480 30 L 500 30" fill="none" stroke="var(--color-primary-red)" stroke-width="3" stroke-linecap="round"></path>
-                                        <!-- Dots -->
                                         <circle cx="80" cy="110" r="4" fill="var(--color-primary-red)" stroke="white" stroke-width="2"></circle>
                                         <circle cx="160" cy="80" r="4" fill="var(--color-primary-red)" stroke="white" stroke-width="2"></circle>
                                         <circle cx="320" cy="40" r="4" fill="var(--color-primary-red)" stroke="white" stroke-width="2"></circle>
@@ -972,7 +1052,6 @@
                                 </div>
                             </div>
 
-                            <!-- Stats générales supplémentaires -->
                             <div class="admin-stats-grid" style="margin-top: 12px;">
                                 <div class="stat-item">
                                     <div class="stat-label">Visiteurs uniques</div>

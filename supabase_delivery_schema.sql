@@ -92,7 +92,7 @@ BEGIN
             COALESCE(new.raw_user_meta_data->>'initial', 'L'),
             0,
             COALESCE((new.raw_user_meta_data->>'subscription_paid')::boolean, false),
-            'actif',
+            COALESCE(new.raw_user_meta_data->>'status', 'en attente'),
             5.0,
             COALESCE(new.raw_user_meta_data->>'city', 'ouaga')
         )
