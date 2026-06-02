@@ -4207,6 +4207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     else STATE.riders.bobo.push(driver);
                 }
                 STATE.loggedDriver = driver;
+                await loadDataFromSupabase();
                 closeAuthModal();
                 updateNavButtons();
                 
@@ -4250,6 +4251,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
  
+                await loadDataFromSupabase();
                 closeAuthModal();
                 openClientDrawer();
                 updateNavButtons();

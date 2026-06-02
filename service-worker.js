@@ -1,4 +1,4 @@
-const CACHE_NAME = 'livraison-rapide-v2';
+const CACHE_NAME = 'livraison-rapide-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -8,6 +8,8 @@ const ASSETS_TO_CACHE = [
   './delivery_logo_premium.jpg',
   './delivery_logo.png',
   './burkina_map.png',
+  './ouaga_monument.png',
+  './bobo_mosque.png',
   './lib/leaflet.css',
   './lib/leaflet.js',
   './lib/supabase.js',
