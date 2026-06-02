@@ -50,3 +50,7 @@ dist/
 # Agentic AI coding assistant files
 .agents/
 skills-lock.json
+
+# Local Supabase CLI folders
+.supabase/
+supabase/.temp/

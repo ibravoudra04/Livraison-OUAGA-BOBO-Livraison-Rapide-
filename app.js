@@ -4580,9 +4580,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Register Service Worker
+    // Register Service Worker (robust check for document ready state)
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
+        const registerSW = () => {
             navigator.serviceWorker.register('./service-worker.js')
                 .then((registration) => {
                     console.log('ServiceWorker registered with scope: ', registration.scope);
@@ -4590,7 +4590,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch((err) => {
                     console.error('ServiceWorker registration failed: ', err);
                 });
-        });
+        };
+        
+        if (document.readyState === 'complete') {
+            registerSW();
+        } else {
+            window.addEventListener('load', registerSW);
+        }
     }
 
     // Admin Settings Form Submit Listener

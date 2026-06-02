@@ -1,4 +1,4 @@
-const CACHE_NAME = 'livraison-rapide-v1';
+const CACHE_NAME = 'livraison-rapide-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -8,9 +8,12 @@ const ASSETS_TO_CACHE = [
   './delivery_logo_premium.jpg',
   './delivery_logo.png',
   './burkina_map.png',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
+  './lib/leaflet.css',
+  './lib/leaflet.js',
+  './lib/supabase.js',
+  './lib/images/marker-icon.png',
+  './lib/images/marker-shadow.png',
+  './lib/images/marker-icon-2x.png'
 ];
 
 self.addEventListener('install', (event) => {
