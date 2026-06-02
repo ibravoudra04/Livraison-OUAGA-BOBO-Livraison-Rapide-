@@ -7,7 +7,10 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   './delivery_logo_premium.jpg',
   './delivery_logo.png',
-  './burkina_map.png'
+  './burkina_map.png',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
 
 self.addEventListener('install', (event) => {
@@ -35,9 +38,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // We only cache GET requests and internal domain assets to avoid caching Supabase API or Map Tiles
+  // We only cache GET requests, internal domain assets, and critical CDNs (Leaflet, Supabase)
   const isGet = event.request.method === 'GET';
-  const isInternal = event.request.url.startsWith(self.location.origin);
+  const isCdn = event.request.url.includes('unpkg.com') || event.request.url.includes('jsdelivr.net');
+  const isInternal = event.request.url.startsWith(self.location.origin) || isCdn;
 
   if (isGet && isInternal) {
     event.respondWith(

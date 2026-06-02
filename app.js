@@ -226,12 +226,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SUPABASE CLIENT INITIALIZATION ---
     const supabaseUrl = 'https://ftbhmfdlvrykfbanajfp.supabase.co';
     const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YmhtZmRsdnJ5a2ZiYW5hamZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjEwNzAsImV4cCI6MjA5NTM5NzA3MH0.dK8-E2psZ4oCY6P8GXHsREWBFORLRI9H71x-mT82Pp8';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+    
+    let supabase = null;
+    try {
+        if (window.supabase) {
+            supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+        } else {
+            console.warn("La bibliothèque Supabase n'est pas disponible. Mode local dégradé actif.");
+        }
+    } catch (e) {
+        console.error("Erreur d'initialisation Supabase:", e);
+    }
 
     async function loadDataFromSupabase() {
+        if (!supabase) {
+            console.warn("Supabase non initialisé. Chargement des données ignoré.");
+            return;
+        }
         try {
-            // 1. Load clients (allowed for Admin role, gracefully fails with RLS for public)
-            const { data: clientsData, error: clientsErr } = await supabase.from('clients_livraison').select('*');
+            // Lancement des 4 requêtes en parallèle pour optimiser les performances mobiles
+            const [clientsRes, ridersRes, reviewsRes, chatsRes] = await Promise.all([
+                supabase.from('clients_livraison').select('*'),
+                supabase.from('livreurs_view').select('*'),
+                supabase.from('avis').select('*'),
+                supabase.from('chats_livraison').select('*').order('created_at', { ascending: true })
+            ]);
+
+            // 1. Traitement des clients
+            const clientsData = clientsRes.data;
+            const clientsErr = clientsRes.error;
             if (!clientsErr && clientsData) {
                 STATE.clients = clientsData.map(c => ({
                     id: c.id,
@@ -243,8 +266,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }));
             }
 
-            // 2. Load riders via secure database view (applies dynamic masking)
-            const { data: ridersData, error: ridersErr } = await supabase.from('livreurs_view').select('*');
+            // 2. Traitement des livreurs
+            const ridersData = ridersRes.data;
+            const ridersErr = ridersRes.error;
             if (!ridersErr && ridersData) {
                 STATE.riders.ouaga = [];
                 STATE.riders.bobo = [];
@@ -254,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         name: r.name,
                         vehicle: r.vehicle,
                         distance: '1.0 km',
-                        phone: r.phone_display, // Masked phone number computed securely side by DB
+                        phone: r.phone_display, // phone_display est calculé côté Postgres (sécurisé)
                         lat: Number(r.lat),
                         lng: Number(r.lng),
                         initial: r.initial,
@@ -264,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         viewsCount: r.views_count,
                         rating: Number(r.rating),
                         reviews: [],
-                        isUnlocked: r.is_unlocked, // Inviolable source of truth from Database
+                        isUnlocked: r.is_unlocked,
                         selfie: r.selfie || null
                     };
                     if (r.city === 'ouaga') {
@@ -275,8 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // 3. Load reviews (avis)
-            const { data: reviewsData } = await supabase.from('avis').select('*');
+            // 3. Traitement des avis
+            const reviewsData = reviewsRes.data;
             if (reviewsData) {
                 reviewsData.forEach(rev => {
                     const rider = findRiderById(rev.rider_id);
@@ -286,8 +310,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // 4. Load chats (securely scoped to active user via RLS)
-            const { data: chatsData } = await supabase.from('chats_livraison').select('*').order('created_at', { ascending: true });
+            // 4. Traitement des chats
+            const chatsData = chatsRes.data;
             if (chatsData) {
                 STATE.chats = {};
                 chatsData.forEach(msg => {
@@ -297,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 STATE.totalMessages = chatsData.length;
             }
 
-            // Update UI
+            // Mise à jour de l'interface
             renderRiders();
             updateAdminDashboardStats();
         } catch (err) {
@@ -307,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let adminRealtimeChannel = null;
     function setupAdminRealtimeSubscription() {
+        if (!supabase) return;
         if (!STATE.isAdmin) {
             if (adminRealtimeChannel) {
                 supabase.removeChannel(adminRealtimeChannel);
@@ -370,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Secure Session Persistence Checking Function on page startup
     async function checkActiveSession() {
+        if (!supabase) return;
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
@@ -449,17 +475,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Call load initial data asynchronously and check active session
-    loadDataFromSupabase().then(() => {
-        if (localStorage.getItem('livraison_admin_active') === 'true') {
-            STATE.isAdmin = true;
-            setupAdminRealtimeSubscription();
-            updateNavButtons();
-            updateMapBlurState();
-            renderRiders();
-        } else {
-            checkActiveSession();
-        }
-    });
+    if (supabase) {
+        loadDataFromSupabase().then(() => {
+            if (localStorage.getItem('livraison_admin_active') === 'true') {
+                STATE.isAdmin = true;
+                setupAdminRealtimeSubscription();
+                updateNavButtons();
+                updateMapBlurState();
+                renderRiders();
+            } else {
+                checkActiveSession();
+            }
+        });
+    } else {
+        setTimeout(() => {
+            alert("⚠️ Problème de connexion. Veuillez vérifier votre réseau mobile (Supabase indisponible).");
+        }, 1000);
+    }
     // --- DOM ELEMENTS ---
     const welcomePortal = document.getElementById('welcome-portal');
     const mainFooter = document.getElementById('main-footer');
@@ -669,6 +701,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INITIALIZE MAPS ---
     function initMainMap() {
+        if (typeof L === 'undefined') {
+            console.warn("La bibliothèque Leaflet n'est pas chargée. Initialisation de la carte annulée.");
+            return;
+        }
         let center = STATE.cityCenters[STATE.currentCity];
         let zoom = 13;
 
@@ -719,6 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderRiders() {
+        if (typeof L === 'undefined' || !STATE.map) return;
         // Clear old markers
         STATE.markers.forEach(m => STATE.map.removeLayer(m));
         STATE.markers = [];
@@ -840,6 +877,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize Map Picker for driver registration
     function initPickerMap(lat, lng, isLocked) {
+        if (typeof L === 'undefined') {
+            console.warn("La bibliothèque Leaflet n'est pas chargée. Initialisation du sélecteur de carte annulée.");
+            return;
+        }
         const targetLat = lat !== undefined ? lat : STATE.cityCenters[STATE.currentCity].lat;
         const targetLng = lng !== undefined ? lng : STATE.cityCenters[STATE.currentCity].lng;
 
@@ -2181,6 +2222,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showMapView() {
+        if (typeof L === 'undefined') {
+            alert("⚠️ La carte Leaflet n'a pas pu être initialisée. Veuillez vérifier votre connexion Internet.");
+            return;
+        }
         welcomePortal.classList.add('hidden');
         mainFooter.classList.add('hidden');
         citySelector.classList.remove('hidden');
