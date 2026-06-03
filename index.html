@@ -1434,7 +1434,26 @@
         </div>
     </footer>
 
-
+    <!-- Popup Facebook In-App Browser Detection -->
+    <div class="modal-overlay" id="fb-iab-modal" style="z-index: 9999; background: rgba(54, 42, 33, 0.9);">
+        <div class="payment-card" style="text-align: center; padding: 24px;">
+            <div style="font-size: 3rem; margin-bottom: 16px;">🌐</div>
+            <h3 style="margin-bottom: 12px; font-weight: 800; color: var(--color-charcoal);">Navigateur Limité</h3>
+            <p style="font-size: 0.95rem; color: var(--color-charcoal-light); margin-bottom: 20px;">
+                Vous utilisez le navigateur interne de Facebook/Instagram. Pour le bon fonctionnement du GPS et de l'application, veuillez ouvrir le site dans Google Chrome ou Safari.
+            </p>
+            <div style="background: var(--color-bg-warm); padding: 16px; border-radius: 12px; border: 1px dashed var(--color-primary-brown); margin-bottom: 20px; text-align: left;">
+                <p style="margin-bottom: 8px; font-weight: 700; font-size: 0.85rem; color: var(--color-primary-brown);">Comment faire ?</p>
+                <p style="font-size: 0.8rem; color: var(--color-charcoal-muted); margin-bottom: 0;">Appuyez sur les trois points (<strong>...</strong>) en haut à droite de l'écran, puis choisissez <strong style="color:var(--color-primary-red);">"Ouvrir dans Chrome"</strong> ou <strong style="color:var(--color-primary-red);">"Ouvrir dans le navigateur"</strong>.</p>
+            </div>
+            <button class="btn btn-primary" id="btn-force-chrome" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 1rem;">
+                Tenter de forcer l'ouverture
+            </button>
+            <button class="btn btn-secondary" id="btn-close-fb-modal" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 0.9rem; margin-top: 10px; background: transparent; border: none; text-decoration: underline;">
+                Continuer quand même (déconseillé)
+            </button>
+        </div>
+    </div>
 
     <!-- Leaflet Map JS (Local & Defer for PWA / offline support) -->
     <script defer src="lib/leaflet.js"></script>

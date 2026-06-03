@@ -47,7 +47,8 @@ body {
     color: var(--color-charcoal);
     line-height: 1.5;
     overflow-x: hidden;
-    height: 100vh;
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh; /* Dynamic viewport height for mobile browsers (Facebook/Safari) */
     display: flex;
     flex-direction: column;
 }

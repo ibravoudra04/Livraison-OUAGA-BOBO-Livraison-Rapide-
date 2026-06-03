@@ -2,6 +2,47 @@
 // Powered by Vanilla JavaScript + Leaflet.js
 
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- BROWSER DETECTION & FACEBOOK REDIRECT ---
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    const isFacebookApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1);
+    
+    if (isFacebookApp) {
+        const fbModal = document.getElementById('fb-iab-modal');
+        const btnForceChrome = document.getElementById('btn-force-chrome');
+        const btnCloseFbModal = document.getElementById('btn-close-fb-modal');
+        
+        if (fbModal) {
+            fbModal.classList.add('open');
+            fbModal.style.pointerEvents = 'auto';
+            fbModal.style.opacity = '1';
+        }
+        
+        if (btnForceChrome) {
+            btnForceChrome.addEventListener('click', () => {
+                if (/android/i.test(ua)) {
+                    // Try to launch Android Chrome intent
+                    window.location.href = "intent://livraisonrapide.app#Intent;scheme=https;package=com.android.chrome;end;";
+                } else {
+                    alert("Sur iPhone, veuillez appuyer sur l'icône de partage ou les 3 points en haut à droite et choisir 'Ouvrir dans Safari / le navigateur'.");
+                }
+            });
+        }
+        
+        if (btnCloseFbModal) {
+            btnCloseFbModal.addEventListener('click', () => {
+                fbModal.classList.remove('open');
+                fbModal.style.pointerEvents = 'none';
+            });
+        }
+        
+        // Optionnel : Tentative de redirection automatique silencieuse sur Android
+        if (/android/i.test(ua)) {
+            setTimeout(() => {
+                window.location.href = "intent://livraisonrapide.app#Intent;scheme=https;package=com.android.chrome;end;";
+            }, 800);
+        }
+    }
 
     // --- 30-DAY FREE PERIOD TRIAL ---
     // The current time is 2026-06-01. The free trial period is valid for 30 days until 2026-07-01 23:59:59 UTC.
