@@ -1436,27 +1436,14 @@
 
     <!-- Popup Facebook In-App Browser Detection -->
     <div class="modal-overlay" id="fb-iab-modal" style="z-index: 9999; background: rgba(54, 42, 33, 0.85);">
-        <div class="payment-card" style="text-align: center; padding: 24px;">
-            <div style="font-size: 3rem; margin-bottom: 12px;">🚀</div>
-            <h3 style="margin-bottom: 12px; font-weight: 800; color: var(--color-charcoal);">Optimisez votre expérience</h3>
-            <p style="font-size: 0.95rem; color: var(--color-charcoal-light); margin-bottom: 20px; line-height: 1.5;">
-                Pour profiter pleinement de la carte interactive et trouver rapidement un livreur près de chez vous, nous vous invitons à continuer sur votre navigateur habituel.
-            </p>
-            <div style="background: var(--color-primary-yellow-light); padding: 16px; border-radius: 12px; border: 1px dashed rgba(246, 205, 86, 0.6); margin-bottom: 20px; text-align: left;">
-                <p style="margin-bottom: 8px; font-weight: 700; font-size: 0.85rem; color: var(--color-primary-brown);">C'est très simple :</p>
-                <p style="font-size: 0.8rem; color: var(--color-charcoal-muted); margin-bottom: 0;">Appuyez sur les trois points (<strong>...</strong>) en haut à droite, puis choisissez <strong style="color:var(--color-primary-red);">"Ouvrir dans Chrome"</strong> ou <strong style="color:var(--color-primary-red);">"Ouvrir dans le navigateur"</strong>.</p>
-            </div>
-            <button class="btn btn-primary" id="btn-force-chrome" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; background: white; color: #333; border: 1px solid #ddd; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256">
-                    <path fill="#4285f4" d="M128 171.7a43.7 43.7 0 1 0 0-87.4 43.7 43.7 0 0 0 0 87.4Z"/>
-                    <path fill="#34a853" d="M128 171.7a43.7 43.7 0 0 1-38-22L51.8 84A128 128 0 0 0 236 199.7l-70-121.2a43.7 43.7 0 0 1-38 93.2Z"/>
-                    <path fill="#fbbc05" d="M128 84.3a43.7 43.7 0 0 1 38 22L204.2 172A128 128 0 0 0 52 56.3l70 121.2a43.7 43.7 0 0 1 6-93.2Z"/>
-                    <path fill="#ea4335" d="M128 0a128 128 0 0 0-109.8 190.7l70-121.2a43.7 43.7 0 0 1 77.8 0h140A128 128 0 0 0 128 0Z"/>
-                </svg>
-                CONTINUER SUR Chrome
+        <div class="payment-card" style="text-align: center; padding: 35px 24px; max-width: 320px; margin: auto;">
+            <img src="https://e7.pngegg.com/pngimages/878/454/png-clipart-google-chrome-extension-web-browser-chrome-os-chrome-web-browser-window-sphere-thumbnail.png" alt="Google Chrome" style="width: 80px; height: 80px; margin-bottom: 24px; object-fit: contain; border-radius: 50%;">
+            
+            <button class="btn btn-primary" id="btn-force-chrome" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 1.05rem; font-weight: 800; background: white; color: #333; border: 1px solid #ddd; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                Continuer sur Google Chrome
             </button>
-            <button class="btn btn-secondary" id="btn-close-fb-modal" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 0.9rem; margin-top: 10px; background: transparent; border: none; text-decoration: underline; color: var(--color-charcoal-muted);">
-                Rester ici pour l'instant
+            <button class="btn btn-secondary" id="btn-close-fb-modal" style="width: 100%; padding: 12px; border-radius: 16px; font-size: 0.95rem; font-weight: 600; background: transparent; border: none; text-decoration: none; color: var(--color-charcoal-muted);">
+                Continuer quand même
             </button>
         </div>
     </div>
