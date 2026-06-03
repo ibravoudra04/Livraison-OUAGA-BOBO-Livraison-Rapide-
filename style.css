@@ -1255,16 +1255,17 @@ footer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start; /* Allows natural scrolling if content is too tall */
     gap: 20px;
-    padding: 20px;
+    padding: 40px 20px;
     z-index: 1000;
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    overflow: hidden; /* Prevent scrolling inside portal overlay */
+    overflow-y: auto; /* Fixes cut-off content on small mobile screens */
+    overflow-x: hidden;
     transition: var(--transition-smooth);
 }
 
@@ -1283,7 +1284,7 @@ footer {
     align-items: center;
     gap: 16px; /* Reduced gap to pull elements and search button higher */
     padding: 28px 24px; /* Slightly more compact padding */
-    background: rgba(255, 255, 255, 0.75); /* High-end clay glass reflection */
+    background: rgba(255, 255, 255, 0.85); /* Slightly higher opacity fallback */
     border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 28px;
     box-shadow: 
@@ -1292,6 +1293,7 @@ footer {
         inset 0 1px 2px rgba(255, 255, 255, 0.9); /* Inset white glow for premium rim highlight */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    transform: translateZ(0); /* Fixes Opera Mobile clip path / backdrop-filter bug */
     animation: portalFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     text-align: center;
 }
