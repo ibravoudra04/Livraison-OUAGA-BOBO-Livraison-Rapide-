@@ -122,38 +122,43 @@ CREATE TRIGGER on_auth_user_created
 
 CREATE OR REPLACE VIEW public.livreurs_view AS
 SELECT 
-    id, name, vehicle, lat, lng, initial, contacts_count, subscription_paid, status, views_count, rating, city, created_at, selfie,
+    l.id, l.name, l.vehicle, l.lat, l.lng, l.initial, l.contacts_count, l.subscription_paid, l.status, l.views_count, l.rating, l.city, l.created_at, l.selfie,
     CASE 
         -- Période de gratuité de 30 jours (du 1er juin au 1er juillet 2026 inclus)
-        WHEN now() < '2026-07-02 00:00:00+00'::timestamptz THEN phone
+        WHEN now() < '2026-07-02 00:00:00+00'::timestamptz THEN l.phone
         -- Règle 1 : Le connecté est le livreur lui-même
-        WHEN (select auth.uid()) = id THEN phone
+        WHEN ctx.uid = l.id THEN l.phone
         -- Règle 2 : Le connecté a débloqué ce livreur
         WHEN EXISTS (
             SELECT 1 FROM public.deblocages d 
-            WHERE d.client_id = auth.uid() AND d.rider_id = livreurs.id
-        ) THEN phone
+            WHERE d.client_id = ctx.uid AND d.rider_id = l.id
+        ) THEN l.phone
         -- Règle 3 : Le connecté est un administrateur vérifié via app_metadata
-        WHEN (auth.jwt()->'app_metadata'->>'role') = 'admin' THEN phone
+        WHEN ctx.role = 'admin' THEN l.phone
         -- Par défaut : Masquage du numéro de téléphone
         ELSE 
             CASE 
-                WHEN length(phone) >= 8 THEN substring(phone from 1 for 7) || ' •• •• ••'
+                WHEN length(l.phone) >= 8 THEN substring(l.phone from 1 for 7) || ' •• •• ••'
                 ELSE '+226 •• •• •• ••'
             END
     END as phone_display,
     CASE 
         -- Période de gratuité de 30 jours
         WHEN now() < '2026-07-02 00:00:00+00'::timestamptz THEN true
-        WHEN (select auth.uid()) = id 
+        WHEN ctx.uid = l.id 
            OR EXISTS (
                SELECT 1 FROM public.deblocages d 
-               WHERE d.client_id = auth.uid() AND d.rider_id = livreurs.id
+               WHERE d.client_id = ctx.uid AND d.rider_id = l.id
            ) 
-           OR (auth.jwt()->'app_metadata'->>'role') = 'admin' THEN true
+           OR ctx.role = 'admin' THEN true
         ELSE false
     END as is_unlocked
-FROM public.livreurs;
+FROM public.livreurs l
+CROSS JOIN (
+    SELECT 
+        auth.uid() as uid, 
+        (auth.jwt()->'app_metadata'->>'role') as role
+) ctx;
 
 -- --- ATTRIBUTION DES DROITS ET POLITIQUES RLS ---
 
