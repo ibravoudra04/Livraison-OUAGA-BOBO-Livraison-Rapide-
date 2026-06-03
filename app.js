@@ -800,13 +800,17 @@ document.addEventListener('DOMContentLoaded', () => {
             doubleClickZoom: true,
             scrollWheelZoom: true,
             boxZoom: true,
-            tap: true
+            tap: false, // Prevents 300ms delay and ghost clicks on modern mobile
+            preferCanvas: true, // Forces Canvas rendering instead of heavy SVG for paths
+            wheelPxPerZoomLevel: 120 // Smoother mouse wheel scrolling
         }).setView([center.lat, center.lng], zoom);
 
         // CartoDB Positron - Beautiful minimalist Light gray tiles (ideal for Wave UI look)
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
-            minZoom: 10
+            minZoom: 10,
+            updateWhenZooming: false, // Prevents stuttering by waiting for zoom end to load new tiles
+            keepBuffer: 4 // Keeps tiles loaded outside view for smoother panning
         }).addTo(STATE.map);
 
         // Add standard zoom control at top-right
@@ -1031,11 +1035,15 @@ document.addEventListener('DOMContentLoaded', () => {
             doubleClickZoom: true,
             scrollWheelZoom: true,
             boxZoom: true,
-            tap: true
+            tap: false,
+            preferCanvas: true,
+            wheelPxPerZoomLevel: 120
         }).setView([targetLat, targetLng], 15);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19
+            maxZoom: 19,
+            updateWhenZooming: false,
+            keepBuffer: 4
         }).addTo(STATE.pickerMap);
 
         // Add a red terracotta pin showing rider's selfie if logged in
