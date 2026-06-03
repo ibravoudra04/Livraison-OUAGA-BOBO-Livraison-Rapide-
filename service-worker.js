@@ -1,4 +1,4 @@
-const CACHE_NAME = 'livraison-rapide-v3';
+const CACHE_NAME = 'livraison-rapide-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const ASSETS_TO_CACHE = [
   './burkina_map.png',
   './ouaga_monument.png',
   './bobo_mosque.png',
+  './vecteezy_google-chrome-icon-logo-symbol_22484495.png',
   './lib/leaflet.css',
   './lib/leaflet.js',
   './lib/supabase.js',
@@ -43,12 +44,14 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // We only cache GET requests, internal domain assets, and critical CDNs (Leaflet, Supabase)
+  // We only cache GET requests, internal domain assets, and critical CDNs (Leaflet, Supabase, Fonts, Map tiles)
   const isGet = event.request.method === 'GET';
   const isCdn = event.request.url.includes('unpkg.com') || event.request.url.includes('jsdelivr.net');
   const isInternal = event.request.url.startsWith(self.location.origin) || isCdn;
+  const isMapTile = event.request.url.includes('basemaps.cartocdn.com');
+  const isFont = event.request.url.includes('fonts.googleapis.com') || event.request.url.includes('fonts.gstatic.com');
 
-  if (isGet && isInternal) {
+  if (isGet && (isInternal || isMapTile || isFont)) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
