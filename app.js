@@ -244,29 +244,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         try {
-            // Lancement des 4 requêtes en parallèle pour optimiser les performances mobiles
-            const [clientsRes, ridersRes, reviewsRes, chatsRes] = await Promise.all([
-                supabase.from('clients_livraison').select('*'),
+            // Optimisation: Lancement de 2 requêtes en parallèle (on diffère le chargement des clients et chats)
+            const [ridersRes, reviewsRes] = await Promise.all([
                 supabase.from('livreurs_view').select('*'),
-                supabase.from('avis').select('*'),
-                supabase.from('chats_livraison').select('*').order('created_at', { ascending: true })
+                supabase.from('avis').select('*')
             ]);
 
-            // 1. Traitement des clients
-            const clientsData = clientsRes.data;
-            const clientsErr = clientsRes.error;
-            if (!clientsErr && clientsData) {
-                STATE.clients = clientsData.map(c => ({
-                    id: c.id,
-                    phone: c.phone,
-                    name: c.name,
-                    subscriptionPaid: c.subscription_paid,
-                    viewedDrivers: new Set(),
-                    contactedDrivers: new Set()
-                }));
-            }
-
-            // 2. Traitement des livreurs
+            // 1. Traitement des livreurs
             const ridersData = ridersRes.data;
             const ridersErr = ridersRes.error;
             if (!ridersErr && ridersData) {
@@ -300,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // 3. Traitement des avis
+            // 2. Traitement des avis
             const reviewsData = reviewsRes.data;
             if (reviewsData) {
                 reviewsData.forEach(rev => {
@@ -309,17 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         rider.reviews.push({ text: rev.text, stars: Number(rev.stars), date: rev.date });
                     }
                 });
-            }
-
-            // 4. Traitement des chats
-            const chatsData = chatsRes.data;
-            if (chatsData) {
-                STATE.chats = {};
-                chatsData.forEach(msg => {
-                    if (!STATE.chats[msg.rider_id]) STATE.chats[msg.rider_id] = [];
-                    STATE.chats[msg.rider_id].push({ sender: msg.sender, text: msg.text, time: msg.time });
-                });
-                STATE.totalMessages = chatsData.length;
             }
 
             // Mise à jour de l'interface
@@ -426,6 +399,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateNavButtons();
                     updateMapBlurState();
                     renderRiders();
+                    
+                    // Fetch heavy admin data only when confirmed as admin
+                    const [clientsRes, chatsRes] = await Promise.all([
+                        supabase.from('clients_livraison').select('*'),
+                        supabase.from('chats_livraison').select('*').order('created_at', { ascending: true })
+                    ]);
+                    if (clientsRes.data) {
+                        STATE.clients = clientsRes.data.map(c => ({
+                            id: c.id,
+                            phone: c.phone,
+                            name: c.name,
+                            subscriptionPaid: c.subscription_paid,
+                            viewedDrivers: new Set(),
+                            contactedDrivers: new Set()
+                        }));
+                    }
+                    if (chatsRes.data) {
+                        STATE.chats = {};
+                        chatsRes.data.forEach(msg => {
+                            if (!STATE.chats[msg.rider_id]) STATE.chats[msg.rider_id] = [];
+                            STATE.chats[msg.rider_id].push({ sender: msg.sender, text: msg.text, time: msg.time });
+                        });
+                        STATE.totalMessages = chatsRes.data.length;
+                        updateAdminDashboardStats();
+                    }
                 } else if (role === 'client') {
                     const { data: dbClient } = await supabase.from('clients_livraison').select('*').eq('id', user.id).maybeSingle();
                     if (dbClient) {
@@ -446,6 +444,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             unlocks.forEach(u => {
                                 STATE.unlockedRiders.add(u.rider_id);
                                 client.contactedDrivers.add(u.rider_id);
+                            });
+                        }
+                        
+                        // Load client chats
+                        const { data: chatsData } = await supabase.from('chats_livraison').select('*').order('created_at', { ascending: true });
+                        if (chatsData) {
+                            STATE.chats = {};
+                            chatsData.forEach(msg => {
+                                if (!STATE.chats[msg.rider_id]) STATE.chats[msg.rider_id] = [];
+                                STATE.chats[msg.rider_id].push({ sender: msg.sender, text: msg.text, time: msg.time });
                             });
                         }
                         
@@ -476,6 +484,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             else STATE.riders.bobo.push(driver);
                         }
                         STATE.loggedDriver = driver;
+                        
+                        // Load rider chats
+                        const { data: chatsData } = await supabase.from('chats_livraison').select('*').order('created_at', { ascending: true });
+                        if (chatsData) {
+                            STATE.chats = {};
+                            chatsData.forEach(msg => {
+                                if (!STATE.chats[msg.rider_id]) STATE.chats[msg.rider_id] = [];
+                                STATE.chats[msg.rider_id].push({ sender: msg.sender, text: msg.text, time: msg.time });
+                            });
+                        }
                         
                         // Render dashboard directly
                         driverRegisterPanel.classList.add('hidden');

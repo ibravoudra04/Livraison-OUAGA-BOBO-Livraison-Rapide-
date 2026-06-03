@@ -277,3 +277,13 @@ REVOKE EXECUTE ON FUNCTION public.simulate_payment_unlock(UUID) FROM PUBLIC;
 
 GRANT EXECUTE ON FUNCTION public.simulate_payment_unlock(UUID) TO authenticated;
 
+-- --- INDEXES DE PERFORMANCE (OPTIMISATION) ---
+-- Index pour accélérer les requêtes RLS et les jointures
+CREATE INDEX IF NOT EXISTS idx_deblocages_rider_id ON public.deblocages(rider_id);
+CREATE INDEX IF NOT EXISTS idx_avis_rider_id ON public.avis(rider_id);
+CREATE INDEX IF NOT EXISTS idx_avis_client_id ON public.avis(client_id);
+CREATE INDEX IF NOT EXISTS idx_chats_rider_id ON public.chats_livraison(rider_id);
+CREATE INDEX IF NOT EXISTS idx_chats_client_id ON public.chats_livraison(client_id);
+CREATE INDEX IF NOT EXISTS idx_livreurs_status ON public.livreurs(status);
+CREATE INDEX IF NOT EXISTS idx_livreurs_city ON public.livreurs(city);
+
