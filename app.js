@@ -3829,6 +3829,43 @@ document.addEventListener('DOMContentLoaded', () => {
     navBtnRegister.addEventListener('click', () => {
         openDriverDrawer();
     });
+
+    // Click on online counter badge finds closest rider
+    if (onlineCounterBadge) {
+        onlineCounterBadge.style.cursor = 'pointer';
+        onlineCounterBadge.addEventListener('click', () => {
+            if (!STATE.riders || STATE.riders.length === 0) return;
+            
+            let centerPoint = STATE.map.getCenter();
+            if (STATE.clientCoordinates && STATE.clientCoordinates.lat) {
+                centerPoint = L.latLng(STATE.clientCoordinates.lat, STATE.clientCoordinates.lng);
+            }
+                
+            let closestRider = null;
+            let minDistance = Infinity;
+            
+            STATE.riders.forEach(rider => {
+                if (rider.status !== 'online') return; // only consider available online riders
+                const riderLatLng = L.latLng(rider.lat, rider.lng);
+                const distance = centerPoint.distanceTo(riderLatLng);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestRider = rider;
+                }
+            });
+            
+            if (closestRider) {
+                selectRider(closestRider);
+                const riderLatLng = L.latLng(closestRider.lat, closestRider.lng);
+                // Center map slightly offset to look perfect with bottom sheet open
+                const mapCenter = STATE.map.project(riderLatLng, 16);
+                const offset = window.innerWidth < 768 ? 160 : 0;
+                mapCenter.y += offset;
+                
+                STATE.map.setView(STATE.map.unproject(mapCenter, 16), 16, { animate: true });
+            }
+        });
+    }
     // --- PASSWORD EYE TOGGLE (PRESS AND HOLD) ---
     document.querySelectorAll('.btn-toggle-password').forEach(btn => {
         const targetId = btn.getAttribute('data-target');
