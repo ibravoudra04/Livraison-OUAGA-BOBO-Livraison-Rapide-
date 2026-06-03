@@ -1435,22 +1435,23 @@
     </footer>
 
     <!-- Popup Facebook In-App Browser Detection -->
-    <div class="modal-overlay" id="fb-iab-modal" style="z-index: 9999; background: rgba(54, 42, 33, 0.9);">
+    <div class="modal-overlay" id="fb-iab-modal" style="z-index: 9999; background: rgba(54, 42, 33, 0.85);">
         <div class="payment-card" style="text-align: center; padding: 24px;">
-            <div style="font-size: 3rem; margin-bottom: 16px;">🌐</div>
-            <h3 style="margin-bottom: 12px; font-weight: 800; color: var(--color-charcoal);">Navigateur Limité</h3>
-            <p style="font-size: 0.95rem; color: var(--color-charcoal-light); margin-bottom: 20px;">
-                Vous utilisez le navigateur interne de Facebook/Instagram. Pour le bon fonctionnement du GPS et de l'application, veuillez ouvrir le site dans Google Chrome ou Safari.
+            <div style="font-size: 3rem; margin-bottom: 12px;">🚀</div>
+            <h3 style="margin-bottom: 12px; font-weight: 800; color: var(--color-charcoal);">Optimisez votre expérience</h3>
+            <p style="font-size: 0.95rem; color: var(--color-charcoal-light); margin-bottom: 20px; line-height: 1.5;">
+                Pour profiter pleinement de la carte interactive et trouver rapidement un livreur près de chez vous, nous vous invitons à continuer sur votre navigateur habituel.
             </p>
-            <div style="background: var(--color-bg-warm); padding: 16px; border-radius: 12px; border: 1px dashed var(--color-primary-brown); margin-bottom: 20px; text-align: left;">
-                <p style="margin-bottom: 8px; font-weight: 700; font-size: 0.85rem; color: var(--color-primary-brown);">Comment faire ?</p>
-                <p style="font-size: 0.8rem; color: var(--color-charcoal-muted); margin-bottom: 0;">Appuyez sur les trois points (<strong>...</strong>) en haut à droite de l'écran, puis choisissez <strong style="color:var(--color-primary-red);">"Ouvrir dans Chrome"</strong> ou <strong style="color:var(--color-primary-red);">"Ouvrir dans le navigateur"</strong>.</p>
+            <div style="background: var(--color-primary-yellow-light); padding: 16px; border-radius: 12px; border: 1px dashed rgba(246, 205, 86, 0.6); margin-bottom: 20px; text-align: left;">
+                <p style="margin-bottom: 8px; font-weight: 700; font-size: 0.85rem; color: var(--color-primary-brown);">C'est très simple :</p>
+                <p style="font-size: 0.8rem; color: var(--color-charcoal-muted); margin-bottom: 0;">Appuyez sur les trois points (<strong>...</strong>) en haut à droite, puis choisissez <strong style="color:var(--color-primary-red);">"Ouvrir dans Chrome"</strong> ou <strong style="color:var(--color-primary-red);">"Ouvrir dans le navigateur"</strong>.</p>
             </div>
-            <button class="btn btn-primary" id="btn-force-chrome" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 1rem;">
-                Tenter de forcer l'ouverture
+            <button class="btn btn-primary" id="btn-force-chrome" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="21.17" y1="8" x2="12" y2="8"></line><line x1="3.95" y1="6.06" x2="8.54" y2="14"></line><line x1="10.88" y1="21.94" x2="15.46" y2="14"></line></svg>
+                Ouvrir dans Chrome
             </button>
-            <button class="btn btn-secondary" id="btn-close-fb-modal" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 0.9rem; margin-top: 10px; background: transparent; border: none; text-decoration: underline;">
-                Continuer quand même (déconseillé)
+            <button class="btn btn-secondary" id="btn-close-fb-modal" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 0.9rem; margin-top: 10px; background: transparent; border: none; text-decoration: underline; color: var(--color-charcoal-muted);">
+                Rester ici pour l'instant
             </button>
         </div>
     </div>
