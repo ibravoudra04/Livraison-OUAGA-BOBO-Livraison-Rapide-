@@ -285,28 +285,27 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         try {
-            // Optimisation: Chargement différé et calcul de distance côté serveur via RPC
-            let lat = STATE.clientCoordinates ? STATE.clientCoordinates.lat : STATE.cityCenters[STATE.currentCity].lat;
-            let lng = STATE.clientCoordinates ? STATE.clientCoordinates.lng : STATE.cityCenters[STATE.currentCity].lng;
-            
-            const ridersRes = await supabase.rpc('get_nearby_riders', {
-                client_lat: lat,
-                client_lng: lng,
-                target_city: STATE.currentCity
-            });
+            // Optimisation: Lancement de 2 requêtes en parallèle (on diffère le chargement des clients et chats)
+            const [ridersRes, reviewsRes] = await Promise.all([
+                supabase.from('livreurs_view').select('*'),
+                supabase.from('avis').select('*')
+            ]);
 
             // 1. Traitement des livreurs
             const ridersData = ridersRes.data;
             const ridersErr = ridersRes.error;
+            if (ridersErr) {
+                console.error("Erreur de chargement des livreurs:", ridersErr);
+            }
             if (!ridersErr && ridersData) {
-                STATE.riders[STATE.currentCity] = [];
-                const riderIds = [];
+                STATE.riders.ouaga = [];
+                STATE.riders.bobo = [];
                 ridersData.forEach(r => {
                     const riderObj = {
                         id: r.id,
                         name: r.name,
                         vehicle: r.vehicle,
-                        distance: (r.distance_km < 999) ? `${r.distance_km.toFixed(1)} km` : '1.0 km',
+                        distance: '1.0 km',
                         phone: r.phone_display, // phone_display est calculé côté Postgres (sécurisé)
                         lat: Number(r.lat),
                         lng: Number(r.lng),
@@ -321,27 +320,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         selfie: r.selfie || null,
                         city: r.city
                     };
-                    STATE.riders[STATE.currentCity].push(riderObj);
-                    riderIds.push(r.id);
-                });
-
-                // 2. Traitement des avis ciblés
-                if (riderIds.length > 0) {
-                    const reviewsRes = await supabase.from('avis').select('*').in('rider_id', riderIds);
-                    if (reviewsRes.data) {
-                        reviewsRes.data.forEach(rev => {
-                            const rider = STATE.riders[STATE.currentCity].find(rd => rd.id === rev.rider_id);
-                            if (rider) {
-                                rider.reviews.push({ text: rev.text, stars: Number(rev.stars), date: rev.date });
-                            }
-                        });
+                    if (r.city === 'ouaga') {
+                        STATE.riders.ouaga.push(riderObj);
+                    } else {
+                        STATE.riders.bobo.push(riderObj);
                     }
-                }
+                });
+            }
+
+            // 2. Traitement des avis
+            const reviewsData = reviewsRes.data;
+            const reviewsErr = reviewsRes.error;
+            if (reviewsErr) {
+                console.error("Erreur de chargement des avis:", reviewsErr);
+            }
+            if (reviewsData) {
+                reviewsData.forEach(rev => {
+                    const rider = findRiderById(rev.rider_id);
+                    if (rider) {
+                        rider.reviews.push({ text: rev.text, stars: Number(rev.stars), date: rev.date });
+                    }
+                });
             }
 
             // Mise à jour de l'interface
             renderRiders();
-            if (STATE.isAdmin) updateAdminDashboardStats();
+            updateAdminDashboardStats();
             updateCityActiveCounts();
         } catch (err) {
             console.error("Error loading data from Supabase:", err);
@@ -444,10 +448,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateMapBlurState();
                     renderRiders();
                     
-                    // Fetch admin data selectively to prevent RAM crash
+                    // Fetch heavy admin data only when confirmed as admin
                     const [clientsRes, chatsRes] = await Promise.all([
-                        supabase.from('clients_livraison').select('*').limit(200),
-                        supabase.from('chats_livraison').select('*').order('created_at', { ascending: false }).limit(500)
+                        supabase.from('clients_livraison').select('*'),
+                        supabase.from('chats_livraison').select('*').order('created_at', { ascending: true })
                     ]);
                     if (clientsRes.data) {
                         STATE.clients = clientsRes.data.map(c => ({
@@ -491,8 +495,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                         }
                         
-                        // Load client chats (Optimized)
-                        const { data: chatsData } = await supabase.from('chats_livraison').select('*').eq('client_id', user.id).order('created_at', { ascending: true });
+                        // Load client chats
+                        const { data: chatsData } = await supabase.from('chats_livraison').select('*').order('created_at', { ascending: true });
                         if (chatsData) {
                             STATE.chats = {};
                             chatsData.forEach(msg => {
@@ -529,8 +533,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         STATE.loggedDriver = driver;
                         
-                        // Load rider chats (Optimized)
-                        const { data: chatsData } = await supabase.from('chats_livraison').select('*').eq('rider_id', user.id).order('created_at', { ascending: true });
+                        // Load rider chats
+                        const { data: chatsData } = await supabase.from('chats_livraison').select('*').order('created_at', { ascending: true });
                         if (chatsData) {
                             STATE.chats = {};
                             chatsData.forEach(msg => {
@@ -555,19 +559,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Call load initial data asynchronously and check active session
     if (supabase) {
-        loadDataFromSupabase().then(() => {
-            if (localStorage.getItem('livraison_admin_active') === 'true') {
-                STATE.isAdmin = true;
-                setupAdminRealtimeSubscription();
-                updateNavButtons();
-                updateMapBlurState();
-                renderRiders();
-                // Restore Supabase Auth session for admin in the background
-                checkActiveSession();
-            } else {
-                checkActiveSession();
-            }
-        });
+        // Wait for session resolution (clears/refreshes invalid tokens) before loading data
+        supabase.auth.getSession().then(() => {
+            loadDataFromSupabase().then(() => {
+                if (localStorage.getItem('livraison_admin_active') === 'true') {
+                    STATE.isAdmin = true;
+                    setupAdminRealtimeSubscription();
+                    updateNavButtons();
+                    updateMapBlurState();
+                    renderRiders();
+                    // Restore Supabase Auth session for admin in the background
+                    checkActiveSession();
+                } else {
+                    checkActiveSession();
+                }
+            });
+        }).catch(e => console.error("Session refresh error:", e));
     } else {
         setTimeout(() => {
             alert("⚠️ Problème de connexion. Veuillez vérifier votre réseau mobile (Supabase indisponible).");
@@ -841,16 +848,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderRiders() {
         if (typeof L === 'undefined' || !STATE.map) return;
-        
-        // Optimisation Leaflet : Réutilisation des marqueurs via un Map local au lieu de tout détruire
-        if (!STATE.markersMap) STATE.markersMap = new Map();
+        // Clear old markers
+        STATE.markers.forEach(m => STATE.map.removeLayer(m));
+        STATE.markers = [];
 
-        const cityRiders = STATE.riders[STATE.currentCity] || [];
+        const cityRiders = STATE.riders[STATE.currentCity];
         
         // Filter out drivers based on active status
         let visibleRiders = cityRiders.filter(rider => {
+            // A logged-in driver can always see their own pin on the map
             if (STATE.loggedDriver && rider.id === STATE.loggedDriver.id) return true;
+
+            // Pending candidates are never visible on the map
             if (rider.status === 'en attente') return false;
+            
+            // Keep all validated drivers visible and active during the free trial period
             if (IS_FREE_PERIOD) {
                 rider.status = 'actif';
                 return true;
@@ -858,6 +870,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const count = rider.contactsCount || 0;
             const paid = rider.subscriptionPaid || false;
             
+            // Auto update status if not set or modified
             if (!rider.status) {
                 if (count >= 5 && !paid) {
                     rider.status = 'suspendu';
@@ -865,63 +878,84 @@ document.addEventListener('DOMContentLoaded', () => {
                     rider.status = 'actif';
                 }
             }
+            
             return rider.status === 'actif';
         });
 
-        // Filtrage de proximité basé sur le calcul côté serveur (distance_km)
-        if (STATE.clientCoordinates && visibleRiders.length > 0) {
-            const proximityRiders = visibleRiders.filter(rider => rider.distance_km && rider.distance_km <= 5.0);
-            if (proximityRiders.length > 0) {
-                visibleRiders = proximityRiders;
+        // If client is geolocated, ONLY show drivers in proximity (e.g. within 5 km)
+        if (STATE.clientCoordinates) {
+            // Calculer la distance entre le client et le centre de la ville en cours de consultation
+            const distToCityCenter = getDistance(
+                STATE.clientCoordinates.lat,
+                STATE.clientCoordinates.lng,
+                STATE.cityCenters[STATE.currentCity].lat,
+                STATE.cityCenters[STATE.currentCity].lng
+            );
+
+            // Si le client est dans la ville active (rayon de 15 km autour du centre de cette ville)
+            if (distToCityCenter <= 15.0) {
+                const proximityRiders = visibleRiders.filter(rider => {
+                    const dist = getDistance(STATE.clientCoordinates.lat, STATE.clientCoordinates.lng, rider.lat, rider.lng);
+                    // Save computed distance dynamically for bottom sheet display
+                    rider.distance = `${dist.toFixed(1)} km`;
+                    return dist <= 15.0; // Increased proximity filter radius from 5km to 15km to show more drivers
+                });
+
+                // Repli : si aucun livreur n'est dans le rayon de 15 km, mais qu'il y a des livreurs actifs dans la ville
+                if (proximityRiders.length > 0) {
+                    visibleRiders = proximityRiders;
+                } else {
+                    // Calculer la distance pour tous les livreurs de la ville afin de l'afficher dans les détails
+                    visibleRiders.forEach(rider => {
+                        const dist = getDistance(STATE.clientCoordinates.lat, STATE.clientCoordinates.lng, rider.lat, rider.lng);
+                        rider.distance = `${dist.toFixed(1)} km`;
+                    });
+                    console.log("Aucun livreur dans un rayon de 15 km. Repli sur les livreurs de la ville.");
+                }
+            } else {
+                // Si le client regarde une autre ville, on n'applique pas la restriction de 5 km
+                visibleRiders.forEach(rider => {
+                    const dist = getDistance(STATE.clientCoordinates.lat, STATE.clientCoordinates.lng, rider.lat, rider.lng);
+                    rider.distance = `${dist.toFixed(1)} km`;
+                });
             }
         }
         
         // Update Counter with active drivers
         onlineCounterText.innerText = `${visibleRiders.length} livreurs disponibles`;
 
-        const visibleIds = new Set(visibleRiders.map(r => r.id));
-
-        // Nettoyer les marqueurs qui ne sont plus visibles
-        for (const [id, marker] of STATE.markersMap.entries()) {
-            if (!visibleIds.has(id)) {
-                STATE.map.removeLayer(marker);
-                STATE.markersMap.delete(id);
-            }
-        }
-
         visibleRiders.forEach(rider => {
-            if (STATE.markersMap.has(rider.id)) {
-                // Mettre à jour la position si le marqueur existe déjà
-                const marker = STATE.markersMap.get(rider.id);
-                marker.setLatLng([rider.lat, rider.lng]);
-            } else {
-                // Créer un nouveau marqueur
-                const markerHtml = rider.selfie 
-                    ? `<div class="rider-pin" id="marker-${rider.id}" style="background-image: url('${rider.selfie}')"></div>` 
-                    : `<div class="rider-pin" id="marker-${rider.id}">${rider.initial}</div>`;
+            // Elegant pulsing halo with driver's selfie background image or initials
+            const markerHtml = rider.selfie 
+                ? `<div class="rider-pin" id="marker-${rider.id}" style="background-image: url('${rider.selfie}')"></div>` 
+                : `<div class="rider-pin" id="marker-${rider.id}">${rider.initial}</div>`;
 
-                const customIcon = L.divIcon({
-                    className: 'custom-marker-wrapper',
-                    html: markerHtml,
-                    iconSize: [36, 36],
-                    iconAnchor: [18, 18]
-                });
+            const customIcon = L.divIcon({
+                className: 'custom-marker-wrapper',
+                html: markerHtml,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
 
-                const marker = L.marker([rider.lat, rider.lng], { icon: customIcon }).addTo(STATE.map);
+            const marker = L.marker([rider.lat, rider.lng], { icon: customIcon }).addTo(STATE.map);
+            
+            // Add click listener on rider pins
+            marker.on('click', (e) => {
+                selectRider(rider);
                 
-                marker.on('click', (e) => {
-                    selectRider(rider);
-                    const mapCenter = STATE.map.project(e.latlng, STATE.map.getZoom());
-                    const offset = window.innerWidth < 768 ? 160 : 0;
-                    mapCenter.y += offset;
-                    STATE.map.panTo(STATE.map.unproject(mapCenter, STATE.map.getZoom()), {
-                        animate: true,
-                        duration: 0.6
-                    });
+                // Center map slightly offset to look perfect with bottom sheet open
+                const mapCenter = STATE.map.project(e.latlng, STATE.map.getZoom());
+                // Offset by 150px vertically depending on screen size
+                const offset = window.innerWidth < 768 ? 160 : 0;
+                mapCenter.y += offset;
+                
+                STATE.map.panTo(STATE.map.unproject(mapCenter, STATE.map.getZoom()), {
+                    animate: true,
+                    duration: 0.6
                 });
+            });
 
-                STATE.markersMap.set(rider.id, marker);
-            }
+            STATE.markers.push(marker);
         });
     }
 
@@ -949,8 +983,8 @@ document.addEventListener('DOMContentLoaded', () => {
             pan: { duration: 1 }
         });
 
-        // Charger les données pour la nouvelle ville depuis Supabase
-        loadDataFromSupabase();
+        // Redraw riders
+        renderRiders();
 
         // Update driver registration picker city text
         lblPickerCity.innerText = STATE.cityCenters[city].name;
@@ -3328,6 +3362,25 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCloseDocInspector.addEventListener('click', closeDocInspectorModal);
     }
     
+    // Bind Image Download Buttons
+    document.querySelectorAll('.btn-download-img').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetId = e.currentTarget.getAttribute('data-target');
+            const imgElement = document.getElementById(targetId);
+            if (imgElement && imgElement.src && imgElement.src.startsWith('data:image')) {
+                const a = document.createElement('a');
+                a.href = imgElement.src;
+                const docName = targetId.includes('selfie') ? 'Selfie' : targetId.includes('recto') ? 'CNI_Recto' : 'CNI_Verso';
+                a.download = `${activeInspectedRider ? activeInspectedRider.name.replace(/\\s+/g, '_') : 'Livreur'}_${docName}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                alert("L'image n'est pas disponible pour le téléchargement.");
+            }
+        });
+    });
+    
     if (btnAdminDocApprove) {
         btnAdminDocApprove.addEventListener('click', () => {
             if (activeInspectedRider) {
@@ -3810,7 +3863,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (onlineCounterBadge) {
         onlineCounterBadge.style.cursor = 'pointer';
         onlineCounterBadge.addEventListener('click', () => {
-            if (!STATE.riders || STATE.riders.length === 0) return;
+            const currentCityRiders = STATE.riders[STATE.currentCity];
+            if (!currentCityRiders || currentCityRiders.length === 0) return;
             
             let centerPoint = STATE.map.getCenter();
             if (STATE.clientCoordinates && STATE.clientCoordinates.lat) {
@@ -3820,8 +3874,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let closestRider = null;
             let minDistance = Infinity;
             
-            STATE.riders.forEach(rider => {
-                if (rider.status !== 'online') return; // only consider available online riders
+            currentCityRiders.forEach(rider => {
+                if (rider.status !== 'actif') return; // only consider available online riders
                 const riderLatLng = L.latLng(rider.lat, rider.lng);
                 const distance = centerPoint.distanceTo(riderLatLng);
                 if (distance < minDistance) {
