@@ -1487,7 +1487,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const cityRiders = STATE.riders[STATE.currentCity] || [];
                     cityRiders.forEach(r => {
                         STATE.loggedClient.contactedDrivers.add(r.id);
-                        supabase.rpc('simulate_payment_unlock', { target_rider_id: r.id }).then();
+                        supabase.rpc('simulate_payment_unlock', { target_rider_id: r.id }).then(() => {
+                            supabase.from('livreurs_view').select('phone_display').eq('id', r.id).single().then(({data}) => {
+                                if (data) r.phone = data.phone_display;
+                            });
+                        });
                     });
                 } else {
                     const unlockedRiderId = STATE.selectedRider ? STATE.selectedRider.id : (STATE.pendingServiceUnlock ? STATE.pendingServiceUnlock.id : '');
@@ -1496,7 +1500,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         STATE.unlockedRiders.add(unlockedRiderId); // Ensure in unlocked set
                         
                         // Utiliser la fonction RPC sécurisée (simulate_payment_unlock) pour contourner la restriction RLS d'insertion directe
-                        supabase.rpc('simulate_payment_unlock', { target_rider_id: unlockedRiderId }).then();
+                        supabase.rpc('simulate_payment_unlock', { target_rider_id: unlockedRiderId }).then(() => {
+                            supabase.from('livreurs_view').select('phone_display').eq('id', unlockedRiderId).single().then(({data}) => {
+                                const r = findRiderById(unlockedRiderId);
+                                if (r && data) {
+                                    r.phone = data.phone_display;
+                                    updateClientDashboardView();
+                                    
+                                    // Update bottom sheet if currently looking at this rider
+                                    if (STATE.selectedRider && STATE.selectedRider.id === unlockedRiderId) {
+                                        const phoneEl = document.getElementById('sheet-rider-phone-masked');
+                                        if (phoneEl) {
+                                            phoneEl.innerText = r.phone;
+                                            phoneEl.classList.remove('phone-masked');
+                                            phoneEl.classList.add('phone-unlocked');
+                                        }
+                                    }
+                                }
+                            });
+                        });
                     }
                 }
                 updateClientDashboardView();
@@ -2071,7 +2093,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const contactedIds = Array.from(client.contactedDrivers || []);
         let contactedHTML = '';
         if (contactedIds.length === 0) {
-            contactedHTML = '<p style="font-size:0.75rem; color:var(--color-charcoal-muted); font-style:italic; margin:0;">Aucun contact débloqué.</p>';
+            contactedHTML = `
+                <div style="text-align:center; padding: 10px 0;">
+                    <p style="font-size:0.75rem; color:var(--color-charcoal-muted); font-style:italic; margin-bottom:12px;">Aucun contact débloqué.</p>
+                    <button class="btn btn-primary" id="btn-empty-find-driver" style="width:100%; padding:10px; border-radius:12px; font-size:0.8rem;">Trouver un livreur</button>
+                </div>
+            `;
         } else {
             contactedIds.forEach(id => {
                 const r = findRiderById(id);
@@ -2227,6 +2254,15 @@ document.addEventListener('DOMContentLoaded', () => {
             updateNavButtons();
             alert("Session déconnectée avec succès.");
         });
+
+        const btnEmptyFind = document.getElementById('btn-empty-find-driver');
+        if (btnEmptyFind) {
+            btnEmptyFind.addEventListener('click', () => {
+                closeClientDrawer();
+                const portalSearchBtn = document.getElementById('portal-btn-find');
+                if (portalSearchBtn) portalSearchBtn.click();
+            });
+        }
 
         // Click on viewed item opens details
         document.querySelectorAll('[data-rider-id]').forEach(el => {
@@ -3515,37 +3551,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updateAdminDashboardStats() {
-        statTotalUnlocks.innerText = STATE.totalUnlocks;
-        statTotalRevenue.innerText = `${STATE.totalRevenue} FCFA`;
-        statTotalDrivers.innerText = STATE.riders.ouaga.length + STATE.riders.bobo.length;
-        statTotalMessages.innerText = STATE.totalMessages;
-        
+        if (STATE.isAdmin) {
+            // Fetch real Supabase data for admin dashboard
+            supabase.from('livreurs').select('id', { count: 'exact', head: true }).then(({count, error}) => {
+                if (!error && count !== null) statTotalDrivers.innerText = count;
+            });
+            supabase.from('clients_livraison').select('id', { count: 'exact', head: true }).then(({count, error}) => {
+                if (!error && count !== null) {
+                    const uniqueVisitorsEl = document.getElementById('stat-unique-visitors');
+                    if (uniqueVisitorsEl) uniqueVisitorsEl.innerText = count;
+                    const chartLegendEl = document.getElementById('chart-legend-text');
+                    if (chartLegendEl) chartLegendEl.innerText = `📈 ${count} visiteurs au total`;
+                }
+            });
+            supabase.from('deblocages').select('id', { count: 'exact', head: true }).then(({count, error}) => {
+                if (!error && count !== null) {
+                    statTotalUnlocks.innerText = count;
+                    statTotalRevenue.innerText = `${count * 200} FCFA`;
+                }
+            });
+            supabase.from('chats_livraison').select('id', { count: 'exact', head: true }).then(({count, error}) => {
+                if (!error && count !== null) statTotalMessages.innerText = count;
+            });
+        } else {
+            // Fallback for non-admin or local demo state
+            statTotalUnlocks.innerText = STATE.totalUnlocks;
+            statTotalRevenue.innerText = `${STATE.totalRevenue} FCFA`;
+            statTotalDrivers.innerText = STATE.riders.ouaga.length + STATE.riders.bobo.length;
+            statTotalMessages.innerText = STATE.totalMessages;
+            
+            const uniqueVisitorsEl = document.getElementById('stat-unique-visitors');
+            if (uniqueVisitorsEl) {
+                uniqueVisitorsEl.innerText = STATE.clients.length;
+            }
+            const chartLegendEl = document.getElementById('chart-legend-text');
+            if (chartLegendEl) {
+                chartLegendEl.innerText = `📈 ${STATE.clients.length} visiteurs au total`;
+            }
+        }
+
         const viewedProfilesEl = document.getElementById('stat-total-viewed-profiles');
         if (viewedProfilesEl) {
             viewedProfilesEl.innerText = STATE.totalViewedProfiles || 0;
         }
 
-        // Dynamically replace other hardcoded/fictitious stats with real ones
-        const uniqueVisitorsEl = document.getElementById('stat-unique-visitors');
         const pageViewsEl = document.getElementById('stat-page-views');
-        const activeConnectionsEl = document.getElementById('stat-active-connections');
-        const chartLegendEl = document.getElementById('chart-legend-text');
-        
-        if (uniqueVisitorsEl) {
-            uniqueVisitorsEl.innerText = STATE.clients.length;
-        }
         if (pageViewsEl) {
             pageViewsEl.innerText = (STATE.totalViewedProfiles * 3) + STATE.totalMessages;
         }
+        
+        const activeConnectionsEl = document.getElementById('stat-active-connections');
         if (activeConnectionsEl) {
             let active = 0;
             if (STATE.loggedClient) active++;
             if (STATE.loggedDriver) active++;
             if (STATE.isAdmin) active++;
             activeConnectionsEl.innerText = active > 0 ? active : 1; // At least the admin themselves!
-        }
-        if (chartLegendEl) {
-            chartLegendEl.innerText = `📈 ${STATE.clients.length} visiteurs au total`;
         }
     }
 
@@ -3978,6 +4039,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Payment interactions
     btnUnlockContact.addEventListener('click', openPaymentModal);
     btnClosePaymentModal.addEventListener('click', closePaymentModal);
+    paymentModal.addEventListener('click', (e) => {
+        if (e.target === paymentModal) {
+            closePaymentModal();
+        }
+    });
 
     methodOrange.addEventListener('click', () => handleProviderSelect(methodOrange, 'Orange Money'));
     methodMoov.addEventListener('click', () => handleProviderSelect(methodMoov, 'Moov Money'));
