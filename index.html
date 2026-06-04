@@ -42,7 +42,7 @@
     <header>
         <a href="#" class="logo-container" id="logo-home">
             <div class="logo-icon">
-                <img src="delivery_logo_premium.jpg" alt="Livraison Rapide Logo" class="logo-image">
+                <img loading="lazy" src="delivery_logo_premium.jpg" alt="Livraison Rapide Logo" class="logo-image">
             </div>
             <h1 class="logo-text">Livraison<span>Rapide</span></h1>
         </a>
@@ -64,7 +64,7 @@
             <div class="portal-card-container">
                 <div class="portal-hero">
                     <!-- Burkina Faso Map Accent Badge -->
-                    <img src="burkina_map.png" alt="Carte du Burkina Faso" class="burkina-map-badge">
+                    <img loading="lazy" src="burkina_map.png" alt="Carte du Burkina Faso" class="burkina-map-badge">
                     <p>
                         Visualisez les livreurs actifs autour de vous sur la carte en temps réel et contactez-les en un clic.
                     </p>
@@ -408,7 +408,7 @@
                                     <input type="file" id="upload-cni-recto" accept="image/*" required>
                                     <span class="upload-icon">🪪</span>
                                     <span class="upload-text">Photo CNI Recto</span>
-                                    <img src="" alt="Aperçu CNI Recto" class="upload-preview" id="preview-cni-recto">
+                                    <img loading="lazy" src="" alt="Aperçu CNI Recto" class="upload-preview" id="preview-cni-recto">
                                     <button type="button" class="upload-remove" id="btn-remove-cni-recto">&times;</button>
                                 </div>
 
@@ -417,7 +417,7 @@
                                     <input type="file" id="upload-cni-verso" accept="image/*" required>
                                     <span class="upload-icon">🪪</span>
                                     <span class="upload-text">Photo CNI Verso</span>
-                                    <img src="" alt="Aperçu CNI Verso" class="upload-preview" id="preview-cni-verso">
+                                    <img loading="lazy" src="" alt="Aperçu CNI Verso" class="upload-preview" id="preview-cni-verso">
                                     <button type="button" class="upload-remove" id="btn-remove-cni-verso">&times;</button>
                                 </div>
 
@@ -426,7 +426,7 @@
                                     <input type="file" id="upload-selfie" accept="image/*" required>
                                     <span class="upload-icon">📸</span>
                                     <span class="upload-text">Photo Selfie</span>
-                                    <img src="" alt="Aperçu Selfie" class="upload-preview" id="preview-selfie">
+                                    <img loading="lazy" src="" alt="Aperçu Selfie" class="upload-preview" id="preview-selfie">
                                     <button type="button" class="upload-remove" id="btn-remove-selfie">&times;</button>
                                 </div>
 
@@ -1173,7 +1173,7 @@
                     </div>
                     
                     <div class="loc-header" style="margin-top:0;">
-                        <img src="burkina_map.png" alt="Carte du Burkina Faso" class="burkina-map-badge">
+                        <img loading="lazy" src="burkina_map.png" alt="Carte du Burkina Faso" class="burkina-map-badge">
                         <h3>Dans quelle ville êtes-vous ?</h3>
                         <p>Choisissez votre ville pour localiser les livreurs disponibles autour de vous.</p>
                     </div>
@@ -1188,12 +1188,12 @@
                     
                     <div class="loc-city-grid">
                          <div class="loc-city-card" id="loc-city-ouaga" data-city="ouaga">
-                            <img src="ouaga_monument.png" alt="Ouagadougou Place des Cinéastes" class="city-card-img">
+                            <img loading="lazy" src="ouaga_monument.png" alt="Ouagadougou Place des Cinéastes" class="city-card-img">
                             <h4>Ouagadougou</h4>
                             <span class="city-desc" id="city-desc-ouaga">8 livreurs actifs</span>
                         </div>
                         <div class="loc-city-card" id="loc-city-bobo" data-city="bobo">
-                            <img src="bobo_mosque.png" alt="Bobo-Dioulasso Grande Mosquée" class="city-card-img">
+                            <img loading="lazy" src="bobo_mosque.png" alt="Bobo-Dioulasso Grande Mosquée" class="city-card-img">
                             <h4>Bobo-Dioulasso</h4>
                             <span class="city-desc" id="city-desc-bobo">6 livreurs actifs</span>
                         </div>
@@ -1335,7 +1335,7 @@
                         <div class="info-item" style="text-align:left;">
                             <span class="info-label" style="display:block; margin-bottom:8px; font-weight:700;">📸 Photo de profil (Selfie) :</span>
                             <div style="position:relative; width:100%; height:200px; border-radius:12px; overflow:hidden; background:#eee; display:flex; align-items:center; justify-content:center; border:1px solid var(--color-border);">
-                                <img id="admin-doc-preview-selfie" src="" alt="Selfie" style="width:100%; height:100%; object-fit:contain;">
+                                <img loading="lazy" id="admin-doc-preview-selfie" src="" alt="Selfie" style="width:100%; height:100%; object-fit:contain;">
                                 <button class="btn-download-img" data-target="admin-doc-preview-selfie" title="Télécharger l'image" style="position:absolute; bottom:8px; right:8px; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 8px; padding: 6px 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.15); color: var(--color-primary-brown); font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; z-index: 10;">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                 </button>
@@ -1346,7 +1346,7 @@
                             <div class="info-item" style="text-align:left;">
                                 <span class="info-label" style="display:block; margin-bottom:8px; font-weight:700;">🪪 CNI Recto :</span>
                                 <div style="position:relative; width:100%; height:120px; border-radius:12px; overflow:hidden; background:#eee; display:flex; align-items:center; justify-content:center; border:1px solid var(--color-border);">
-                                    <img id="admin-doc-preview-recto" src="" alt="CNI Recto" style="width:100%; height:100%; object-fit:contain;">
+                                    <img loading="lazy" id="admin-doc-preview-recto" src="" alt="CNI Recto" style="width:100%; height:100%; object-fit:contain;">
                                     <button class="btn-download-img" data-target="admin-doc-preview-recto" title="Télécharger l'image" style="position:absolute; bottom:8px; right:8px; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 8px; padding: 6px 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.15); color: var(--color-primary-brown); font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; z-index: 10;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                     </button>
@@ -1355,7 +1355,7 @@
                             <div class="info-item" style="text-align:left;">
                                 <span class="info-label" style="display:block; margin-bottom:8px; font-weight:700;">🪪 CNI Verso :</span>
                                 <div style="position:relative; width:100%; height:120px; border-radius:12px; overflow:hidden; background:#eee; display:flex; align-items:center; justify-content:center; border:1px solid var(--color-border);">
-                                    <img id="admin-doc-preview-verso" src="" alt="CNI Verso" style="width:100%; height:100%; object-fit:contain;">
+                                    <img loading="lazy" id="admin-doc-preview-verso" src="" alt="CNI Verso" style="width:100%; height:100%; object-fit:contain;">
                                     <button class="btn-download-img" data-target="admin-doc-preview-verso" title="Télécharger l'image" style="position:absolute; bottom:8px; right:8px; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 8px; padding: 6px 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.15); color: var(--color-primary-brown); font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; z-index: 10;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                     </button>
@@ -1391,7 +1391,7 @@
         <!-- Bannière d'installation PWA -->
         <div class="pwa-install-banner hidden" id="pwa-install-banner">
             <div class="pwa-banner-logo">
-                <img src="delivery_logo_premium.jpg" alt="Logo">
+                <img loading="lazy" src="delivery_logo_premium.jpg" alt="Logo">
             </div>
             <div class="pwa-banner-text">
                 <h3>Installer l'application</h3>
@@ -1408,7 +1408,7 @@
             <div class="pwa-ios-card">
                 <button class="btn-close-sheet" id="btn-close-pwa-ios" aria-label="Fermer">×</button>
                 <div class="pwa-ios-header">
-                    <img src="delivery_logo_premium.jpg" alt="Logo" class="pwa-ios-logo">
+                    <img loading="lazy" src="delivery_logo_premium.jpg" alt="Logo" class="pwa-ios-logo">
                     <div>
                         <h3>Installer l'application</h3>
                         <p>Ajouter à l'écran d'accueil</p>
@@ -1446,7 +1446,7 @@
     <!-- Popup Facebook In-App Browser Detection -->
     <div class="modal-overlay" id="fb-iab-modal" style="z-index: 9999; background: rgba(54, 42, 33, 0.85);">
         <div class="payment-card" style="text-align: center; padding: 35px 24px; max-width: 320px; margin: auto;">
-            <img src="vecteezy_google-chrome-icon-logo-symbol_22484495.png" alt="Google Chrome" style="width: 90px; height: 90px; margin-bottom: 24px; object-fit: contain; border-radius: 50%;">
+            <img loading="lazy" src="vecteezy_google-chrome-icon-logo-symbol_22484495.png" alt="Google Chrome" style="width: 90px; height: 90px; margin-bottom: 24px; object-fit: contain; border-radius: 50%;">
             
             <button class="btn btn-primary" id="btn-force-chrome" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 1.05rem; font-weight: 800; background: var(--color-primary-green) !important; color: white !important; border: none !important; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3) !important; margin-bottom: 12px;">
                 Continuer sur Google Chrome

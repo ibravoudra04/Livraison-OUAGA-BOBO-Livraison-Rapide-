@@ -1,3 +1,20 @@
+// --- GLOBAL APP ROBUSTNESS & UX FIXES ---
+window.addEventListener('error', function(event) {
+    console.error('Global Error Caught:', event.error);
+    if (typeof showSystemAlert === 'function') showSystemAlert('Une erreur inattendue est survenue.', 'error');
+});
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled Promise Rejection:', event.reason);
+});
+window.addEventListener('offline', function() {
+    if (typeof showSystemAlert === 'function') showSystemAlert('Vous êtes hors ligne. Vérifiez votre connexion internet.', 'warning');
+});
+window.addEventListener('online', function() {
+    if (typeof showSystemAlert === 'function') showSystemAlert('Connexion rétablie.', 'success');
+});
+// ------------------------------------------
+
+
 // Application Logic for "Livraison Rapide"
 // Powered by Vanilla JavaScript + Leaflet.js
 
