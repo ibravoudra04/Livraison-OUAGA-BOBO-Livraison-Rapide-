@@ -1444,15 +1444,22 @@
     </footer>
 
     <!-- Popup Facebook In-App Browser Detection -->
-    <div class="modal-overlay" id="fb-iab-modal" style="z-index: 9999; background: rgba(54, 42, 33, 0.85);">
+    <div class="modal-overlay hidden" id="fb-iab-modal" style="z-index: 9999; background: rgba(54, 42, 33, 0.85);">
         <div class="payment-card" style="text-align: center; padding: 35px 24px; max-width: 320px; margin: auto;">
-            <img loading="lazy" src="vecteezy_google-chrome-icon-logo-symbol_22484495.png" alt="Google Chrome" style="width: 90px; height: 90px; margin-bottom: 24px; object-fit: contain; border-radius: 50%;">
+            <div id="iab-icon-container" style="margin-bottom: 24px;">
+                <!-- Icône injectée dynamiquement selon OS -->
+            </div>
             
-            <button class="btn btn-primary" id="btn-force-chrome" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 1.05rem; font-weight: 800; background: var(--color-primary-green) !important; color: white !important; border: none !important; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3) !important; margin-bottom: 12px;">
-                Continuer sur Google Chrome
+            <h3 style="font-size:1.2rem; font-weight:800; margin-bottom:12px;" id="iab-title">Ouvrir dans le navigateur</h3>
+            <p style="font-size:0.85rem; color:var(--color-charcoal-muted); margin-bottom:24px; line-height:1.5;" id="iab-desc">
+                Pour une meilleure expérience (GPS, Photos) et pour pouvoir installer l'application, veuillez l'ouvrir dans votre navigateur natif.
+            </p>
+
+            <button class="btn btn-primary" id="btn-force-browser" style="width: 100%; padding: 14px; border-radius: 16px; font-size: 1.05rem; font-weight: 800; background: var(--color-primary-green) !important; color: white !important; border: none !important; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3) !important; margin-bottom: 12px;">
+                Continuer sur le navigateur
             </button>
             <button class="btn btn-secondary" id="btn-close-fb-modal" style="width: 100%; padding: 12px; border-radius: 16px; font-size: 0.95rem; font-weight: 600; background: rgba(54, 42, 33, 0.08) !important; border: none !important; text-decoration: none !important; color: var(--color-charcoal) !important;">
-                Continuer quand même
+                Continuer ici quand même
             </button>
         </div>
     </div>

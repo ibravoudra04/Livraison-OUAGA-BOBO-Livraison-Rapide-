@@ -22,26 +22,38 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- BROWSER DETECTION & FACEBOOK REDIRECT ---
     const ua = navigator.userAgent || navigator.vendor || window.opera;
-    const isFacebookApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1);
+    const isFacebookApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1) || (ua.indexOf("LinkedIn") > -1);
     
     if (isFacebookApp) {
         const fbModal = document.getElementById('fb-iab-modal');
-        const btnForceChrome = document.getElementById('btn-force-chrome');
+        const btnForceBrowser = document.getElementById('btn-force-browser');
         const btnCloseFbModal = document.getElementById('btn-close-fb-modal');
+        const iabIconContainer = document.getElementById('iab-icon-container');
+        const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
         
         if (fbModal) {
+            fbModal.classList.remove('hidden');
             fbModal.classList.add('open');
             fbModal.style.pointerEvents = 'auto';
             fbModal.style.opacity = '1';
+            
+            // Personnalisation dynamique selon l'OS (Chrome vs Safari)
+            if (iabIconContainer) {
+                if (isIOS) {
+                    iabIconContainer.innerHTML = '<img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/5/52/Safari_browser_logo.svg" alt="Safari" style="width: 90px; height: 90px; object-fit: contain;">';
+                } else {
+                    iabIconContainer.innerHTML = '<img loading="lazy" src="vecteezy_google-chrome-icon-logo-symbol_22484495.png" alt="Google Chrome" style="width: 90px; height: 90px; object-fit: contain; border-radius: 50%;">';
+                }
+            }
         }
         
-        if (btnForceChrome) {
-            btnForceChrome.addEventListener('click', () => {
-                if (/android/i.test(ua)) {
+        if (btnForceBrowser) {
+            btnForceBrowser.addEventListener('click', () => {
+                if (!isIOS) {
                     // Try to launch Android Chrome intent
                     window.location.href = "intent://livraisonrapide.app#Intent;scheme=https;package=com.android.chrome;end;";
                 } else {
-                    alert("Sur iPhone, veuillez appuyer sur l'icône de partage ou les 3 points en haut à droite et choisir 'Ouvrir dans Safari / le navigateur'.");
+                    alert("Sur iPhone, veuillez appuyer sur l'icône de partage ou sur les options en bas à droite et choisir 'Ouvrir dans le navigateur' ou 'Ouvrir dans Safari'.");
                 }
             });
         }
@@ -49,15 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnCloseFbModal) {
             btnCloseFbModal.addEventListener('click', () => {
                 fbModal.classList.remove('open');
+                fbModal.classList.add('hidden');
                 fbModal.style.pointerEvents = 'none';
             });
-        }
-        
-        // Optionnel : Tentative de redirection automatique silencieuse sur Android
-        if (/android/i.test(ua)) {
-            setTimeout(() => {
-                window.location.href = "intent://livraisonrapide.app#Intent;scheme=https;package=com.android.chrome;end;";
-            }, 800);
         }
     }
 
