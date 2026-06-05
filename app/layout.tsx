@@ -22,13 +22,16 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `
           if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              let hasUnregistered = false;
               for(let registration of registrations) {
-                if (registration.active && registration.active.scriptURL.includes('service-worker.js')) {
-                  registration.unregister().then(() => {
-                    caches.keys().then((cacheNames) => Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName))))
-                    .then(() => window.location.reload(true));
-                  });
-                }
+                registration.unregister();
+                hasUnregistered = true;
+              }
+              if (hasUnregistered) {
+                caches.keys().then((cacheNames) => Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName))))
+                .then(() => {
+                  window.location.href = window.location.href.split('?')[0] + '?cleared=1';
+                });
               }
             });
           }

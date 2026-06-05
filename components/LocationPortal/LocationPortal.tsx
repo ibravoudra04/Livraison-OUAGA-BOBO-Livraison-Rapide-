@@ -15,8 +15,8 @@ export default function LocationPortal({ onClose, onCitySelect, onAutoDetect }: 
 
   // Fetch real counts from DB
   const { livreurs } = useLivreursRealtime();
-  const ouagaCount = livreurs.filter((l: any) => l.city === 'Ouagadougou').length;
-  const boboCount = livreurs.filter((l: any) => l.city === 'Bobo-Dioulasso').length;
+  const ouagaCount = livreurs.filter((l: any) => l.city === 'ouaga').length;
+  const boboCount = livreurs.filter((l: any) => l.city === 'bobo').length;
 
   // Full exhaustive list of sectors & neighborhoods based on administrative divisions
   const sectorsData: Record<string, string[]> = {

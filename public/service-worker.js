@@ -1,24 +1,22 @@
-self.addEventListener('install', (e) => {
+self.addEventListener('install', function(e) {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (e) => {
+self.addEventListener('activate', function(e) {
   e.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(function(cacheNames) {
       return Promise.all(
-        cacheNames.map((cacheName) => {
+        cacheNames.map(function(cacheName) {
           return caches.delete(cacheName);
         })
       );
-    }).then(() => {
-      return self.clients.claim();
-    }).then(() => {
-      self.registration.unregister();
     })
   );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-  // Pass through all requests
-  return;
+self.addEventListener('message', function(e) {
+  if (e.data === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });
