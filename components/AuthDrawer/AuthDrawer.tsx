@@ -45,9 +45,8 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
   };
 
   return (
-    <Drawer id="auth-drawer" isOpen={isOpen} onClose={onClose} title="Se connecter">
+    <Drawer id="auth-drawer" isOpen={isOpen} onClose={onClose} title="Se connecter" cardStyle={{ maxWidth: '380px' }}>
       <div className="drawer-body" style={{ textAlign: 'left' }}>
-        <p className="form-subtitle">Connectez-vous à votre espace (Client, Livreur ou Admin).</p>
         
         {error && (
           <div style={{ padding: '10px', backgroundColor: '#fce8e6', color: '#d93025', borderRadius: '8px', marginBottom: '15px', fontSize: '0.9rem' }}>
