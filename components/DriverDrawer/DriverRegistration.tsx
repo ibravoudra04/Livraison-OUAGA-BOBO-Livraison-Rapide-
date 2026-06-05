@@ -134,9 +134,9 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
                 onClick={() => setFormData({ ...formData, vehicle: v })}
               >
                 <span className="vehicle-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {v === 'Moto' ? <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle><path d="M15 6a3.5 3.5 0 0 0-7 0v2h7z"></path><polyline points="15 8 19 8 20.5 13 23 13"></polyline><line x1="8" y1="8" x2="5" y2="13"></line><line x1="5" y1="13" x2="1" y2="13"></line><polyline points="5 13 8 18.5"></polyline><polyline points="19 8 15 18.5"></polyline></svg> 
-                  : v === 'Tricycle' ? <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg> 
-                  : <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 00-.84-.99L16 11l-2.7-3.6a2 2 0 00-1.6-.8H8a2 2 0 00-2 2v7.55a1 1 0 001 1h2m7-5H9m3 3v2"/><circle cx="7.5" cy="16.5" r="2.5"/><circle cx="17.5" cy="16.5" r="2.5"/></svg>}
+                  {v === 'Moto' ? <img src="/icons/moto.png" alt="Moto" width="28" height="28" style={{ objectFit: 'contain' }} /> 
+                  : v === 'Tricycle' ? <img src="/icons/tricycle.png" alt="Tricycle" width="28" height="28" style={{ objectFit: 'contain' }} /> 
+                  : <img src="/icons/voiture.png" alt="Voiture" width="28" height="28" style={{ objectFit: 'contain' }} />}
                 </span>
                 <span className="vehicle-label">{v}</span>
               </div>

@@ -54,17 +54,17 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
   };
 
   const getVehicleEmoji = (v: string) => {
-    if (v?.toLowerCase().includes('moto')) return '🏍️';
-    if (v?.toLowerCase().includes('tricycle')) return '🛺';
-    if (v?.toLowerCase().includes('voiture')) return '🚗';
-    return '🚚';
+    if (v?.toLowerCase().includes('moto')) return <img src="/icons/moto.png" alt="Moto" width="20" height="20" style={{ objectFit: 'contain' }} />;
+    if (v?.toLowerCase().includes('tricycle')) return <img src="/icons/tricycle.png" alt="Tricycle" width="20" height="20" style={{ objectFit: 'contain' }} />;
+    if (v?.toLowerCase().includes('voiture')) return <img src="/icons/voiture.png" alt="Voiture" width="20" height="20" style={{ objectFit: 'contain' }} />;
+    return <span style={{fontSize: '16px'}}>🚚</span>;
   }
 
   return (
     <div id="driver-dashboard-panel">
       <div className="driver-dashboard-welcome">
         <h3 id="driver-dash-name">Bonjour, {driverData.name.split(' ')[0]} !</h3>
-        <p id="driver-dash-vehicle">{getVehicleEmoji(driverData.vehicle)} {driverData.vehicle}</p>
+        <p id="driver-dash-vehicle" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{getVehicleEmoji(driverData.vehicle)} {driverData.vehicle}</p>
       </div>
 
       <div className="driver-status-card">

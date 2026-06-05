@@ -36,10 +36,11 @@ export default function LivreurCard({
         </div>
         
         <div className={styles.riderVehicle}>
-          <span style={{ fontSize: '14px', marginRight: '4px' }}>
-            {vehicle?.toLowerCase().includes('moto') ? '🏍️' : 
-             vehicle?.toLowerCase().includes('tricycle') ? '🛺' : 
-             vehicle?.toLowerCase().includes('voiture') ? '🚗' : '🚚'}
+          <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: '6px' }}>
+            {vehicle?.toLowerCase().includes('moto') ? <img src="/icons/moto.png" alt="Moto" width="24" height="24" style={{ objectFit: 'contain' }} /> : 
+             vehicle?.toLowerCase().includes('tricycle') ? <img src="/icons/tricycle.png" alt="Tricycle" width="24" height="24" style={{ objectFit: 'contain' }} /> : 
+             vehicle?.toLowerCase().includes('voiture') ? <img src="/icons/voiture.png" alt="Voiture" width="24" height="24" style={{ objectFit: 'contain' }} /> : 
+             <span style={{fontSize: '16px'}}>🚚</span>}
           </span>
           <span>{vehicle}</span>
         </div>
