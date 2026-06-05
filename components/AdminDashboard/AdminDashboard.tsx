@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAdminStats } from '@/hooks/useAdminStats';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import styles from './AdminDashboard.module.css';
 
 interface AdminDashboardProps {
@@ -12,7 +13,13 @@ type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending';
 
 export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashboardProps) {
   const { stats, loading, approveDriver, deleteDriver } = useAdminStats(isAdmin);
+  const { logout } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+
+  const handleLogout = async () => {
+    await logout();
+    onClose();
+  };
 
   if (!isOpen || !isAdmin) return null;
 
@@ -70,6 +77,20 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                 )}
               </button>
             ))}
+            
+            <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
+              <button 
+                onClick={handleLogout}
+                style={{ 
+                  display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 15px', borderRadius: '12px', 
+                  background: 'var(--color-primary-red)', color: 'white', width: '100%',
+                  fontWeight: 'bold', border: 'none', cursor: 'pointer', transition: 'var(--transition-smooth)'
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Se déconnecter
+              </button>
+            </div>
           </div>
 
           {/* Main Content Area */}

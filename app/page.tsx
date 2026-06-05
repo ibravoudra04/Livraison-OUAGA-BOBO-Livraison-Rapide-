@@ -15,6 +15,7 @@ import ChatDrawer from '@/components/ChatDrawer/ChatDrawer';
 import PwaInstallPrompt from '@/components/PwaInstallPrompt/PwaInstallPrompt';
 import ReviewsModal from '@/components/ReviewsModal/ReviewsModal';
 import AdminDashboard from '@/components/AdminDashboard/AdminDashboard';
+import AuthDrawer from '@/components/AuthDrawer/AuthDrawer';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useLivreursRealtime } from '@/hooks/useLivreursRealtime';
 import { useUnlockLogic } from '@/hooks/useUnlockLogic';
@@ -33,6 +34,7 @@ export default function Home() {
   const [isDriverDrawerOpen, setIsDriverDrawerOpen] = useState(false);
   const [driverDrawerInitialView, setDriverDrawerInitialView] = useState<'login' | 'register'>('login');
   const [isClientDrawerOpen, setIsClientDrawerOpen] = useState(false);
+  const [isAuthDrawerOpen, setIsAuthDrawerOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
@@ -54,10 +56,16 @@ export default function Home() {
   };
 
   const handleLoginClick = () => {
-    if (role === 'admin') {
-      setIsAdminDashboardOpen(true);
+    if (!user) {
+      setIsAuthDrawerOpen(true);
     } else {
-      setIsClientDrawerOpen(true);
+      if (role === 'admin') {
+        setIsAdminDashboardOpen(true);
+      } else if (role === 'rider') {
+        setIsDriverDrawerOpen(true);
+      } else {
+        setIsClientDrawerOpen(true);
+      }
     }
   };
 
@@ -206,11 +214,15 @@ export default function Home() {
                   {selectedLivreur.is_online ? (
                     <span style={{ backgroundColor: '#e6f4ea', color: '#1e8e3e', padding: '4px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold' }}>Disponible</span>
                   ) : (
-                    <span style={{ backgroundColor: '#fce8e6', color: '#d93025', padding: '4px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold' }}>Indisponible</span>
+                    <span style={{ backgroundColor: '#e6f4ea', color: '#1e8e3e', padding: '4px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold' }}>Disponible</span>
                   )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-charcoal)', fontSize: '0.85rem', marginTop: '4px' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg>
+                  <span style={{ fontSize: '14px' }}>
+                    {(selectedLivreur.transport_type || selectedLivreur.vehicle || 'Moto').toLowerCase().includes('moto') ? '🏍️' : 
+                     (selectedLivreur.transport_type || selectedLivreur.vehicle || '').toLowerCase().includes('tricycle') ? '🛺' : 
+                     (selectedLivreur.transport_type || selectedLivreur.vehicle || '').toLowerCase().includes('voiture') ? '🚗' : '🚚'}
+                  </span>
                   {selectedLivreur.transport_type || selectedLivreur.vehicle || 'Moto'}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px' }} onClick={() => setIsReviewsModalOpen(true)}>
@@ -322,6 +334,11 @@ export default function Home() {
         isOpen={isAdminDashboardOpen}
         onClose={() => setIsAdminDashboardOpen(false)}
         isAdmin={role === 'admin'}
+      />
+
+      <AuthDrawer 
+        isOpen={isAuthDrawerOpen}
+        onClose={() => setIsAuthDrawerOpen(false)}
       />
 
       <PaymentSimulator 
