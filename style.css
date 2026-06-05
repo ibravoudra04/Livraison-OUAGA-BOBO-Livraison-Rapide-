@@ -71,10 +71,10 @@ body {
 
 /* Header Minimal */
 header {
-    background: rgba(250, 246, 242, 0.75);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    background: rgba(255, 255, 255, 0.45) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.55) !important;
+    backdrop-filter: blur(35px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(35px) saturate(180%) !important;
     box-shadow: 0 4px 30px rgba(54, 42, 33, 0.03), inset 0 1px 1px rgba(255, 255, 255, 0.85);
     padding: 12px 20px;
     display: flex;

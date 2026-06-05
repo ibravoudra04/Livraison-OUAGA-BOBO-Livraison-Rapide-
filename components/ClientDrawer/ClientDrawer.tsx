@@ -27,10 +27,16 @@ export default function ClientDrawer({ isOpen, onClose, onSimulatePremium }: Cli
       if (role === 'client') {
         setView('dashboard');
         const fetchClient = async () => {
-          const { data } = await supabase.from('clients_livraison').select('*').eq('id', user.id).single();
-          if (data) {
-            setClientData(data);
-          } else {
+          try {
+            const { data, error } = await supabase.from('clients_livraison').select('*').eq('id', user.id).single();
+            if (error) console.error("Error fetching client:", error);
+            if (data) {
+              setClientData(data);
+            } else {
+              setClientData({ id: user.id, name: user.user_metadata?.name || 'Client', phone: user.user_metadata?.phone, subscription_paid: false });
+            }
+          } catch (e) {
+            console.error("Exception fetching client:", e);
             setClientData({ id: user.id, name: user.user_metadata?.name || 'Client', phone: user.user_metadata?.phone, subscription_paid: false });
           }
         };

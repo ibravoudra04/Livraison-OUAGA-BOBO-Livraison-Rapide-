@@ -22,8 +22,35 @@ export default function DriverDrawer({ isOpen, onClose, initialView = 'login' }:
       setView('dashboard');
       // Fetch driver details
       const fetchDriver = async () => {
-        const { data } = await supabase.from('livreurs_view').select('*').eq('id', user.id).single();
-        if (data) setDriverData(data);
+        try {
+          const { data, error } = await supabase.from('livreurs_view').select('*').eq('id', user.id).single();
+          if (error) console.error("Error fetching driver:", error);
+          
+          if (data) {
+            setDriverData(data);
+          } else {
+            setDriverData({
+              id: user.id,
+              name: user.user_metadata?.name || 'Livreur',
+              vehicle: user.user_metadata?.vehicle || 'Moto',
+              status: 'en attente',
+              contacts_count: 0,
+              views_count: 0,
+              subscription_paid: false
+            });
+          }
+        } catch (e) {
+          console.error("Exception fetching driver:", e);
+          setDriverData({
+            id: user.id,
+            name: user.user_metadata?.name || 'Livreur',
+            vehicle: user.user_metadata?.vehicle || 'Moto',
+            status: 'en attente',
+            contacts_count: 0,
+            views_count: 0,
+            subscription_paid: false
+          });
+        }
       };
       fetchDriver();
     } else if (user) {

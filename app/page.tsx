@@ -174,21 +174,21 @@ export default function Home() {
         </header>
       )}
 
-      {showWelcome && (
-        <WelcomePortal 
-          onStartSearch={() => {
-            setShowWelcome(false);
-            setShowLocationPortal(true);
-          }}
-          onRegisterClick={() => {
-            setDriverDrawerInitialView('register');
-            setIsDriverDrawerOpen(true);
-          }}
-        />
-      )}
-
       <div style={{ flex: 1, position: 'relative' }}>
         
+        {showWelcome && (
+          <WelcomePortal 
+            onStartSearch={() => {
+              setShowWelcome(false);
+              setShowLocationPortal(true);
+            }}
+            onRegisterClick={() => {
+              setDriverDrawerInitialView('register');
+              setIsDriverDrawerOpen(true);
+            }}
+          />
+        )}
+
         {/* Switcher de ville (Ouaga / Bobo) avec le design d'origine */}
         {!showWelcome && (
           <>
