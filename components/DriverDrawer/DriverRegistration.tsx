@@ -133,7 +133,11 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
                 className={`vehicle-option ${formData.vehicle === v ? 'selected' : ''}`}
                 onClick={() => setFormData({ ...formData, vehicle: v })}
               >
-                <span className="vehicle-icon">{v === 'Moto' ? '🏍️' : v === 'Tricycle' ? '🛺' : '🚗'}</span>
+                <span className="vehicle-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {v === 'Moto' ? <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle><path d="M15 6a3.5 3.5 0 0 0-7 0v2h7z"></path><polyline points="15 8 19 8 20.5 13 23 13"></polyline><line x1="8" y1="8" x2="5" y2="13"></line><line x1="5" y1="13" x2="1" y2="13"></line><polyline points="5 13 8 18.5"></polyline><polyline points="19 8 15 18.5"></polyline></svg> 
+                  : v === 'Tricycle' ? <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg> 
+                  : <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 00-.84-.99L16 11l-2.7-3.6a2 2 0 00-1.6-.8H8a2 2 0 00-2 2v7.55a1 1 0 001 1h2m7-5H9m3 3v2"/><circle cx="7.5" cy="16.5" r="2.5"/><circle cx="17.5" cy="16.5" r="2.5"/></svg>}
+                </span>
                 <span className="vehicle-label">{v}</span>
               </div>
             ))}
@@ -143,7 +147,9 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
         <div className="form-group">
           <label className="form-label">Localisation GPS (Point d'attente) *</label>
           <div className="geo-status-card">
-            <div className="geo-status-icon">📍</div>
+            <div className="geo-status-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            </div>
             <div className="geo-status-details">
               <h4>{geoStatus === 'success' ? 'Position enregistrée' : 'Détection GPS requise'}</h4>
               <p>{geoStatus === 'success' ? `Lat: ${location.lat.toFixed(4)}, Lng: ${location.lng.toFixed(4)}` : 'Pour apparaître sur la carte, nous devons enregistrer votre position.'}</p>
@@ -169,7 +175,9 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
             </div>
             <div className="upload-box">
               <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'selfie')} />
-              <span className="upload-icon">📸</span>
+              <span className="upload-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              </span>
               <span className="upload-text">{files.selfie ? files.selfie.name : 'Selfie'}</span>
             </div>
           </div>

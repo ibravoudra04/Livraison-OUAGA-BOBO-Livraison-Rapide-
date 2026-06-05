@@ -51,7 +51,10 @@ export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, ri
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             Retour
           </button>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>⭐ Notes & Avis Clients</h3>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="var(--color-primary-yellow)" stroke="var(--color-primary-yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            Notes & Avis Clients
+          </h3>
           <div style={{ width: '70px' }}></div>
         </div>
         
@@ -62,7 +65,11 @@ export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, ri
               <div style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)', fontWeight: 600, marginTop: '6px' }}>Basé sur {riderReviewsCount} avis</div>
             </div>
             <div style={{ textAlign: 'left' }}>
-              <div style={{ color: 'var(--color-primary-yellow)', fontSize: '1.4rem', letterSpacing: '1px', lineHeight: 1 }}>{'★'.repeat(Math.round(riderRating))}{'☆'.repeat(5 - Math.round(riderRating))}</div>
+              <div style={{ display: 'flex', gap: '2px', justifyContent: 'center' }}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <svg key={i} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={i < Math.round(riderRating) ? "var(--color-primary-yellow)" : "none"} stroke="var(--color-primary-yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                ))}
+              </div>
               <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-light)', margin: '8px 0 0 0', lineHeight: 1.4 }}>Moyenne générale calculée sur les retours d'expériences clients.</p>
             </div>
           </div>
@@ -76,8 +83,10 @@ export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, ri
               reviews.map((review) => (
                 <div key={review.id} style={{ background: 'rgba(54, 42, 33, 0.03)', padding: '15px', borderRadius: '16px', border: '1px solid rgba(54, 42, 33, 0.06)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <div style={{ color: 'var(--color-primary-yellow)', fontSize: '1rem', letterSpacing: '1px' }}>
-                      {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                    <div style={{ display: 'flex', gap: '2px' }}>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <svg key={i} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={i < review.rating ? "var(--color-primary-yellow)" : "none"} stroke="var(--color-primary-yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                      ))}
                     </div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--color-charcoal-muted)' }}>
                       {new Date(review.created_at).toLocaleDateString('fr-FR')}

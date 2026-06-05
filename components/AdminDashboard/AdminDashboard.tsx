@@ -42,10 +42,10 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
           {/* Sidebar */}
           <div style={{ width: '220px', background: 'rgba(255,255,255,0.5)', borderRight: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', padding: '15px 10px', gap: '5px' }}>
             {[
-              { id: 'overview', icon: '📊', label: 'Vue Globale' },
-              { id: 'drivers', icon: '🏍️', label: 'Livreurs' },
-              { id: 'pending', icon: '🛂', label: 'Candidatures' },
-              { id: 'chats', icon: '💬', label: 'Discussions' },
+              { id: 'overview', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>, label: 'Vue Globale' },
+              { id: 'drivers', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>, label: 'Livreurs' },
+              { id: 'pending', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>, label: 'Candidatures' },
+              { id: 'chats', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>, label: 'Discussions' },
             ].map(tab => (
               <button 
                 key={tab.id}
@@ -59,7 +59,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                   boxShadow: activeTab === tab.id ? '0 4px 10px rgba(0,0,0,0.05)' : 'none'
                 }}
               >
-                <span style={{ fontSize: '1.2rem' }}>{tab.icon}</span>
+                <span style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center' }}>{tab.icon}</span>
                 {tab.label}
                 {tab.id === 'pending' && (stats?.pendingDrivers?.length || 0) > 0 && (
                   <span style={{ marginLeft: 'auto', background: 'var(--color-primary-red)', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold' }}>

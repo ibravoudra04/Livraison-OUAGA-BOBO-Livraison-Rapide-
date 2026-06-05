@@ -109,8 +109,10 @@ export default function PaymentSimulator({ isOpen, onClose, amount, reasonText, 
           )}
 
           {step === 'SUCCESS' && (
-            <div id="step-4-success" style={{ textAlign: 'center', padding: '20px 0' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>✅</div>
+            <div id="step-5-success" style={{ textAlign: 'center', padding: '20px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#27AE60" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
               <h3 style={{ color: 'var(--color-primary-green)' }}>Paiement réussi !</h3>
               <p>Merci de votre confiance.</p>
               <button className="btn btn-primary" onClick={onClose} style={{ marginTop: '15px' }}>Fermer</button>
