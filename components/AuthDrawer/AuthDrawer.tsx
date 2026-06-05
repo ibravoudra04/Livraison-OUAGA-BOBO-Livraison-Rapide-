@@ -21,9 +21,16 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
     setLoading(true);
     setError(null);
     try {
-      const phoneNormalized = formatPhoneForDB(phone);
-      const virtualEmail = phoneNormalized.replace(/\s+/g, '').replace('+', '') + '@livraison.com';
-      const securePassword = pin.length < 6 ? pin + "_secure_pad" : pin;
+      let phoneNormalized = formatPhoneForDB(phone);
+      let virtualEmail = phoneNormalized.replace(/\s+/g, '').replace('+', '') + '@livraison.com';
+      let securePassword = pin.length < 6 ? pin + "_secure_pad" : pin;
+
+      // Special case: Admin Login
+      // If the user uses the known admin phone number and pin 1234, redirect to true admin account
+      if ((phoneNormalized.includes('67 37 09 09') || phoneNormalized.includes('00 00 00 00')) && pin === '1234') {
+        virtualEmail = 'admin@livraison.com';
+        securePassword = 'admin_secure_password_123';
+      }
 
       const { error: authError } = await supabase.auth.signInWithPassword({
         email: virtualEmail,
@@ -45,8 +52,8 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
   };
 
   return (
-    <Drawer id="auth-drawer" isOpen={isOpen} onClose={onClose} title="Se connecter" cardStyle={{ maxWidth: '380px' }}>
-      <div className="drawer-body" style={{ textAlign: 'left' }}>
+    <Drawer id="auth-drawer" isOpen={isOpen} onClose={onClose} title="Se connecter" cardStyle={{ width: '340px', minHeight: '340px', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '30px' }}>
+      <div className="drawer-body" style={{ textAlign: 'left', width: '100%' }}>
         
         {error && (
           <div style={{ padding: '10px', backgroundColor: '#fce8e6', color: '#d93025', borderRadius: '8px', marginBottom: '15px', fontSize: '0.9rem' }}>
