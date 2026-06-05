@@ -19,23 +19,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
-        <script dangerouslySetInnerHTML={{ __html: `
-          if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-              let hasUnregistered = false;
-              for(let registration of registrations) {
-                registration.unregister();
-                hasUnregistered = true;
-              }
-              if (hasUnregistered) {
-                caches.keys().then((cacheNames) => Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName))))
-                .then(() => {
-                  window.location.href = window.location.href.split('?')[0] + '?cleared=1';
-                });
-              }
-            });
-          }
-        ` }} />
+
       </body>
     </html>
   );

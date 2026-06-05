@@ -1,3 +1,15 @@
+import withPWAInit from '@ducanh2912/next-pwa';
+
+const withPWA = withPWAInit({
+  dest: 'public',
+  sw: 'service-worker.js',
+  // Make sure the service worker always claims clients and updates immediately
+  workboxOptions: {
+    clientsClaim: true,
+    skipWaiting: true,
+  },
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -19,4 +31,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);

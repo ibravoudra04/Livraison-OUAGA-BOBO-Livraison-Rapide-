@@ -57,3 +57,11 @@ supabase/.temp/
 
 # Next.js
 .next/
+  
+# next-pwa  
+public/sw.js  
+public/service-worker.js  
+public/workbox-*.js  
+public/fallback-*.js  
+public/sw.js.map  
+public/service-worker.js.map 
