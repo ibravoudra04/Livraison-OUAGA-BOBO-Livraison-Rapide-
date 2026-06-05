@@ -1,0 +1,86 @@
+.riderProfile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.riderAvatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: var(--color-primary-yellow-light);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: var(--color-charcoal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border: 2px solid var(--color-card-white);
+  box-shadow: 0 4px 10px rgba(54, 42, 33, 0.12);
+  flex-shrink: 0;
+}
+
+.riderIdentity {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.riderName {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-charcoal);
+  margin: 0;
+}
+
+.riderVehicle {
+  font-size: 0.85rem;
+  color: var(--color-charcoal-light);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.riderStatus {
+  background-color: var(--color-green-light);
+  color: var(--color-green-soft);
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.riderRating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.ratingStars {
+  color: var(--color-primary-yellow);
+  letter-spacing: 1px;
+}
+
+.ratingVal {
+  font-weight: 700;
+  color: var(--color-charcoal);
+}
+
+.reviewsCount {
+  color: var(--color-charcoal-muted);
+  font-size: 0.75rem;
+}

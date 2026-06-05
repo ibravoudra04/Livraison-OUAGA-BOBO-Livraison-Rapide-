@@ -877,7 +877,7 @@ main {
     bottom: 0;
     width: 100%;
     max-width: 500px;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.98);
     border-left: 1px solid rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -1257,7 +1257,7 @@ footer {
     align-items: center;
     justify-content: flex-start; /* Allows natural scrolling if content is too tall */
     gap: 20px;
-    padding: 40px 20px;
+    padding: 40px 20px 100px 20px;
     z-index: 1000;
     position: absolute;
     top: 0;
@@ -1711,6 +1711,25 @@ footer {
 
 .btn-chat:active {
     transform: translateY(1px);
+}
+
+.driver-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    max-width: 420px;
+    background: rgba(255, 255, 255, 0.98); /* Increased opacity to prevent bleeding */
+    border-left: 1px solid rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 1500;
+    transform: translateX(105%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: -15px 0 45px rgba(54, 42, 33, 0.12), inset 1px 0 2px rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 /* Live Chat Drawer Panel */
@@ -3169,10 +3188,8 @@ header {
 }
 
 .driver-drawer, .bottom-sheet, .payment-card, .admin-card, .ussd-simulation, .chat-drawer {
-    background: rgba(255, 255, 255, 0.45) !important;
+    background: var(--color-bg-warm) !important;
     border: 1px solid rgba(255, 255, 255, 0.55) !important;
-    backdrop-filter: blur(35px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(35px) saturate(180%) !important;
     box-shadow: 
         0 24px 70px rgba(54, 42, 33, 0.12),
         inset 0 1px 2.5px rgba(255, 255, 255, 0.95) !important;
@@ -4318,3 +4335,12 @@ header {
 
 /* iOS Zoom Prevention */
 input, select, textarea, .form-input, .ussd-input { font-size: 16px !important; }
+
+/* Custom Driver Dot Marker */
+.custom-driver-dot { position: relative; }
+.driver-dot-core { width: 14px; height: 14px; background-color: var(--color-primary-green, #27AE60); border-radius: 50%; position: absolute; top: 3px; left: 3px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.driver-dot-pulse { width: 20px; height: 20px; background-color: rgba(39, 174, 96, 0.4); border-radius: 50%; position: absolute; top: 0; left: 0; animation: pulsate-dot 1.5s ease-out infinite; }
+@keyframes pulsate-dot { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+
+/* Hide Leaflet Attribution */
+.leaflet-control-attribution { display: none !important; }

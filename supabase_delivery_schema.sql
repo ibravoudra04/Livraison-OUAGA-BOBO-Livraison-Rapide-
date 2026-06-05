@@ -61,7 +61,8 @@ CREATE TABLE IF NOT EXISTS public.chats_livraison (
     rider_id UUID REFERENCES public.livreurs(id) ON DELETE CASCADE,
     client_id UUID REFERENCES public.clients_livraison(id) ON DELETE CASCADE,
     sender TEXT NOT NULL CHECK (sender IN ('client', 'rider')),
-    text TEXT NOT NULL,
+    text TEXT,
+    image_url TEXT,
     time TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

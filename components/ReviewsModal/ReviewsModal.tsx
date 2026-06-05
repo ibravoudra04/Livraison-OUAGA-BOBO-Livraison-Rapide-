@@ -1,0 +1,95 @@
+import React, { useEffect, useState } from 'react';
+import { createClient } from '@/utils/supabase/client';
+
+interface Review {
+  id: string;
+  rating: number;
+  text: string;
+  created_at: string;
+}
+
+interface ReviewsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  riderId: string;
+  riderRating: number;
+  riderReviewsCount: number;
+}
+
+export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, riderReviewsCount }: ReviewsModalProps) {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    if (isOpen && riderId) {
+      const fetchReviews = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('avis')
+          .select('*')
+          .eq('rider_id', riderId)
+          .order('created_at', { ascending: false });
+        
+        if (!error && data) {
+          setReviews(data as Review[]);
+        }
+        setLoading(false);
+      };
+      
+      fetchReviews();
+    }
+  }, [isOpen, riderId, supabase]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" id="reviews-modal" style={{ display: 'flex' }}>
+      <div className="payment-card" style={{ maxWidth: '480px', width: '95%' }}>
+        <div className="payment-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%' }}>
+          <button className="btn-back-modal" onClick={onClose} aria-label="Fermer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Retour
+          </button>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>⭐ Notes & Avis Clients</h3>
+          <div style={{ width: '70px' }}></div>
+        </div>
+        
+        <div className="payment-body" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '20px' }}>
+          <div className="reviews-summary-block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', borderBottom: '1.5px solid var(--color-border)', paddingBottom: '20px', marginBottom: '20px', textAlign: 'center' }}>
+            <div>
+              <span style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--color-primary-yellow)', lineHeight: 1 }}>{riderRating.toFixed(1)}</span>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)', fontWeight: 600, marginTop: '6px' }}>Basé sur {riderReviewsCount} avis</div>
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ color: 'var(--color-primary-yellow)', fontSize: '1.4rem', letterSpacing: '1px', lineHeight: 1 }}>{'★'.repeat(Math.round(riderRating))}{'☆'.repeat(5 - Math.round(riderRating))}</div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-light)', margin: '8px 0 0 0', lineHeight: 1.4 }}>Moyenne générale calculée sur les retours d'expériences clients.</p>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {loading ? (
+              <p style={{ textAlign: 'center', color: 'var(--color-charcoal-light)' }}>Chargement des avis...</p>
+            ) : reviews.length === 0 ? (
+              <p style={{ textAlign: 'center', color: 'var(--color-charcoal-light)' }}>Aucun avis pour le moment.</p>
+            ) : (
+              reviews.map((review) => (
+                <div key={review.id} style={{ background: 'rgba(54, 42, 33, 0.03)', padding: '15px', borderRadius: '16px', border: '1px solid rgba(54, 42, 33, 0.06)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <div style={{ color: 'var(--color-primary-yellow)', fontSize: '1rem', letterSpacing: '1px' }}>
+                      {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--color-charcoal-muted)' }}>
+                      {new Date(review.created_at).toLocaleDateString('fr-FR')}
+                    </div>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-charcoal)', lineHeight: 1.5 }}>{review.text}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
