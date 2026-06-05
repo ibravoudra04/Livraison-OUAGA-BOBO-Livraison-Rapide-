@@ -12,7 +12,13 @@ self.addEventListener('activate', function(e) {
       );
     })
   );
-  self.clients.claim();
+  self.clients.claim().then(() => {
+    self.clients.matchAll({ type: 'window' }).then(windowClients => {
+      windowClients.forEach(windowClient => {
+        windowClient.navigate(windowClient.url);
+      });
+    });
+  });
 });
 
 self.addEventListener('message', function(e) {

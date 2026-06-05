@@ -271,74 +271,74 @@ export default function Home() {
 
       <BottomSheet isOpen={isSheetOpen} onClose={() => setIsSheetOpen(false)}>
         {selectedLivreur && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '5px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: '10px 5px' }}>
             {/* Header: Photo, Info, Status */}
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.6)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
-              <div style={{ width: '70px', height: '70px', borderRadius: '20px', overflow: 'hidden', border: '2px solid white', boxShadow: '0 8px 16px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '50%', overflow: 'hidden', border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', flexShrink: 0 }}>
                 {selectedLivreur.selfie ? (
                   <img src={selectedLivreur.selfie} alt={selectedLivreur.first_name || selectedLivreur.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.5rem' }}>
+                  <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
                     {(selectedLivreur.first_name || selectedLivreur.name || 'L').charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--color-primary-brown)', fontWeight: 800, letterSpacing: '-0.3px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-primary-brown)', fontWeight: 800 }}>
                     {selectedLivreur.first_name || selectedLivreur.name}
                   </h3>
-                  <span style={{ backgroundColor: 'var(--color-primary-green-light)', color: 'var(--color-primary-green)', padding: '6px 10px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(39, 174, 96, 0.2)' }}>
-                    <div className="pulse-dot" style={{ width: '6px', height: '6px' }}></div>
-                    En ligne
+                  <span style={{ backgroundColor: '#e6f4ea', color: '#1e8e3e', padding: '4px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div className="pulse-dot" style={{ width: '6px', height: '6px', background: '#1e8e3e' }}></div>
+                    Disponible
                   </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-charcoal)', fontSize: '0.9rem', marginTop: '6px', fontWeight: 600 }}>
-                  <span style={{ fontSize: '16px', background: 'white', padding: '4px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-charcoal)', fontSize: '0.85rem', marginTop: '4px' }}>
+                  <span style={{ fontSize: '14px' }}>
                     {(selectedLivreur.transport_type || selectedLivreur.vehicle || 'Moto').toLowerCase().includes('moto') ? '🏍️' : 
                      (selectedLivreur.transport_type || selectedLivreur.vehicle || '').toLowerCase().includes('tricycle') ? '🛺' : 
                      (selectedLivreur.transport_type || selectedLivreur.vehicle || '').toLowerCase().includes('voiture') ? '🚗' : '🚚'}
                   </span>
-                  {selectedLivreur.transport_type || selectedLivreur.vehicle || 'Moto'}
+                  {selectedLivreur.transport_type || selectedLivreur.vehicle || 'Moto 135cc'}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }} onClick={() => setIsReviewsModalOpen(true)}>
-                  <span style={{ color: 'var(--color-primary-yellow)', fontSize: '1rem', textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>{'★'.repeat(Math.round(selectedLivreur.average_rating || 5))}{'☆'.repeat(5 - Math.round(selectedLivreur.average_rating || 5))}</span>
-                  <span style={{ fontWeight: 800, fontSize: '0.85rem', marginLeft: '4px' }}>{Number(selectedLivreur.average_rating || 5).toFixed(1)}</span>
-                  <span style={{ color: 'var(--color-charcoal-muted)', fontSize: '0.8rem', textDecoration: 'underline', cursor: 'pointer', background: 'white', padding: '2px 6px', borderRadius: '8px' }}>({selectedLivreur.reviews_count || 0} avis)</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }} onClick={() => setIsReviewsModalOpen(true)}>
+                  <span style={{ color: 'var(--color-primary-yellow)', fontSize: '0.9rem' }}>{'★'.repeat(Math.round(selectedLivreur.average_rating || 5))}{'☆'.repeat(5 - Math.round(selectedLivreur.average_rating || 5))}</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '0.8rem', marginLeft: '4px' }}>{Number(selectedLivreur.average_rating || 5).toFixed(1)}</span>
+                  <span style={{ color: 'var(--color-charcoal-muted)', fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}>({selectedLivreur.reviews_count || 0} avis)</span>
                 </div>
               </div>
             </div>
 
             {/* Badges: Distance & Phone */}
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ flex: 1, backgroundColor: 'white', borderRadius: '16px', padding: '16px', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 6px 15px rgba(54, 42, 33, 0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--color-charcoal-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>📍 Distance</div>
-                <div style={{ fontWeight: 800, color: 'var(--color-primary-red)', fontSize: '1.1rem' }}>
-                  {selectedLivreur.distanceToUser !== undefined ? `${selectedLivreur.distanceToUser.toFixed(1)} km` : 'À calculer...'}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Distance</div>
+                <div style={{ fontWeight: 'bold', color: 'var(--color-charcoal)', fontSize: '0.9rem' }}>
+                  {selectedLivreur.distanceToUser !== undefined ? `À ${selectedLivreur.distanceToUser.toFixed(1)} km` : 'À calculer...'}
                 </div>
               </div>
-              <div style={{ flex: 1, backgroundColor: 'white', borderRadius: '16px', padding: '16px', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 6px 15px rgba(54, 42, 33, 0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--color-charcoal-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>📱 Téléphone</div>
-                <div style={{ fontWeight: 800, color: 'var(--color-charcoal)', fontSize: '1.1rem', letterSpacing: '1px' }}>{selectedLivreur.phone_display || selectedLivreur.phone}</div>
+              <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Téléphone</div>
+                <div style={{ fontWeight: 'bold', color: 'var(--color-charcoal)', fontSize: '0.9rem' }}>{selectedLivreur.phone_display || selectedLivreur.phone}</div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '12px', marginTop: '5px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
               <button 
                 className="btn-primary" 
-                style={{ flex: 1, padding: '16px', borderRadius: '16px', background: 'white', color: 'var(--color-primary-brown)', border: '2px solid var(--color-primary-brown)', fontWeight: 800, fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(141, 85, 55, 0.1)' }}
+                style={{ flex: 1, padding: '14px', borderRadius: '16px', background: 'white', color: 'var(--color-primary-brown)', border: '2px solid var(--color-primary-brown)', fontWeight: 'bold', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 onClick={() => { window.location.href = `tel:${selectedLivreur.phone_display || selectedLivreur.phone}`; }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                 Appeler
               </button>
               <button 
                 className="btn-primary" 
-                style={{ flex: 1, padding: '16px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--color-primary-green), #1E9E4F)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 800, fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s', boxShadow: '0 8px 25px rgba(39, 174, 96, 0.4), inset 0 2px 2px rgba(255,255,255,0.3)' }}
+                style={{ flex: 1, padding: '14px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--color-primary-green), #1E9E4F)', color: 'white', border: 'none', fontWeight: 'bold', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)' }}
                 onClick={() => setIsChatDrawerOpen(true)}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                 Discuter (Chat)
               </button>
             </div>
