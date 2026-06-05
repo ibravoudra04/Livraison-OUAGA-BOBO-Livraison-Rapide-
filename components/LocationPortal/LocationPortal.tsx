@@ -4,9 +4,10 @@ import { useLivreursRealtime } from '@/hooks/useLivreursRealtime';
 interface LocationPortalProps {
   onClose: () => void;
   onCitySelect: (city: string) => void;
+  onAutoDetect?: () => void;
 }
 
-export default function LocationPortal({ onClose, onCitySelect }: LocationPortalProps) {
+export default function LocationPortal({ onClose, onCitySelect, onAutoDetect }: LocationPortalProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [tempCity, setTempCity] = useState<string | null>(null);
   const [sectorSearch, setSectorSearch] = useState('');
@@ -14,8 +15,8 @@ export default function LocationPortal({ onClose, onCitySelect }: LocationPortal
 
   // Fetch real counts from DB
   const { livreurs } = useLivreursRealtime();
-  const ouagaCount = livreurs.filter((l: any) => l.city === 'ouaga').length;
-  const boboCount = livreurs.filter((l: any) => l.city === 'bobo').length;
+  const ouagaCount = livreurs.filter((l: any) => l.city === 'Ouagadougou').length;
+  const boboCount = livreurs.filter((l: any) => l.city === 'Bobo-Dioulasso').length;
 
   // Full exhaustive list of sectors & neighborhoods based on administrative divisions
   const sectorsData: Record<string, string[]> = {
@@ -56,13 +57,14 @@ export default function LocationPortal({ onClose, onCitySelect }: LocationPortal
 
   const handleAutoDetect = () => {
     setIsDetecting(true);
-    // Simulate GPS detection delay
-    setTimeout(() => {
-      setIsDetecting(false);
-      // Let's pretend GPS resolved to Ouagadougou directly, skip step 2 for auto-detect
-      // To strictly adhere to the old behavior, we pass the city to onCitySelect which skips options
-      onCitySelect('Ouagadougou');
-    }, 1200);
+    if (onAutoDetect) {
+      onAutoDetect();
+    } else {
+      setTimeout(() => {
+        setIsDetecting(false);
+        onCitySelect('Ouagadougou');
+      }, 1200);
+    }
   };
 
   const handleMapDirectly = () => {

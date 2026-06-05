@@ -138,21 +138,25 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
         </div>
       </div>
       
-
-
-      <div style={{ marginTop: '20px' }}>
-        <button 
-          onClick={handleLogout} 
-          style={{ 
-            width: '100%', padding: '14px', borderRadius: '16px', fontWeight: 'bold',
-            background: 'var(--color-primary-red)', color: 'white', border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-          }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-          Se déconnecter
+      {/* Option de paiement d'abonnement */}
+      <div className="driver-terms-info" id="driver-dash-sub-box" style={{ marginTop: '15px' }}>
+        <h4>ℹ️ Suivi de votre abonnement</h4>
+        <p id="driver-dash-sub-text" style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-light)', lineHeight: 1.4, marginBottom: 0 }}>
+          {subTextHTML}
+        </p>
+        {showPayBtn && (
+          <button className="btn-unlock" id="btn-driver-pay-sub" style={{ width: '100%', marginTop: '12px', padding: '10px', fontSize: '0.9rem' }}>
+            Régler mon abonnement (500 FCFA)
+          </button>
+        )}
+        <button className="btn btn-secondary" id="btn-driver-simulate-contact" onClick={onSimulatePayment} style={{ width: '100%', marginTop: '10px', fontSize: '0.75rem', padding: '6px 12px', borderRadius: '8px' }}>
+          ⚡ Simuler 2 nouveaux contacts clients
         </button>
       </div>
+
+      <button className="btn btn-secondary" id="btn-driver-logout" onClick={handleLogout} style={{ width: '100%', padding: '12px', borderRadius: '16px', marginTop: '15px' }}>
+        Se déconnecter
+      </button>
     </div>
   );
 }

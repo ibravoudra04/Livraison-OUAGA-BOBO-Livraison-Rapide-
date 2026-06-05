@@ -124,6 +124,14 @@ export default function Home() {
     return { ...livreur, distanceToUser: dist };
   }).filter(livreur => {
     if (!userLocation) return true;
+    
+    // Check if user is actually near Ouaga or Bobo
+    const dOuaga = getDistance(userLocation.lat, userLocation.lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
+    const dBobo = getDistance(userLocation.lat, userLocation.lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
+    
+    // If testing from abroad (> 100km away from any city), don't filter out by 10km so the map isn't empty
+    if (dOuaga > 100 && dBobo > 100) return true;
+    
     return livreur.distanceToUser <= 10;
   });
 
@@ -149,17 +157,34 @@ export default function Home() {
         <header className="main-header" style={{ position: 'relative', zIndex: 2000 }}>
           <a href="#" className="logo-container" id="logo-home" onClick={(e) => { e.preventDefault(); setShowWelcome(true); }}>
             <div className="logo-icon">
-              <img loading="lazy" src="delivery_logo_premium.jpg" alt="Livraison Rapide Logo" className="logo-image" />
+              <img src="/delivery_logo_premium.jpg" alt="Livraison Rapide Logo" className="logo-image" />
             </div>
             <h1 className="logo-text">Livraison<span>Rapide</span></h1>
           </a>
           <nav className="nav-buttons">
-            <button className="btn btn-secondary" id="btn-nav-login" onClick={handleLoginClick} style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              <span>{!user ? 'Se connecter' : (role === 'admin' ? 'Espace Admin' : 'Profil')}</span>
-            </button>
+            {user ? (
+              <button className="btn btn-secondary" onClick={handleLoginClick} style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span>Mon Compte</span>
+              </button>
+            ) : (
+              <button className="btn btn-secondary" onClick={() => setIsAuthDrawerOpen(true)}>Se connecter</button>
+            )}
           </nav>
         </header>
+      )}
+
+      {showWelcome && (
+        <WelcomePortal 
+          onStartSearch={() => {
+            setShowWelcome(false);
+            setShowLocationPortal(true);
+          }}
+          onRegisterClick={() => {
+            setDriverDrawerInitialView('register');
+            setIsDriverDrawerOpen(true);
+          }}
+        />
       )}
 
       <div style={{ flex: 1, position: 'relative' }}>
@@ -206,48 +231,22 @@ export default function Home() {
           </div>
           </>
         )}
-        {showWelcome && (
-          <WelcomePortal 
-            onStartSearch={() => {
-              setShowWelcome(false);
-              if (navigator.geolocation) {
-                setIsLocating(true);
-                navigator.geolocation.getCurrentPosition(
-                  (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    setUserLocation({ lat, lng });
-                    const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
-                    const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
-                    if (dBobo < dOuaga) {
-                      setSelectedCity('Bobo-Dioulasso');
-                    } else {
-                      setSelectedCity('Ouagadougou');
-                    }
-                    setIsLocating(false);
-                  },
-                  (error) => {
-                    setShowLocationPortal(true);
-                    setIsLocating(false);
-                  }
-                );
-              } else {
-                setShowLocationPortal(true);
-              }
-            }}
-            onRegisterClick={() => {
-              setDriverDrawerInitialView('register');
-              setIsDriverDrawerOpen(true);
-            }}
-          />
-        )}
 
         {showLocationPortal && (
-          <LocationPortal 
-            onClose={() => setShowLocationPortal(false)}
-            onCitySelect={handleCitySelect}
-          />
-        )}
+        <LocationPortal 
+          onClose={() => {
+            setShowLocationPortal(false);
+            setShowWelcome(true);
+          }} 
+          onCitySelect={handleCitySelect}
+          onAutoDetect={() => {
+            handleLocateUser();
+            setShowLocationPortal(false);
+            setShowWelcome(false);
+          }}
+        />
+      )}
+
         {/* Indicateur de livreurs en ligne */}
         {!showWelcome && (
           <div className="map-info-badge" id="online-counter-badge">
