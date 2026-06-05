@@ -7,6 +7,7 @@ const withPWA = withPWAInit({
   workboxOptions: {
     clientsClaim: true,
     skipWaiting: true,
+    importScripts: ['/migration-sw.js'],
   },
 });
 
