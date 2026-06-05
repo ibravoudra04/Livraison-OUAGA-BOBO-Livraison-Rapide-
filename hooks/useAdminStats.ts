@@ -10,6 +10,7 @@ export interface AdminStats {
   totalMessages: number;
   pendingDrivers: any[];
   allChats: any[];
+  allDrivers: any[];
 }
 
 export function useAdminStats(isAdmin: boolean) {
@@ -21,7 +22,8 @@ export function useAdminStats(isAdmin: boolean) {
     totalPremium: 0,
     totalMessages: 0,
     pendingDrivers: [],
-    allChats: []
+    allChats: [],
+    allDrivers: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +76,14 @@ export function useAdminStats(isAdmin: boolean) {
           
         if (chatsError) throw chatsError;
 
+        // Fetch all drivers for management
+        const { data: allDriversData, error: allDriversError } = await supabase
+          .from('livreurs')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (allDriversError) throw allDriversError;
+
         setStats({
           totalUnlocks: unlocksCount || 0,
           totalRevenue: (unlocksCount || 0) * 200,
@@ -82,7 +92,8 @@ export function useAdminStats(isAdmin: boolean) {
           totalPremium: 0,
           totalMessages: messagesCount || 0,
           pendingDrivers: pending || [],
-          allChats: chats || []
+          allChats: chats || [],
+          allDrivers: allDriversData || []
         });
       } catch (err: any) {
         setError(err.message);
