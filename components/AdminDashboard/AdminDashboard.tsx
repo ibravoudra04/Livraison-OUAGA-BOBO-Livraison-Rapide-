@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAdminStats } from '@/hooks/useAdminStats';
+import styles from './AdminDashboard.module.css';
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -37,10 +38,10 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
         </div>
 
         {/* Layout avec Sidebar et Contenu */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div className={styles.adminLayout}>
           
           {/* Sidebar */}
-          <div style={{ width: '220px', background: 'rgba(255,255,255,0.5)', borderRight: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', padding: '15px 10px', gap: '5px' }}>
+          <div className={styles.sidebar}>
             {[
               { id: 'overview', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>, label: 'Vue Globale' },
               { id: 'drivers', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>, label: 'Livreurs' },
@@ -55,8 +56,9 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                   background: activeTab === tab.id ? 'white' : 'transparent', 
                   color: activeTab === tab.id ? 'var(--color-primary-brown)' : 'var(--color-charcoal)', 
                   fontWeight: activeTab === tab.id ? 'bold' : 'normal',
-                  border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'var(--transition-smooth)',
-                  boxShadow: activeTab === tab.id ? '0 4px 10px rgba(0,0,0,0.05)' : 'none'
+                  border: 'none', cursor: 'pointer', transition: 'var(--transition-smooth)',
+                  boxShadow: activeTab === tab.id ? '0 4px 10px rgba(0,0,0,0.05)' : 'none',
+                  flexShrink: 0
                 }}
               >
                 <span style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center' }}>{tab.icon}</span>
@@ -71,7 +73,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
           </div>
 
           {/* Main Content Area */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '25px', background: 'rgba(250,246,242,0.4)' }}>
+          <div className={styles.mainContent}>
             
             {loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-charcoal-muted)' }}>

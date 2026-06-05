@@ -25,7 +25,8 @@ export function useLivreursRealtime(city?: string) {
 
     fetchLivreurs();
 
-    const channel = supabase.channel('livreurs_changes')
+    const channelName = `livreurs_changes_${Math.random().toString(36).substring(7)}`;
+    const channel = supabase.channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'livreurs' },

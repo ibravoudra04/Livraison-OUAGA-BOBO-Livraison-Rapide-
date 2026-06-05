@@ -45,8 +45,9 @@ export function useChatRealtime(riderId?: string, clientId?: string, currentRole
     fetchMessages();
 
     // Subscribe to new messages
+    const channelName = `chat_${riderId}_${clientId}_${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel(`chat_${riderId}_${clientId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
