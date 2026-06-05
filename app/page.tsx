@@ -39,11 +39,13 @@ export default function Home() {
   const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   
-  // Payment state
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(200);
   const [paymentReason, setPaymentReason] = useState("");
   const [paymentCallback, setPaymentCallback] = useState<(() => Promise<void>) | null>(null);
+
+  const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   const cityCenters = {
     'Ouagadougou': { lat: 12.3714, lng: -1.5197 },
@@ -74,6 +76,56 @@ export default function Home() {
     setShowLocationPortal(false);
     setShowWelcome(false);
   };
+
+  const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const handleLocateUser = () => {
+    setIsLocating(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setUserLocation({ lat, lng });
+          const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
+          const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
+          if (dBobo < dOuaga) {
+            setSelectedCity('Bobo-Dioulasso');
+          } else {
+            setSelectedCity('Ouagadougou');
+          }
+          setToast({ message: "Position trouvée !", type: "success" });
+          setIsLocating(false);
+        },
+        (error) => {
+          setToast({ message: "Localisation refusée ou introuvable", type: "error" });
+          setIsLocating(false);
+        }
+      );
+    } else {
+      setToast({ message: "Géo-localisation non supportée", type: "error" });
+      setIsLocating(false);
+    }
+  };
+
+  const filteredLivreurs = livreurs.map(livreur => {
+    if (!userLocation) return livreur;
+    const dist = getDistance(userLocation.lat, userLocation.lng, livreur.lat, livreur.lng);
+    return { ...livreur, distanceToUser: dist };
+  }).filter(livreur => {
+    if (!userLocation) return true;
+    return livreur.distanceToUser <= 10;
+  });
 
   const handleUnlockClick = async (livreurId: string) => {
     setPaymentAmount(200);
@@ -156,7 +208,33 @@ export default function Home() {
         )}
         {showWelcome && (
           <WelcomePortal 
-            onStartSearch={() => setShowLocationPortal(true)}
+            onStartSearch={() => {
+              setShowWelcome(false);
+              if (navigator.geolocation) {
+                setIsLocating(true);
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    setUserLocation({ lat, lng });
+                    const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
+                    const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
+                    if (dBobo < dOuaga) {
+                      setSelectedCity('Bobo-Dioulasso');
+                    } else {
+                      setSelectedCity('Ouagadougou');
+                    }
+                    setIsLocating(false);
+                  },
+                  (error) => {
+                    setShowLocationPortal(true);
+                    setIsLocating(false);
+                  }
+                );
+              } else {
+                setShowLocationPortal(true);
+              }
+            }}
             onRegisterClick={() => {
               setDriverDrawerInitialView('register');
               setIsDriverDrawerOpen(true);
@@ -180,14 +258,14 @@ export default function Home() {
 
         {/* Bouton de recalibrage de position sur la carte */}
         {!showWelcome && (
-          <button className="map-locate-btn" id="map-locate-btn" aria-label="Ma position actuelle">
+          <button className="map-locate-btn" id="map-locate-btn" aria-label="Ma position actuelle" onClick={handleLocateUser} style={{ opacity: isLocating ? 0.5 : 1 }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line></svg>
           </button>
         )}
 
         <MapWrapper 
-          livreurs={livreurs} 
-          cityCenter={cityCenters[selectedCity as keyof typeof cityCenters]} 
+          livreurs={filteredLivreurs} 
+          cityCenter={userLocation || cityCenters[selectedCity as keyof typeof cityCenters]} 
           onMarkerClick={handleMarkerClick} 
         />
       </div>
@@ -237,7 +315,9 @@ export default function Home() {
             <div style={{ display: 'flex', gap: '10px' }}>
               <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(0,0,0,0.05)' }}>
                 <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Distance</div>
-                <div style={{ fontWeight: 'bold', color: 'var(--color-charcoal)', fontSize: '0.9rem' }}>À calculer...</div>
+                <div style={{ fontWeight: 'bold', color: 'var(--color-charcoal)', fontSize: '0.9rem' }}>
+                  {selectedLivreur.distanceToUser !== undefined ? `${selectedLivreur.distanceToUser.toFixed(1)} km` : 'À calculer...'}
+                </div>
               </div>
               <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(0,0,0,0.05)' }}>
                 <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Téléphone</div>
@@ -249,7 +329,7 @@ export default function Home() {
             <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
               <button 
                 className="btn-primary" 
-                style={{ flex: 1, padding: '14px', borderRadius: '12px', background: 'var(--color-primary-green)', color: 'white', border: 'none', fontWeight: 'bold', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                style={{ flex: 1, padding: '14px', borderRadius: '12px', background: 'var(--color-primary-brown)', color: 'white', border: 'none', fontWeight: 'bold', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 onClick={() => { window.location.href = `tel:${selectedLivreur.phone_display || selectedLivreur.phone}`; }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
@@ -257,7 +337,7 @@ export default function Home() {
               </button>
               <button 
                 className="btn-primary" 
-                style={{ flex: 1, padding: '14px', borderRadius: '12px', background: 'var(--color-primary-brown)', color: 'white', border: 'none', fontWeight: 'bold', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                style={{ flex: 1, padding: '14px', borderRadius: '12px', background: 'var(--color-primary-green)', color: 'white', border: 'none', fontWeight: 'bold', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 onClick={() => setIsChatDrawerOpen(true)}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
