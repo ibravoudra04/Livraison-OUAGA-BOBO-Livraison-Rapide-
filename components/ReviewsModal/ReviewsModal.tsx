@@ -16,9 +16,19 @@ interface ReviewsModalProps {
   riderReviewsCount: number;
 }
 
-export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, riderReviewsCount }: ReviewsModalProps) {
+export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, riderReviewsCount, user }: ReviewsModalProps & { user: any }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Form state
+  const [showForm, setShowForm] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState(false);
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -38,8 +48,51 @@ export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, ri
       };
       
       fetchReviews();
+      setShowForm(false);
+      setRating(0);
+      setReviewText('');
+      setFormError('');
+      setFormSuccess(false);
     }
   }, [isOpen, riderId, supabase]);
+
+  const handleSubmitReview = async () => {
+    if (!user) {
+      setFormError('Vous devez être connecté pour laisser un avis.');
+      return;
+    }
+    if (rating === 0) {
+      setFormError('Veuillez sélectionner au moins une étoile.');
+      return;
+    }
+    
+    setSubmitting(true);
+    setFormError('');
+    
+    const { error } = await supabase
+      .from('avis')
+      .insert({
+        client_id: user.id,
+        rider_id: riderId,
+        rating: rating,
+        text: reviewText
+      });
+      
+    setSubmitting(false);
+    
+    if (error) {
+      if (error.message.includes('unique') || error.message.includes('RLS') || error.code === '42501') {
+        setFormError('Vous ne pouvez noter que les livreurs que vous avez contactés/débloqués.');
+      } else {
+        setFormError('Erreur lors de l\'envoi de l\'avis.');
+      }
+    } else {
+      setFormSuccess(true);
+      // Refresh reviews list
+      const { data } = await supabase.from('avis').select('*').eq('rider_id', riderId).order('created_at', { ascending: false });
+      if (data) setReviews(data as Review[]);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -58,7 +111,86 @@ export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, ri
           <div style={{ width: '70px' }}></div>
         </div>
         
-        <div className="payment-body" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '20px' }}>
+        <div className="payment-body" style={{ maxHeight: '75vh', overflowY: 'auto', padding: '20px' }}>
+          
+          {!showForm && !formSuccess && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              <button 
+                onClick={() => setShowForm(true)}
+                style={{ background: 'var(--color-primary-brown)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '50px', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(141, 85, 55, 0.2)' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Donner un avis
+              </button>
+            </div>
+          )}
+
+          {showForm && !formSuccess && (
+            <div style={{ background: 'rgba(54, 42, 33, 0.04)', padding: '20px', borderRadius: '16px', marginBottom: '25px', border: '1px solid rgba(54, 42, 33, 0.08)' }}>
+              <h4 style={{ margin: '0 0 15px 0', color: 'var(--color-primary-brown)', fontSize: '1rem', textAlign: 'center' }}>Laissez votre avis</h4>
+              
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', marginBottom: '15px' }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <svg 
+                    key={star} 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="32" 
+                    height="32" 
+                    viewBox="0 0 24 24" 
+                    fill={(hoverRating || rating) >= star ? "var(--color-primary-yellow)" : "none"} 
+                    stroke="var(--color-primary-yellow)" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    style={{ cursor: 'pointer', transition: 'all 0.1s' }}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    onClick={() => setRating(star)}
+                  >
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                ))}
+              </div>
+              
+              <textarea 
+                placeholder="Racontez votre expérience avec ce livreur (optionnel)..." 
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                style={{ width: '100%', height: '80px', padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'none', marginBottom: '15px' }}
+              />
+              
+              {formError && (
+                <div style={{ color: 'var(--color-primary-red)', fontSize: '0.85rem', marginBottom: '15px', textAlign: 'center', fontWeight: 'bold' }}>
+                  {formError}
+                </div>
+              )}
+              
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  onClick={() => setShowForm(false)}
+                  style={{ flex: 1, padding: '12px', borderRadius: '50px', background: 'transparent', border: '1px solid var(--color-charcoal-muted)', color: 'var(--color-charcoal)', fontWeight: 'bold', cursor: 'pointer' }}
+                >
+                  Annuler
+                </button>
+                <button 
+                  onClick={handleSubmitReview}
+                  disabled={submitting}
+                  style={{ flex: 1, padding: '12px', borderRadius: '50px', background: 'var(--color-primary-green)', border: 'none', color: 'white', fontWeight: 'bold', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}
+                >
+                  {submitting ? 'Envoi...' : 'Envoyer l\'avis'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {formSuccess && (
+            <div style={{ background: '#e6f4ea', padding: '20px', borderRadius: '16px', marginBottom: '25px', textAlign: 'center', border: '1px solid #1e8e3e' }}>
+              <div style={{ color: '#1e8e3e', fontSize: '2rem', marginBottom: '10px' }}>✓</div>
+              <h4 style={{ margin: '0 0 5px 0', color: '#1e8e3e', fontSize: '1.1rem' }}>Merci pour votre avis !</h4>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#1e8e3e' }}>Votre retour aide la communauté.</p>
+            </div>
+          )}
+
           <div className="reviews-summary-block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', borderBottom: '1.5px solid var(--color-border)', paddingBottom: '20px', marginBottom: '20px', textAlign: 'center' }}>
             <div>
               <span style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--color-primary-yellow)', lineHeight: 1 }}>{riderRating.toFixed(1)}</span>
