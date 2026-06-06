@@ -209,6 +209,9 @@ export default function Home() {
   }).filter(livreur => {
     if (!userLocation) return true;
     
+    // Les administrateurs voient tous les livreurs de la ville sélectionnée, sans limite de distance
+    if (role === 'admin') return true;
+    
     // Check if user is actually near Ouaga or Bobo
     const dOuaga = getDistance(userLocation.lat, userLocation.lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
     const dBobo = getDistance(userLocation.lat, userLocation.lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
