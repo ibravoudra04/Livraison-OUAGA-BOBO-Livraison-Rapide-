@@ -48,6 +48,7 @@ export default function Home() {
   const [isLocating, setIsLocating] = useState(false);
   const [mapCenter, setMapCenter] = useState<{ lat: number, lng: number } | null>(null);
   const [hasPaidMapService, setHasPaidMapService] = useState<boolean>(false);
+  const [isPremiumClient, setIsPremiumClient] = useState<boolean>(false);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -57,6 +58,18 @@ export default function Home() {
       }
     }
   }, []);
+
+  React.useEffect(() => {
+    if (user && role === 'client') {
+      const checkPremium = async () => {
+        const { data } = await supabase.from('clients_livraison').select('subscription_paid').eq('id', user.id).single();
+        if (data && data.subscription_paid) {
+          setIsPremiumClient(true);
+        }
+      };
+      checkPremium();
+    }
+  }, [user, role, supabase]);
 
   const cityCenters = {
     'Ouagadougou': { lat: 12.3714, lng: -1.5197 },
@@ -420,7 +433,7 @@ export default function Home() {
           </div>
         )}
 
-        <div style={{ width: '100%', height: '100%', filter: (!hasPaidMapService && role !== 'admin' && role !== 'rider') ? 'blur(12px) saturate(150%)' : 'none', pointerEvents: (!hasPaidMapService && role !== 'admin' && role !== 'rider') ? 'none' : 'auto', transition: 'filter 0.5s' }}>
+        <div style={{ width: '100%', height: '100%', filter: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'blur(12px) saturate(150%)' : 'none', pointerEvents: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'none' : 'auto', transition: 'filter 0.5s' }}>
           <MapWrapper 
             livreurs={filteredLivreurs} 
             cityCenter={mapCenter || cityCenters[selectedCity as keyof typeof cityCenters] || cityCenters['Ouagadougou']} 
@@ -428,7 +441,7 @@ export default function Home() {
           />
         </div>
 
-        {(!hasPaidMapService && role !== 'admin' && role !== 'rider' && !showWelcome && !showLocationPortal) && (
+        {(!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider' && !showWelcome && !showLocationPortal) && (
           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.1)' }}>
             <div style={{ background: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(20px)', padding: '30px', borderRadius: '24px', boxShadow: '0 24px 70px rgba(54, 42, 33, 0.2)', border: '1px solid rgba(255, 255, 255, 0.6)', textAlign: 'center', maxWidth: '90%', width: '340px' }}>
               <div style={{ width: '60px', height: '60px', background: 'var(--color-primary-brown)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto', color: 'white', boxShadow: '0 4px 15px rgba(141, 85, 55, 0.4)' }}>
@@ -559,6 +572,7 @@ export default function Home() {
                .update({ subscription_paid: true })
                .eq('id', user?.id);
              if (error) throw error;
+             setIsPremiumClient(true);
              setToast({ message: "Abonnement Premium activé !", type: 'success' });
              setIsClientDrawerOpen(false);
           });

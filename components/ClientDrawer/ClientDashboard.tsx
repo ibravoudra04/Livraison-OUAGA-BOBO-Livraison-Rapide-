@@ -90,7 +90,19 @@ export default function ClientDashboard({ clientData, onLogout, onSimulatePremiu
         </div>
       )}
 
-      <div id="client-premium-upgrade-box" style={{ display: 'none' }}></div>
+      {!isPremium && (
+        <div id="client-premium-upgrade-box" style={{ marginBottom: '15px', background: 'rgba(246, 205, 86, 0.15)', borderRadius: '12px', padding: '15px', border: '1px solid rgba(246, 205, 86, 0.4)' }}>
+          <h4 style={{ margin: '0 0 5px 0', fontSize: '0.95rem', fontWeight: 800, color: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            👑 Devenir Premium
+          </h4>
+          <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.4 }}>
+            Naviguez sur la carte en accès illimité. Plus besoin de payer 200F à chaque recherche !
+          </p>
+          <button type="button" onClick={onSimulatePremium} style={{ width: '100%', padding: '10px', fontSize: '0.9rem', borderRadius: '10px', fontWeight: 700, background: 'var(--color-primary-yellow)', color: 'var(--color-primary-brown)', border: 'none', boxShadow: '0 4px 10px rgba(246, 205, 86, 0.4)', cursor: 'pointer' }}>
+            Passer Premium (5000 FCFA / mois)
+          </button>
+        </div>
+      )}
 
       {/* Historique de Consultation */}
       <div className="driver-terms-info" style={{ marginTop: '15px', background: 'rgba(255,255,255,0.9)', borderRadius: '12px', padding: '12px' }}>
