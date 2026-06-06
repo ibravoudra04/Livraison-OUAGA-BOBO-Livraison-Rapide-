@@ -61,6 +61,17 @@ export default function Home() {
   }, []);
 
   React.useEffect(() => {
+    if (ussdDialed) {
+      const timer = setTimeout(() => {
+        sessionStorage.setItem('hasPaidMapService', 'true');
+        setHasPaidMapService(true);
+        setUssdDialed(false);
+      }, 15000);
+      return () => clearTimeout(timer);
+    }
+  }, [ussdDialed]);
+
+  React.useEffect(() => {
     if (user && role === 'client') {
       const checkPremium = async () => {
         const { data } = await supabase.from('clients_livraison').select('subscription_paid').eq('id', user.id).single();
@@ -408,8 +419,8 @@ export default function Home() {
           </button>
         )}
 
-        {/* Bouton "Détecter un livreur" et "Me localiser" */}
-        {!showWelcome && !showLocationPortal && (
+        {/* Bouton "Détecter un livreur" */}
+        {(!showWelcome && !showLocationPortal && !isSheetOpen) && (
           <div style={{ position: 'absolute', bottom: '110px', left: '0', right: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', zIndex: 1000, pointerEvents: 'none' }}>
             
             <button 
@@ -420,21 +431,11 @@ export default function Home() {
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <span>Détecter un livreur</span>
             </button>
-
-            <button 
-              className="btn btn-secondary"
-              onClick={handleLocateUser}
-              disabled={isLocating}
-              style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '30px', background: 'rgba(255, 255, 255, 0.95)', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', color: 'var(--color-charcoal)' }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-brown)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
-              <span>{isLocating ? "Recherche..." : "Me localiser"}</span>
-            </button>
             
           </div>
         )}
 
-        <div style={{ width: '100%', height: '100%', filter: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'blur(12px) saturate(150%)' : 'none', pointerEvents: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'none' : 'auto', transition: 'filter 0.5s' }}>
+        <div style={{ width: '100%', height: '100%', filter: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'blur(8px) saturate(120%)' : 'none', pointerEvents: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'none' : 'auto', transition: 'filter 0.5s' }}>
           <MapWrapper 
             livreurs={filteredLivreurs} 
             cityCenter={mapCenter || cityCenters[selectedCity as keyof typeof cityCenters] || cityCenters['Ouagadougou']} 
@@ -443,7 +444,7 @@ export default function Home() {
         </div>
 
         {(!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider' && !showWelcome && !showLocationPortal) && (
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.1)' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.4)' }}>
               {/* Bouton Retour (Home) */}
               <button 
                 onClick={() => {
@@ -456,40 +457,34 @@ export default function Home() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
               </button>
 
-              <div style={{ width: '60px', height: '60px', background: 'var(--color-primary-brown)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto', color: 'white', boxShadow: '0 4px 15px rgba(141, 85, 55, 0.4)' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-              <h2 style={{ color: 'var(--color-primary-brown)', fontSize: '1.4rem', marginBottom: '10px' }}>Service Premium</h2>
-              <p style={{ color: 'var(--color-charcoal)', fontSize: '0.95rem', marginBottom: '25px', lineHeight: '1.5', fontWeight: '500' }}>
-                {ussdDialed 
-                  ? "Avez-vous terminé le paiement Orange Money sur votre téléphone ?" 
-                  : "Découvrez en temps réel tous les livreurs disponibles autour de vous et accédez à leurs contacts."}
-              </p>
-              
+            <div style={{ background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)', padding: '25px', borderRadius: '24px', boxShadow: '0 24px 70px rgba(54, 42, 33, 0.2)', border: '1px solid rgba(255, 255, 255, 0.8)', textAlign: 'center', maxWidth: '90%', width: '320px' }}>
               {!ussdDialed ? (
-                <button 
-                  className="btn pulse" 
-                  onClick={() => {
-                    window.location.href = "tel:*144*2*1*67370909*200%23";
-                    setUssdDialed(true);
-                  }}
-                  style={{ width: '100%', background: 'var(--color-primary-green)', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 25px rgba(39, 174, 96, 0.4)', cursor: 'pointer' }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                  Utiliser le service 200 FCFA
-                </button>
+                <>
+                  <button 
+                    className="btn pulse" 
+                    onClick={() => {
+                      window.location.href = "tel:*144*2*1*67370909*200%23";
+                      setUssdDialed(true);
+                    }}
+                    style={{ width: '100%', background: 'var(--color-primary-green)', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 25px rgba(39, 174, 96, 0.4)', cursor: 'pointer', marginBottom: '15px' }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    Utiliser le service à 200 FCFA
+                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--color-charcoal)' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>Paiement sécurisé via</span>
+                    <div style={{ background: '#FF7900', color: 'white', fontWeight: '900', fontSize: '0.8rem', padding: '3px 6px', borderRadius: '4px', letterSpacing: '0.5px' }}>OM</div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#FF7900' }}>Orange Money</span>
+                  </div>
+                </>
               ) : (
-                <button 
-                  onClick={() => {
-                    sessionStorage.setItem('hasPaidMapService', 'true');
-                    setHasPaidMapService(true);
-                  }}
-                  style={{ width: '100%', background: 'var(--color-primary-brown)', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: 'pointer' }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  J'ai validé le transfert
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                  <div className="geo-spinner" style={{ width: '40px', height: '40px', borderTopColor: 'var(--color-primary-green)', marginBottom: '20px' }}></div>
+                  <h3 style={{ color: 'var(--color-primary-green)', fontSize: '1.2rem', marginBottom: '8px' }}>Paiement en cours...</h3>
+                  <p style={{ color: 'var(--color-charcoal-muted)', fontSize: '0.9rem', lineHeight: '1.4' }}>Veuillez valider le transfert sur votre téléphone. La carte se débloquera automatiquement.</p>
+                </div>
               )}
+            </div>
           </div>
         )}
       </div>
