@@ -59,7 +59,10 @@ export function useChatRealtime(riderId?: string, clientId?: string, currentRole
         (payload) => {
           const newMessage = payload.new as ChatMessage;
           if (newMessage.client_id === clientId) {
-            setMessages((prev) => [...prev, newMessage]);
+            setMessages((prev) => {
+              if (prev.some(m => m.id === newMessage.id)) return prev;
+              return [...prev, newMessage];
+            });
           }
         }
       )
@@ -75,6 +78,19 @@ export function useChatRealtime(riderId?: string, clientId?: string, currentRole
 
     const now = new Date();
     const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    const optimisticMessage: ChatMessage = {
+      id: `temp-${Date.now()}`,
+      rider_id: riderId,
+      client_id: clientId,
+      sender: currentRole,
+      text,
+      image_url: imageUrl,
+      time,
+      created_at: new Date().toISOString()
+    };
+
+    setMessages((prev) => [...prev, optimisticMessage]);
 
     const { data, error: sendError } = await supabase
       .from('chats_livraison')
@@ -93,7 +109,14 @@ export function useChatRealtime(riderId?: string, clientId?: string, currentRole
 
     if (sendError) {
       setError(sendError.message);
+      // Retirer le message optimiste en cas d'erreur
+      setMessages((prev) => prev.filter(msg => msg.id !== optimisticMessage.id));
       return null;
+    }
+
+    // Mettre à jour l'ID du message optimiste avec le vrai ID
+    if (data) {
+      setMessages((prev) => prev.map(msg => msg.id === optimisticMessage.id ? data : msg));
     }
 
     // Déclenchement de la notification Push pour le destinataire

@@ -7,9 +7,11 @@ interface ClientDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onSimulatePremium: () => void;
+  onSearch: () => void;
+  onChatRider: (riderId: string, riderName: string) => void;
 }
 
-export default function ClientDrawer({ isOpen, onClose, onSimulatePremium }: ClientDrawerProps) {
+export default function ClientDrawer({ isOpen, onClose, onSimulatePremium, onSearch, onChatRider }: ClientDrawerProps) {
   const { user, role, supabase, formatPhoneForDB } = useSupabaseAuth();
   
   const [view, setView] = useState<'login' | 'register' | 'dashboard'>('login');
@@ -207,7 +209,9 @@ export default function ClientDrawer({ isOpen, onClose, onSimulatePremium }: Cli
           <ClientDashboard 
             clientData={clientData} 
             onLogout={handleLogout} 
-            onSimulatePremium={onSimulatePremium} 
+            onSimulatePremium={onSimulatePremium}
+            onSearch={onSearch}
+            onChatRider={onChatRider}
           />
         ) : (
           <div style={{ textAlign: 'center', padding: '20px' }}>Chargement...</div>

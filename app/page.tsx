@@ -461,6 +461,16 @@ export default function Home() {
           });
           setIsPaymentOpen(true);
         }}
+        onSearch={() => {
+          setIsClientDrawerOpen(false);
+          setShowWelcome(false);
+          setShowLocationPortal(true);
+        }}
+        onChatRider={(riderId, riderName) => {
+          setSelectedLivreur({ id: riderId, name: riderName });
+          setIsClientDrawerOpen(false);
+          setIsChatDrawerOpen(true);
+        }}
       />
       {showWelcome && (
         <footer style={{ flexShrink: 0, width: '100%', display: 'flex', justifyContent: 'center', zIndex: 1000, background: 'rgba(255,255,255,0.95)', borderTop: '1px solid rgba(0,0,0,0.05)', padding: '12px 0' }}>

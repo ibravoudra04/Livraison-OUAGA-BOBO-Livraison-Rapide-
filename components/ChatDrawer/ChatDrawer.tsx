@@ -13,7 +13,7 @@ interface ChatDrawerProps {
 }
 
 export default function ChatDrawer({ isOpen, onClose, riderId, clientId, currentRole, otherPartyName }: ChatDrawerProps) {
-  const { messages, loading, sendMessage } = useChatRealtime(riderId, clientId, currentRole);
+  const { messages, loading, error: chatError, sendMessage } = useChatRealtime(riderId, clientId, currentRole);
   const [inputText, setInputText] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -178,6 +178,11 @@ export default function ChatDrawer({ isOpen, onClose, riderId, clientId, current
         </div>
         
         {loading && <div style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--color-charcoal-light)' }}>Chargement des messages...</div>}
+        {chatError && (
+          <div style={{ textAlign: 'center', fontSize: '0.85rem', color: 'white', backgroundColor: 'var(--color-primary-red)', padding: '8px', borderRadius: '12px' }}>
+            Erreur: {chatError}
+          </div>
+        )}
         
         {messages.map((msg) => {
           const isMine = msg.sender === currentRole;
