@@ -56,7 +56,7 @@ export function useAdminStats(isAdmin: boolean) {
         const { data: pending, error: pendingError } = await supabase
           .from('livreurs')
           .select('*')
-          .eq('status', 'pending');
+          .eq('status', 'en attente');
         
         if (pendingError) throw pendingError;
 
@@ -108,7 +108,7 @@ export function useAdminStats(isAdmin: boolean) {
   const approveDriver = async (driverId: string) => {
     const { error } = await supabase
       .from('livreurs')
-      .update({ status: 'actif', is_online: true })
+      .update({ status: 'actif' })
       .eq('id', driverId);
     
     if (error) {
@@ -120,7 +120,7 @@ export function useAdminStats(isAdmin: boolean) {
     setStats(prev => ({
       ...prev,
       pendingDrivers: prev.pendingDrivers.filter(d => d.id !== driverId),
-      allDrivers: prev.allDrivers.map(d => d.id === driverId ? { ...d, status: 'actif', is_online: true } : d)
+      allDrivers: prev.allDrivers.map(d => d.id === driverId ? { ...d, status: 'actif' } : d)
     }));
     return true;
   };
@@ -148,7 +148,7 @@ export function useAdminStats(isAdmin: boolean) {
   const suspendDriver = async (driverId: string) => {
     const { error } = await supabase
       .from('livreurs')
-      .update({ status: 'suspendu', is_online: false })
+      .update({ status: 'suspendu' })
       .eq('id', driverId);
     
     if (error) {
@@ -158,7 +158,7 @@ export function useAdminStats(isAdmin: boolean) {
     
     setStats(prev => ({
       ...prev,
-      allDrivers: prev.allDrivers.map(d => d.id === driverId ? { ...d, status: 'suspendu', is_online: false } : d)
+      allDrivers: prev.allDrivers.map(d => d.id === driverId ? { ...d, status: 'suspendu' } : d)
     }));
     return true;
   };

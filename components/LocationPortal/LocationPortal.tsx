@@ -4,7 +4,7 @@ import { useLivreursRealtime } from '@/hooks/useLivreursRealtime';
 interface LocationPortalProps {
   onClose: () => void;
   onCitySelect: (city: string) => void;
-  onAutoDetect?: () => void;
+  onAutoDetect?: () => Promise<void> | void;
 }
 
 export default function LocationPortal({ onClose, onCitySelect, onAutoDetect }: LocationPortalProps) {
@@ -55,10 +55,14 @@ export default function LocationPortal({ onClose, onCitySelect, onAutoDetect }: 
     setStep(2); // Go to options (Carte vs Quartiers)
   };
 
-  const handleAutoDetect = () => {
+  const handleAutoDetect = async () => {
     setIsDetecting(true);
     if (onAutoDetect) {
-      onAutoDetect();
+      try {
+        await onAutoDetect();
+      } finally {
+        setIsDetecting(false);
+      }
     } else {
       setTimeout(() => {
         setIsDetecting(false);

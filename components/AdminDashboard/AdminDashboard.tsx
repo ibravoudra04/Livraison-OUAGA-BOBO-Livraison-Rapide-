@@ -183,7 +183,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                                 </span>
                               </td>
                               <td style={{ padding: '12px 15px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
-                                {(driver.status === 'pending' || driver.status === 'suspendu') && (
+                                {(driver.status === 'en attente' || driver.status === 'suspendu') && (
                                   <button onClick={() => approveDriver(driver.id)} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>{driver.status === 'suspendu' ? 'Réactiver' : 'Valider'}</button>
                                 )}
                                 {(driver.status === 'approved' || driver.status === 'actif') && (

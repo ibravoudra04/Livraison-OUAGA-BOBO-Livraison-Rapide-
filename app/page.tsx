@@ -240,9 +240,35 @@ export default function Home() {
           }} 
           onCitySelect={handleCitySelect}
           onAutoDetect={() => {
-            handleLocateUser();
-            setShowLocationPortal(false);
-            setShowWelcome(false);
+            return new Promise<void>((resolve) => {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    setUserLocation({ lat, lng });
+                    const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
+                    const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
+                    if (dBobo < dOuaga) {
+                      setSelectedCity('Bobo-Dioulasso');
+                    } else {
+                      setSelectedCity('Ouagadougou');
+                    }
+                    setToast({ message: "Position trouvée !", type: "success" });
+                    setShowLocationPortal(false);
+                    setShowWelcome(false);
+                    resolve();
+                  },
+                  (error) => {
+                    setToast({ message: "Localisation refusée ou introuvable", type: "error" });
+                    resolve();
+                  }
+                );
+              } else {
+                setToast({ message: "Géo-localisation non supportée", type: "error" });
+                resolve();
+              }
+            });
           }}
         />
       )}
@@ -423,6 +449,30 @@ export default function Home() {
       <AuthDrawer 
         isOpen={isAuthDrawerOpen}
         onClose={() => setIsAuthDrawerOpen(false)}
+        onLoginSuccess={(userId, loggedInRole) => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+              const lat = pos.coords.latitude;
+              const lng = pos.coords.longitude;
+              setUserLocation({ lat, lng });
+              const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
+              const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
+              const detectedCity = dBobo < dOuaga ? 'Bobo-Dioulasso' : 'Ouagadougou';
+              setSelectedCity(detectedCity);
+              setToast({ message: `Bienvenue ! Vous avez été localisé à ${detectedCity}.`, type: 'success' });
+              
+              if (loggedInRole === 'rider') {
+                 await supabase.from('livreurs').update({ 
+                    lat, 
+                    lng, 
+                    city: detectedCity === 'Ouagadougou' ? 'ouaga' : 'bobo' 
+                 }).eq('id', userId);
+              }
+            }, () => {
+              setToast({ message: "Connexion réussie. Pensez à activer la géolocalisation pour une meilleure expérience.", type: "success" });
+            });
+          }
+        }}
       />
 
       <PaymentSimulator 

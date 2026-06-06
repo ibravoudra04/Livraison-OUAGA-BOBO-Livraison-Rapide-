@@ -5,6 +5,7 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 interface AuthDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onLoginSuccess?: (userId: string, role: string) => void;
 }
 
 export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
@@ -41,6 +42,9 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
       // On success, close the drawer. App.js/page.tsx will handle the routing
       // based on the updated session/role.
       onClose();
+      if (onLoginSuccess && authData.user) {
+        onLoginSuccess(authData.user.id, authData.user.user_metadata?.role || 'client');
+      }
       // Reset form
       setPhone('');
       setPin('');

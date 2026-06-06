@@ -12,7 +12,7 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
     if (typeof window !== 'undefined' && !mapRef.current && containerRef.current) {
       mapRef.current = L.map(containerRef.current, {
         zoomControl: false,
-      }).setView([cityCenter.lat, cityCenter.lng], 11);
+      }).setView([cityCenter.lat, cityCenter.lng], 14);
       
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
@@ -31,7 +31,7 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
 
   useEffect(() => {
     if(mapRef.current && cityCenter) {
-       mapRef.current.setView([cityCenter.lat, cityCenter.lng], mapRef.current.getZoom());
+       mapRef.current.setView([cityCenter.lat, cityCenter.lng], 14);
     }
   }, [cityCenter]);
 
