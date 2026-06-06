@@ -49,6 +49,7 @@ export default function Home() {
   const [mapCenter, setMapCenter] = useState<{ lat: number, lng: number } | null>(null);
   const [hasPaidMapService, setHasPaidMapService] = useState<boolean>(false);
   const [isPremiumClient, setIsPremiumClient] = useState<boolean>(false);
+  const [ussdDialed, setUssdDialed] = useState<boolean>(false);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -443,21 +444,52 @@ export default function Home() {
 
         {(!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider' && !showWelcome && !showLocationPortal) && (
           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.1)' }}>
-            <div style={{ background: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(20px)', padding: '30px', borderRadius: '24px', boxShadow: '0 24px 70px rgba(54, 42, 33, 0.2)', border: '1px solid rgba(255, 255, 255, 0.6)', textAlign: 'center', maxWidth: '90%', width: '340px' }}>
+              {/* Bouton Retour (Home) */}
+              <button 
+                onClick={() => {
+                  setShowLocationPortal(false);
+                  setShowWelcome(true);
+                  setUssdDialed(false);
+                }}
+                style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-charcoal-muted)' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              </button>
+
               <div style={{ width: '60px', height: '60px', background: 'var(--color-primary-brown)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto', color: 'white', boxShadow: '0 4px 15px rgba(141, 85, 55, 0.4)' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
               </div>
               <h2 style={{ color: 'var(--color-primary-brown)', fontSize: '1.4rem', marginBottom: '10px' }}>Service Premium</h2>
-              <p style={{ color: 'var(--color-charcoal)', fontSize: '0.95rem', marginBottom: '25px', lineHeight: '1.5', fontWeight: '500' }}>Découvrez en temps réel tous les livreurs disponibles autour de vous et accédez à leurs contacts.</p>
+              <p style={{ color: 'var(--color-charcoal)', fontSize: '0.95rem', marginBottom: '25px', lineHeight: '1.5', fontWeight: '500' }}>
+                {ussdDialed 
+                  ? "Avez-vous terminé le paiement Orange Money sur votre téléphone ?" 
+                  : "Découvrez en temps réel tous les livreurs disponibles autour de vous et accédez à leurs contacts."}
+              </p>
               
-              <button 
-                className="btn pulse" 
-                onClick={handlePayMapService}
-                style={{ width: '100%', background: 'var(--color-primary-green)', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 25px rgba(39, 174, 96, 0.4)', cursor: 'pointer' }}
-              >
-                Utiliser le service 200 FCFA
-              </button>
-            </div>
+              {!ussdDialed ? (
+                <button 
+                  className="btn pulse" 
+                  onClick={() => {
+                    window.location.href = "tel:*144*2*1*67370909*200%23";
+                    setUssdDialed(true);
+                  }}
+                  style={{ width: '100%', background: 'var(--color-primary-green)', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 25px rgba(39, 174, 96, 0.4)', cursor: 'pointer' }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  Utiliser le service 200 FCFA
+                </button>
+              ) : (
+                <button 
+                  onClick={() => {
+                    sessionStorage.setItem('hasPaidMapService', 'true');
+                    setHasPaidMapService(true);
+                  }}
+                  style={{ width: '100%', background: 'var(--color-primary-brown)', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: 'pointer' }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  J'ai validé le transfert
+                </button>
+              )}
           </div>
         )}
       </div>
