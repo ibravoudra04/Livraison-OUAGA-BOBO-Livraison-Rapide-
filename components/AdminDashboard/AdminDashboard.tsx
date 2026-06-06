@@ -15,6 +15,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
   const { stats, loading, approveDriver, suspendDriver, deleteDriver, verifyDriver, createAnnonce, resolveTicket } = useAdminStats(isAdmin);
   const { logout } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [selectedDriver, setSelectedDriver] = useState<any | null>(null);
 
   const downloadCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) return;
@@ -171,72 +172,135 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
 
                 {/* DRIVERS & PENDING */}
                 {(activeTab === 'drivers' || activeTab === 'pending') && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>{activeTab === 'drivers' ? 'Gestion des Livreurs Inscrits' : 'Candidatures en Attente'}</h3>
-                      {activeTab === 'drivers' && <button onClick={() => downloadCSV(stats?.allDrivers, 'livreurs_export')} style={{ background: '#2980b9', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold' }}>Exporter CSV</button>}
-                    </div>
-                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
-                        <thead>
-                          <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
-                            <th style={{ padding: '12px 15px' }}>Nom</th>
-                            <th style={{ padding: '12px 15px' }}>Contact</th>
-                            <th style={{ padding: '12px 15px' }}>Véhicule</th>
-                            <th style={{ padding: '12px 15px' }}>Localisation</th>
-                            <th style={{ padding: '12px 15px' }}>Photos</th>
-                            <th style={{ padding: '12px 15px' }}>Statut</th>
-                            <th style={{ padding: '12px 15px', textAlign: 'right' }}>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', position: 'relative', height: '100%' }}>
+                    {!selectedDriver ? (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>{activeTab === 'drivers' ? 'Gestion des Livreurs Inscrits' : 'Candidatures en Attente'}</h3>
+                          {activeTab === 'drivers' && <button onClick={() => downloadCSV(stats?.allDrivers, 'livreurs_export')} style={{ background: '#2980b9', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold' }}>Exporter CSV</button>}
+                        </div>
+                        <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
                           {(activeTab === 'drivers' ? stats?.allDrivers : stats?.pendingDrivers)?.map(driver => (
-                            <tr key={driver.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                              <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>{driver.first_name || driver.name}</td>
-                              <td style={{ padding: '12px 15px' }}>{driver.phone}</td>
-                              <td style={{ padding: '12px 15px' }}>{driver.transport_type || driver.vehicle}</td>
-                              <td style={{ padding: '12px 15px', fontSize: '0.85rem' }}>
-                                <span style={{ textTransform: 'capitalize' }}>{driver.city || 'Ouaga'}</span><br/>
-                                <span style={{ color: 'var(--color-charcoal-muted)' }}>{driver.lat?.toFixed(4)}, {driver.lng?.toFixed(4)}</span>
-                              </td>
-                              <td style={{ padding: '12px 15px' }}>
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                  {driver.cni_recto && <a href={driver.cni_recto} target="_blank" rel="noreferrer" style={{ color: '#2980b9', textDecoration: 'underline', fontSize: '0.85rem' }}>CNI Recto</a>}
-                                  {driver.cni_verso && <a href={driver.cni_verso} target="_blank" rel="noreferrer" style={{ color: '#2980b9', textDecoration: 'underline', fontSize: '0.85rem' }}>CNI Verso</a>}
-                                  {driver.selfie && <a href={driver.selfie} target="_blank" rel="noreferrer" style={{ color: '#2980b9', textDecoration: 'underline', fontSize: '0.85rem' }}>Selfie</a>}
-                                  {!driver.cni_recto && !driver.cni_verso && !driver.selfie && <span style={{ color: 'var(--color-charcoal-muted)', fontSize: '0.8rem' }}>Aucune</span>}
+                            <div 
+                              key={driver.id} 
+                              onClick={() => setSelectedDriver(driver)}
+                              style={{ padding: '15px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'background 0.2s' }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.02)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-bg-warm)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary-brown)', fontWeight: 'bold' }}>
+                                  {driver.initial || driver.name.substring(0,2).toUpperCase()}
                                 </div>
-                              </td>
-                              <td style={{ padding: '12px 15px' }}>
-                                <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', background: driver.status === 'approved' || driver.status === 'actif' ? '#e6f4ea' : driver.status === 'suspendu' ? '#fdf6e3' : '#fce8e6', color: driver.status === 'approved' || driver.status === 'actif' ? '#1e8e3e' : driver.status === 'suspendu' ? '#b58900' : '#d93025' }}>
-                                  {driver.status === 'approved' || driver.status === 'actif' ? 'Actif' : driver.status === 'suspendu' ? 'Suspendu' : 'En attente'}
-                                </span>
-                              </td>
-                              <td style={{ padding: '12px 15px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
-                                {(driver.status === 'en attente' || driver.status === 'suspendu') && (
-                                  <button onClick={() => approveDriver(driver.id)} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>{driver.status === 'suspendu' ? 'Réactiver' : 'Valider'}</button>
-                                )}
-                                {(driver.status === 'approved' || driver.status === 'actif') && (
-                                  <button onClick={() => { if(window.confirm('Suspendre ce livreur ?')) suspendDriver(driver.id); }} style={{ background: '#f39c12', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Suspendre</button>
-                                )}
-                                {(driver.status === 'approved' || driver.status === 'actif') && !driver.is_verified && (
-                                  <button onClick={() => verifyDriver(driver.id, true)} style={{ background: '#3498db', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Vérifier (Badge)</button>
-                                )}
-                                {(driver.status === 'approved' || driver.status === 'actif') && driver.is_verified && (
-                                  <button onClick={() => verifyDriver(driver.id, false)} style={{ background: '#bdc3c7', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Retirer Badge</button>
-                                )}
-                                <button onClick={() => { if(window.confirm('Supprimer définitivement ce livreur ?')) deleteDriver(driver.id); }} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
-                              </td>
-                            </tr>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <strong style={{ fontSize: '1.1rem', color: 'var(--color-charcoal)' }}>{driver.first_name || driver.name}</strong>
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>
+                                    {driver.status === 'approved' || driver.status === 'actif' ? '🟢 Actif' : driver.status === 'suspendu' ? '🟠 Suspendu' : '🔴 En attente'}
+                                  </span>
+                                </div>
+                              </div>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-charcoal-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </div>
                           ))}
                           {(activeTab === 'drivers' ? stats?.allDrivers : stats?.pendingDrivers)?.length === 0 && (
-                            <tr>
-                              <td colSpan={7} style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucune donnée à afficher.</td>
-                            </tr>
+                            <div style={{ padding: '30px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucune donnée à afficher.</div>
                           )}
-                        </tbody>
-                      </table>
-                    </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'var(--color-bg-warm)', zIndex: 10, display: 'flex', flexDirection: 'column', borderRadius: '16px', overflow: 'hidden' }}>
+                        <div style={{ padding: '15px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255, 255, 255, 0.45)', backdropFilter: 'blur(35px) saturate(180%)' }}>
+                          <button onClick={() => setSelectedDriver(null)} style={{ background: 'white', border: '1px solid rgba(0,0,0,0.1)', color: 'var(--color-charcoal)', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                            Retour
+                          </button>
+                          <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            🪪 Inspecteur — {selectedDriver.first_name || selectedDriver.name}
+                          </h2>
+                        </div>
+                        
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                            <div style={{ background: 'white', padding: '15px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                👤 NOM COMPLET
+                              </div>
+                              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-charcoal)' }}>{selectedDriver.first_name || selectedDriver.name}</div>
+                            </div>
+                            <div style={{ background: 'white', padding: '15px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                📞 TÉLÉPHONE
+                              </div>
+                              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-charcoal)' }}>{selectedDriver.phone}</div>
+                            </div>
+                            <div style={{ background: 'white', padding: '15px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                🏍️ MOYEN DE TRANSPORT
+                              </div>
+                              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-charcoal)' }}>{selectedDriver.transport_type || selectedDriver.vehicle}</div>
+                            </div>
+                            <div style={{ background: 'white', padding: '15px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                🏙️ VILLE D'ACTIVITÉ
+                              </div>
+                              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-charcoal)', textTransform: 'capitalize' }}>{selectedDriver.city || 'Ouagadougou'}</div>
+                            </div>
+                            <div style={{ background: 'white', padding: '15px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                📍 COORDONNÉES GPS
+                              </div>
+                              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-charcoal)' }}>{selectedDriver.lat?.toFixed(5)}, {selectedDriver.lng?.toFixed(5)}</div>
+                            </div>
+                            <div style={{ background: 'white', padding: '15px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                ⭐ NOTE & CLICS
+                              </div>
+                              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-charcoal)' }}>⭐ {selectedDriver.rating || '5.0'} • {selectedDriver.contacts_count || 0} clics</div>
+                            </div>
+                          </div>
+                          
+                          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '15px', fontWeight: 'bold' }}>
+                              📸 PHOTO DE PROFIL (SELFIE) :
+                            </div>
+                            {selectedDriver.selfie ? (
+                               <img src={selectedDriver.selfie} alt="Selfie" style={{ width: '100%', maxWidth: '300px', borderRadius: '8px', display: 'block', margin: '0 auto' }} />
+                            ) : (
+                               <div style={{ padding: '40px', textAlign: 'center', background: 'var(--color-bg-warm)', borderRadius: '8px', color: 'var(--color-charcoal-muted)' }}>Aucune photo fournie</div>
+                            )}
+                            
+                            {(selectedDriver.cni_recto || selectedDriver.cni_verso) && (
+                              <>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '1px', margin: '20px 0 15px 0', fontWeight: 'bold', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+                                  🪪 PIÈCES D'IDENTITÉ :
+                                </div>
+                                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                  {selectedDriver.cni_recto && <img src={selectedDriver.cni_recto} alt="CNI Recto" style={{ width: '100%', maxWidth: '300px', borderRadius: '8px' }} />}
+                                  {selectedDriver.cni_verso && <img src={selectedDriver.cni_verso} alt="CNI Verso" style={{ width: '100%', maxWidth: '300px', borderRadius: '8px' }} />}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          
+                          {/* Actions Opérationnelles */}
+                          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                            {(selectedDriver.status === 'en attente' || selectedDriver.status === 'suspendu') && (
+                              <button onClick={() => { approveDriver(selectedDriver.id); setSelectedDriver({...selectedDriver, status: 'actif'}); }} style={{ flex: 1, background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}>{selectedDriver.status === 'suspendu' ? 'Réactiver le compte' : 'Valider la candidature'}</button>
+                            )}
+                            {(selectedDriver.status === 'approved' || selectedDriver.status === 'actif') && (
+                              <button onClick={() => { if(window.confirm('Suspendre ce livreur ?')) { suspendDriver(selectedDriver.id); setSelectedDriver({...selectedDriver, status: 'suspendu'}); } }} style={{ flex: 1, background: '#f39c12', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}>Suspendre temporairement</button>
+                            )}
+                            {(selectedDriver.status === 'approved' || selectedDriver.status === 'actif') && !selectedDriver.is_verified && (
+                              <button onClick={() => { verifyDriver(selectedDriver.id, true); setSelectedDriver({...selectedDriver, is_verified: true}); }} style={{ flex: 1, background: '#3498db', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}>Décerner un Badge Vérifié</button>
+                            )}
+                            {(selectedDriver.status === 'approved' || selectedDriver.status === 'actif') && selectedDriver.is_verified && (
+                              <button onClick={() => { verifyDriver(selectedDriver.id, false); setSelectedDriver({...selectedDriver, is_verified: false}); }} style={{ flex: 1, background: '#bdc3c7', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}>Retirer le Badge Vérifié</button>
+                            )}
+                            <button onClick={() => { if(window.confirm('Supprimer définitivement ce livreur ? Cette action est irréversible.')) { deleteDriver(selectedDriver.id); setSelectedDriver(null); } }} style={{ flex: 1, background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}>Supprimer définitivement</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

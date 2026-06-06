@@ -93,36 +93,45 @@ export default function Home() {
 
   const handleLocateUser = () => {
     setIsLocating(true);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          setUserLocation({ lat, lng });
-          const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
-          const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
-          if (dBobo < dOuaga) {
-            setSelectedCity('Bobo-Dioulasso');
-          } else {
-            setSelectedCity('Ouagadougou');
-          }
-          setToast({ message: "Position trouvée !", type: "success" });
-          setIsLocating(false);
-        },
-        (error) => {
-          let errorMessage = "Localisation refusée ou introuvable";
-          if (error.code === 1) errorMessage = "Permission refusée. Activez le GPS et autorisez le navigateur.";
-          if (error.code === 2) errorMessage = "Position introuvable (signal faible).";
-          if (error.code === 3) errorMessage = "Délai d'attente dépassé.";
-          setToast({ message: errorMessage, type: "error" });
-          setIsLocating(false);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-      );
-    } else {
-      setToast({ message: "Géo-localisation non supportée", type: "error" });
-      setIsLocating(false);
-    }
+    
+    const requestLocation = (highAccuracy: boolean) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            setUserLocation({ lat, lng });
+            const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
+            const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
+            if (dBobo < dOuaga) {
+              setSelectedCity('Bobo-Dioulasso');
+            } else {
+              setSelectedCity('Ouagadougou');
+            }
+            setToast({ message: "Position trouvée !", type: "success" });
+            setIsLocating(false);
+          },
+          (error) => {
+            if (error.code === 3 && highAccuracy) {
+              requestLocation(false);
+              return;
+            }
+            let errorMessage = "Localisation refusée ou introuvable";
+            if (error.code === 1) errorMessage = "Permission refusée. Activez le GPS et autorisez le navigateur.";
+            if (error.code === 2) errorMessage = "Position introuvable (signal faible).";
+            if (error.code === 3) errorMessage = "Délai d'attente dépassé.";
+            setToast({ message: errorMessage, type: "error" });
+            setIsLocating(false);
+          },
+          { enableHighAccuracy: highAccuracy, timeout: 15000, maximumAge: 60000 }
+        );
+      } else {
+        setToast({ message: "Géo-localisation non supportée", type: "error" });
+        setIsLocating(false);
+      }
+    };
+    
+    requestLocation(true);
   };
 
   const filteredLivreurs = livreurs.map(livreur => {
@@ -287,38 +296,45 @@ export default function Home() {
           onCitySelect={handleCitySelect}
           onAutoDetect={() => {
             return new Promise<void>((resolve) => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                  (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    setUserLocation({ lat, lng });
-                    const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
-                    const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
-                    if (dBobo < dOuaga) {
-                      setSelectedCity('Bobo-Dioulasso');
-                    } else {
-                      setSelectedCity('Ouagadougou');
-                    }
-                    setToast({ message: "Position trouvée !", type: "success" });
-                    setShowLocationPortal(false);
-                    setShowWelcome(false);
-                    resolve();
-                  },
-                  (error) => {
-                    let errorMessage = "Localisation refusée ou introuvable";
-                    if (error.code === 1) errorMessage = "Permission refusée. Activez le GPS et autorisez le navigateur.";
-                    if (error.code === 2) errorMessage = "Position introuvable (signal faible).";
-                    if (error.code === 3) errorMessage = "Délai d'attente dépassé.";
-                    setToast({ message: errorMessage, type: "error" });
-                    resolve();
-                  },
-                  { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-                );
-              } else {
-                setToast({ message: "Géo-localisation non supportée", type: "error" });
-                resolve();
-              }
+              const requestLocation = (highAccuracy: boolean) => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      const lat = position.coords.latitude;
+                      const lng = position.coords.longitude;
+                      setUserLocation({ lat, lng });
+                      const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
+                      const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
+                      if (dBobo < dOuaga) {
+                        setSelectedCity('Bobo-Dioulasso');
+                      } else {
+                        setSelectedCity('Ouagadougou');
+                      }
+                      setToast({ message: "Position trouvée !", type: "success" });
+                      setShowLocationPortal(false);
+                      setShowWelcome(false);
+                      resolve();
+                    },
+                    (error) => {
+                      if (error.code === 3 && highAccuracy) {
+                        requestLocation(false);
+                        return;
+                      }
+                      let errorMessage = "Localisation refusée ou introuvable";
+                      if (error.code === 1) errorMessage = "Permission refusée. Activez le GPS et autorisez le navigateur.";
+                      if (error.code === 2) errorMessage = "Position introuvable (signal faible).";
+                      if (error.code === 3) errorMessage = "Délai d'attente dépassé.";
+                      setToast({ message: errorMessage, type: "error" });
+                      resolve();
+                    },
+                    { enableHighAccuracy: highAccuracy, timeout: 15000, maximumAge: 60000 }
+                  );
+                } else {
+                  setToast({ message: "Géo-localisation non supportée", type: "error" });
+                  resolve();
+                }
+              };
+              requestLocation(true);
             });
           }}
         />
@@ -521,29 +537,13 @@ export default function Home() {
         isOpen={isAuthDrawerOpen}
         onClose={() => setIsAuthDrawerOpen(false)}
         onLoginSuccess={(userId, loggedInRole) => {
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-              const lat = pos.coords.latitude;
-              const lng = pos.coords.longitude;
-              setUserLocation({ lat, lng });
-              const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
-              const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
-              const detectedCity = dBobo < dOuaga ? 'Bobo-Dioulasso' : 'Ouagadougou';
-              setSelectedCity(detectedCity);
-              setToast({ message: `Bienvenue ! Vous avez été localisé à ${detectedCity}.`, type: 'success' });
-              
-              if (loggedInRole === 'rider') {
-                 await supabase.from('livreurs').update({ 
-                    lat, 
-                    lng, 
-                    city: detectedCity === 'Ouagadougou' ? 'ouaga' : 'bobo' 
-                 }).eq('id', userId);
-              }
-            }, (error) => {
-              let errorMessage = "Connexion réussie. Pensez à activer la géolocalisation.";
-              if (error.code === 1) errorMessage = "Connexion réussie. Géolocalisation refusée par l'appareil.";
-              setToast({ message: errorMessage, type: "success" });
-            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 });
+          setToast({ message: "Connexion réussie ! Bienvenue.", type: 'success' });
+          if (loggedInRole === 'rider') {
+             setIsDriverDrawerOpen(true);
+          } else if (loggedInRole === 'admin') {
+             setIsAdminDashboardOpen(true);
+          } else {
+             setIsClientDrawerOpen(true);
           }
         }}
       />

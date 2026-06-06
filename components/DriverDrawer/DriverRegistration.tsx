@@ -38,29 +38,39 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
 
   const handleGeolocation = () => {
     setGeoStatus('loading');
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
-          setGeoStatus('success');
-        },
-        (error) => {
-          let errorMessage = "Géolocalisation refusée ou impossible.";
-          if (error.code === 1) errorMessage = "Permission refusée. Veuillez activer le GPS et autoriser le navigateur.";
-          if (error.code === 2) errorMessage = "Position introuvable (GPS désactivé ou signal faible).";
-          if (error.code === 3) errorMessage = "Délai d'attente dépassé. Réessayez à l'extérieur.";
-          
-          alert(`${errorMessage}\n\nUne position par défaut sera utilisée temporairement.`);
-          setLocation({ lat: 12.3714, lng: -1.5197 });
-          setGeoStatus('success');
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-      );
-    } else {
-      alert("Géo-localisation non supportée. Utilisation de la position par défaut.");
-      setLocation({ lat: 12.3714, lng: -1.5197 });
-      setGeoStatus('success');
-    }
+    
+    const requestLocation = (highAccuracy: boolean) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+            setGeoStatus('success');
+          },
+          (error) => {
+            if (error.code === 3 && highAccuracy) {
+              // Retry with lower accuracy if high accuracy times out
+              requestLocation(false);
+              return;
+            }
+            let errorMessage = "Géolocalisation refusée ou impossible.";
+            if (error.code === 1) errorMessage = "Permission refusée. Veuillez activer le GPS et autoriser le navigateur.";
+            if (error.code === 2) errorMessage = "Position introuvable (GPS désactivé ou signal faible).";
+            if (error.code === 3) errorMessage = "Délai d'attente dépassé. Réessayez à l'extérieur.";
+            
+            alert(`${errorMessage}\n\nUne position par défaut sera utilisée temporairement.`);
+            setLocation({ lat: 12.3714, lng: -1.5197 });
+            setGeoStatus('success');
+          },
+          { enableHighAccuracy: highAccuracy, timeout: 15000, maximumAge: 60000 }
+        );
+      } else {
+        alert("Géo-localisation non supportée. Utilisation de la position par défaut.");
+        setLocation({ lat: 12.3714, lng: -1.5197 });
+        setGeoStatus('success');
+      }
+    };
+    
+    requestLocation(true);
   };
 
   const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
