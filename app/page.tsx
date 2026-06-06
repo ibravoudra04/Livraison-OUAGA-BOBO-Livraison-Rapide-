@@ -64,6 +64,7 @@ export default function Home() {
     if (ussdDialed) {
       const timer = setTimeout(() => {
         sessionStorage.setItem('hasPaidMapService', 'true');
+        sessionStorage.setItem('clientClicks', '0'); // Reset clicks on payment
         setHasPaidMapService(true);
         setUssdDialed(false);
       }, 15000);
@@ -89,6 +90,22 @@ export default function Home() {
   };
 
   const handleMarkerClick = (livreur: any) => {
+    // Logique des 5 clics maximum pour les clients payants non-premium
+    if (hasPaidMapService && role !== 'admin' && role !== 'rider' && !isPremiumClient) {
+      let clicks = parseInt(sessionStorage.getItem('clientClicks') || '0');
+      clicks += 1;
+      
+      if (clicks > 5) {
+        setHasPaidMapService(false);
+        sessionStorage.setItem('hasPaidMapService', 'false');
+        setUssdDialed(false); // Réinitialiser le paiement
+        setToast({ message: "Vous avez consulté 5 livreurs. Veuillez renouveler l'accès.", type: "warning" });
+        return; // Bloque l'ouverture du profil
+      } else {
+        sessionStorage.setItem('clientClicks', clicks.toString());
+      }
+    }
+    
     setSelectedLivreur(livreur);
     setIsSheetOpen(true);
   };
@@ -206,20 +223,6 @@ export default function Home() {
     if (!userLocation) return livreur;
     const dist = getDistance(userLocation.lat, userLocation.lng, livreur.lat, livreur.lng);
     return { ...livreur, distanceToUser: dist };
-  }).filter(livreur => {
-    if (!userLocation) return true;
-    
-    // Les administrateurs voient tous les livreurs de la ville sélectionnée, sans limite de distance
-    if (role === 'admin') return true;
-    
-    // Check if user is actually near Ouaga or Bobo
-    const dOuaga = getDistance(userLocation.lat, userLocation.lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
-    const dBobo = getDistance(userLocation.lat, userLocation.lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
-    
-    // If testing from abroad (> 100km away from any city), don't filter out by 5km so the map isn't empty
-    if (dOuaga > 100 && dBobo > 100) return true;
-    
-    return livreur.distanceToUser <= 5;
   });
 
   React.useEffect(() => {

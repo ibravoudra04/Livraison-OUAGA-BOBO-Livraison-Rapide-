@@ -59,11 +59,17 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
                   finalLng += Math.cos(angle) * radius;
               }
 
+              const hasSelfie = livreur.selfie && livreur.selfie !== '';
+              const iconHtml = hasSelfie 
+                  ? `<div class="driver-dot-pulse" style="width: 40px; height: 40px; top: -5px; left: -5px;"></div>
+                     <div class="driver-dot-core" style="width: 30px; height: 30px; top: 0; left: 0; background-image: url('${livreur.selfie}'); background-size: cover; background-position: center; border: 2px solid var(--color-primary-green); box-sizing: border-box;"></div>`
+                  : `<div class="driver-dot-pulse"></div><div class="driver-dot-core"></div>`;
+
               const icon = L.divIcon({
                   className: 'custom-driver-dot',
-                  html: `<div class="driver-dot-pulse"></div><div class="driver-dot-core"></div>`,
-                  iconSize: [20, 20],
-                  iconAnchor: [10, 10]
+                  html: iconHtml,
+                  iconSize: [30, 30],
+                  iconAnchor: [15, 15]
               });
               
               const marker = L.marker([finalLat, finalLng], { icon });
