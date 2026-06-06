@@ -9,7 +9,7 @@ export function useDriverOnboarding() {
   const uploadDocument = async (file: File, path: string) => {
     const { data, error } = await supabase.storage
       .from('identities')
-      .upload(path, file, { upsert: true });
+      .upload(path, file);
     
     if (error) throw error;
     
@@ -41,7 +41,7 @@ export function useDriverOnboarding() {
       const securePassword = formData.pin.length < 6 ? formData.pin + "_secure_pad" : formData.pin;
 
       // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      let { data: authData, error: authError } = await supabase.auth.signUp({
         email: virtualEmail,
         password: securePassword,
         options: {
@@ -59,6 +59,19 @@ export function useDriverOnboarding() {
           }
         }
       });
+
+      // If user already exists but onboarding failed previously, try logging them in
+      if (authError && authError.message.toLowerCase().includes('already registered')) {
+        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+          email: virtualEmail,
+          password: securePassword,
+        });
+        
+        if (loginError) throw new Error("Ce numéro est déjà inscrit. Vérifiez votre mot de passe secret ou contactez le support.");
+        
+        authData = loginData;
+        authError = null;
+      }
 
       if (authError) throw authError;
 

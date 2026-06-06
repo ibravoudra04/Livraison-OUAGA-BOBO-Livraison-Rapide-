@@ -14,6 +14,7 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
     phone: '',
     pin: '',
     vehicle: 'Moto',
+    city: 'Ouagadougou',
   });
 
   const [location, setLocation] = useState({ lat: 12.3714, lng: -1.5197 });
@@ -44,10 +45,16 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
           setLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
           setGeoStatus('success');
         },
-        () => setGeoStatus('error')
+        () => {
+          alert("Géolocalisation refusée ou impossible. Utilisation de la position par défaut de la ville.");
+          setLocation(formData.city === 'Ouagadougou' ? { lat: 12.3714, lng: -1.5197 } : { lat: 11.1771, lng: -4.2968 });
+          setGeoStatus('success');
+        }
       );
     } else {
-      setGeoStatus('error');
+      alert("Géo-localisation non supportée. Utilisation de la position par défaut de la ville.");
+      setLocation(formData.city === 'Ouagadougou' ? { lat: 12.3714, lng: -1.5197 } : { lat: 11.1771, lng: -4.2968 });
+      setGeoStatus('success');
     }
   };
 
@@ -66,6 +73,7 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
     
     const result = await registerDriver({
       ...formData,
+      city: formData.city === 'Ouagadougou' ? 'ouaga' : 'bobo',
       lat: location.lat,
       lng: location.lng,
       ...files
@@ -142,6 +150,21 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Ville d'activité *</label>
+          <select 
+            name="city" 
+            className="form-input" 
+            value={formData.city} 
+            onChange={handleChange}
+            required
+            style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', background: 'var(--color-bg-warm)', fontSize: '0.95rem' }}
+          >
+            <option value="Ouagadougou">Ouagadougou</option>
+            <option value="Bobo-Dioulasso">Bobo-Dioulasso</option>
+          </select>
         </div>
 
         <div className="form-group">

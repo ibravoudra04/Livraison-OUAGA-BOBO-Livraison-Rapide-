@@ -16,6 +16,9 @@ export function useLivreursRealtime(city?: string) {
          query = query.eq('city', dbCity);
       }
       
+      // Filtrer uniquement les livreurs actifs/approuvés pour qu'ils s'affichent sur la carte
+      query = query.in('status', ['actif', 'approved']);
+      
       const { data, error } = await query;
       if (!error && data) {
         setLivreurs(data);

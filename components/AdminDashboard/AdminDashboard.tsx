@@ -12,7 +12,7 @@ interface AdminDashboardProps {
 type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'subscriptions' | 'stats' | 'settings';
 
 export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashboardProps) {
-  const { stats, loading, approveDriver, deleteDriver } = useAdminStats(isAdmin);
+  const { stats, loading, approveDriver, suspendDriver, deleteDriver } = useAdminStats(isAdmin);
   const { logout } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
@@ -25,7 +25,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
 
   return (
     <div className="location-portal-overlay open" style={{ zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="location-portal-card" style={{ maxWidth: '1200px', width: '95%', height: '90vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(35px) saturate(180%)', border: '1px solid rgba(255,255,255,0.6)' }}>
+      <div className="location-portal-card" style={{ maxWidth: '1600px', width: '98%', height: '95vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(35px) saturate(180%)', border: '1px solid rgba(255,255,255,0.6)' }}>
         
         {/* Header Admin */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 24px', background: 'var(--color-bg-warm)', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
@@ -153,6 +153,8 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                             <th style={{ padding: '12px 15px' }}>Nom</th>
                             <th style={{ padding: '12px 15px' }}>Contact</th>
                             <th style={{ padding: '12px 15px' }}>Véhicule</th>
+                            <th style={{ padding: '12px 15px' }}>Localisation</th>
+                            <th style={{ padding: '12px 15px' }}>Photos</th>
                             <th style={{ padding: '12px 15px' }}>Statut</th>
                             <th style={{ padding: '12px 15px', textAlign: 'right' }}>Actions</th>
                           </tr>
@@ -163,22 +165,37 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                               <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>{driver.first_name || driver.name}</td>
                               <td style={{ padding: '12px 15px' }}>{driver.phone}</td>
                               <td style={{ padding: '12px 15px' }}>{driver.transport_type || driver.vehicle}</td>
+                              <td style={{ padding: '12px 15px', fontSize: '0.85rem' }}>
+                                <span style={{ textTransform: 'capitalize' }}>{driver.city || 'Ouaga'}</span><br/>
+                                <span style={{ color: 'var(--color-charcoal-muted)' }}>{driver.lat?.toFixed(4)}, {driver.lng?.toFixed(4)}</span>
+                              </td>
                               <td style={{ padding: '12px 15px' }}>
-                                <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', background: driver.status === 'approved' ? '#e6f4ea' : '#fce8e6', color: driver.status === 'approved' ? '#1e8e3e' : '#d93025' }}>
-                                  {driver.status === 'approved' ? 'Actif' : 'En attente'}
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                  {driver.cni_recto && <a href={driver.cni_recto} target="_blank" rel="noreferrer" style={{ color: '#2980b9', textDecoration: 'underline', fontSize: '0.85rem' }}>CNI Recto</a>}
+                                  {driver.cni_verso && <a href={driver.cni_verso} target="_blank" rel="noreferrer" style={{ color: '#2980b9', textDecoration: 'underline', fontSize: '0.85rem' }}>CNI Verso</a>}
+                                  {driver.selfie && <a href={driver.selfie} target="_blank" rel="noreferrer" style={{ color: '#2980b9', textDecoration: 'underline', fontSize: '0.85rem' }}>Selfie</a>}
+                                  {!driver.cni_recto && !driver.cni_verso && !driver.selfie && <span style={{ color: 'var(--color-charcoal-muted)', fontSize: '0.8rem' }}>Aucune</span>}
+                                </div>
+                              </td>
+                              <td style={{ padding: '12px 15px' }}>
+                                <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', background: driver.status === 'approved' || driver.status === 'actif' ? '#e6f4ea' : driver.status === 'suspendu' ? '#fdf6e3' : '#fce8e6', color: driver.status === 'approved' || driver.status === 'actif' ? '#1e8e3e' : driver.status === 'suspendu' ? '#b58900' : '#d93025' }}>
+                                  {driver.status === 'approved' || driver.status === 'actif' ? 'Actif' : driver.status === 'suspendu' ? 'Suspendu' : 'En attente'}
                                 </span>
                               </td>
-                              <td style={{ padding: '12px 15px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                {driver.status === 'pending' && (
-                                  <button onClick={() => approveDriver(driver.id)} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Valider</button>
+                              <td style={{ padding: '12px 15px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
+                                {(driver.status === 'pending' || driver.status === 'suspendu') && (
+                                  <button onClick={() => approveDriver(driver.id)} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>{driver.status === 'suspendu' ? 'Réactiver' : 'Valider'}</button>
                                 )}
-                                <button onClick={() => { if(window.confirm('Supprimer ce livreur ?')) deleteDriver(driver.id); }} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
+                                {(driver.status === 'approved' || driver.status === 'actif') && (
+                                  <button onClick={() => { if(window.confirm('Suspendre ce livreur ?')) suspendDriver(driver.id); }} style={{ background: '#f39c12', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Suspendre</button>
+                                )}
+                                <button onClick={() => { if(window.confirm('Supprimer définitivement ce livreur ?')) deleteDriver(driver.id); }} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
                               </td>
                             </tr>
                           ))}
                           {(activeTab === 'drivers' ? stats?.allDrivers : stats?.pendingDrivers)?.length === 0 && (
                             <tr>
-                              <td colSpan={5} style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucune donnée à afficher.</td>
+                              <td colSpan={7} style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucune donnée à afficher.</td>
                             </tr>
                           )}
                         </tbody>

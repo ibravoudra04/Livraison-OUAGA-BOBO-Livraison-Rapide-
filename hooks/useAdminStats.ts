@@ -108,7 +108,7 @@ export function useAdminStats(isAdmin: boolean) {
   const approveDriver = async (driverId: string) => {
     const { error } = await supabase
       .from('livreurs')
-      .update({ status: 'approved', is_online: true })
+      .update({ status: 'actif', is_online: true })
       .eq('id', driverId);
     
     if (error) {
@@ -119,7 +119,8 @@ export function useAdminStats(isAdmin: boolean) {
     // Optimistic update
     setStats(prev => ({
       ...prev,
-      pendingDrivers: prev.pendingDrivers.filter(d => d.id !== driverId)
+      pendingDrivers: prev.pendingDrivers.filter(d => d.id !== driverId),
+      allDrivers: prev.allDrivers.map(d => d.id === driverId ? { ...d, status: 'actif', is_online: true } : d)
     }));
     return true;
   };
@@ -138,10 +139,29 @@ export function useAdminStats(isAdmin: boolean) {
     setStats(prev => ({
       ...prev,
       pendingDrivers: prev.pendingDrivers.filter(d => d.id !== driverId),
+      allDrivers: prev.allDrivers.filter(d => d.id !== driverId),
       totalDrivers: prev.totalDrivers - 1
     }));
     return true;
   };
 
-  return { stats, loading, error, approveDriver, deleteDriver };
+  const suspendDriver = async (driverId: string) => {
+    const { error } = await supabase
+      .from('livreurs')
+      .update({ status: 'suspendu', is_online: false })
+      .eq('id', driverId);
+    
+    if (error) {
+      setError(error.message);
+      return false;
+    }
+    
+    setStats(prev => ({
+      ...prev,
+      allDrivers: prev.allDrivers.map(d => d.id === driverId ? { ...d, status: 'suspendu', is_online: false } : d)
+    }));
+    return true;
+  };
+
+  return { stats, loading, error, approveDriver, suspendDriver, deleteDriver };
 }
