@@ -42,6 +42,23 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
           livreurs.forEach((livreur: any) => {
               if(!livreur.lat || !livreur.lng) return;
               
+              let finalLat = livreur.lat;
+              let finalLng = livreur.lng;
+              
+              // Si le livreur est exactement au centre-ville par défaut (il n'a pas bougé le curseur GPS)
+              // On applique un léger décalage pour éviter que tous les marqueurs se superposent
+              const isDefaultOuaga = Math.abs(livreur.lat - 12.3714) < 0.0001 && Math.abs(livreur.lng - (-1.5197)) < 0.0001;
+              const isDefaultBobo = Math.abs(livreur.lat - 11.1771) < 0.0001 && Math.abs(livreur.lng - (-4.2968)) < 0.0001;
+              
+              if (isDefaultOuaga || isDefaultBobo) {
+                  const hashStr = livreur.name || livreur.first_name || livreur.id || 'A';
+                  const hash = hashStr.toString().charCodeAt(0) * hashStr.toString().length;
+                  const angle = hash * 0.3; // Angle pseudo-aléatoire
+                  const radius = 0.001 + ((hash % 15) * 0.0005); // Rayon pseudo-aléatoire (entre 100m et 800m)
+                  finalLat += Math.sin(angle) * radius;
+                  finalLng += Math.cos(angle) * radius;
+              }
+
               const icon = L.divIcon({
                   className: 'custom-driver-dot',
                   html: `<div class="driver-dot-pulse"></div><div class="driver-dot-core"></div>`,
@@ -49,7 +66,7 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
                   iconAnchor: [10, 10]
               });
               
-              const marker = L.marker([livreur.lat, livreur.lng], { icon });
+              const marker = L.marker([finalLat, finalLng], { icon });
               
               if(onMarkerClick) {
                   marker.on('click', () => onMarkerClick(livreur));
