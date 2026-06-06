@@ -10,11 +10,13 @@ if (vapidPublicKey && vapidPrivateKey) {
   webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 }
 
-// Create a service role client to bypass RLS and fetch the recipient's subscription
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Initialize inside the handler to prevent Next.js build-time errors if env vars are missing
+const getSupabaseAdmin = () => {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://placeholder.url',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key'
+  );
+};
 
 export async function POST(request: Request) {
   if (!vapidPublicKey || !vapidPrivateKey) {
@@ -29,8 +31,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const adminSupabase = getSupabaseAdmin();
     // Fetch the subscriptions for the recipient
-    const { data: subscriptions, error } = await supabase
+    const { data: subscriptions, error } = await adminSupabase
       .from('push_subscriptions')
       .select('subscription')
       .eq('user_id', recipientId);
