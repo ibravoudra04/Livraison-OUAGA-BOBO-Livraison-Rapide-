@@ -3,7 +3,7 @@ import { useLivreursRealtime } from '@/hooks/useLivreursRealtime';
 
 interface LocationPortalProps {
   onClose: () => void;
-  onCitySelect: (city: string) => void;
+  onCitySelect: (city: string, lat?: number, lng?: number) => void;
   onAutoDetect?: () => Promise<void> | void;
 }
 
@@ -81,10 +81,26 @@ export default function LocationPortal({ onClose, onCitySelect, onAutoDetect }: 
     setStep(3); // Go to Sectors selection
   };
 
-  const handleSectorSelect = (sector: string) => {
+  const handleSectorSelect = async (sector: string) => {
     if (tempCity) {
-      onCitySelect(tempCity);
-      // In a real app, we would pan the map to the sector here
+      setIsDetecting(true);
+      try {
+        const query = `${sector}, ${tempCity}, Burkina Faso`;
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
+        const data = await res.json();
+        
+        if (data && data.length > 0) {
+          onCitySelect(tempCity, parseFloat(data[0].lat), parseFloat(data[0].lon));
+        } else {
+          // Fallback if sector is not found
+          onCitySelect(tempCity);
+        }
+      } catch (err) {
+        console.error("Erreur de géocodage :", err);
+        onCitySelect(tempCity);
+      } finally {
+        setIsDetecting(false);
+      }
     }
   };
 

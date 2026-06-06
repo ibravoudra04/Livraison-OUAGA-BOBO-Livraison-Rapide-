@@ -18,14 +18,12 @@ import AdminDashboard from '@/components/AdminDashboard/AdminDashboard';
 import AuthDrawer from '@/components/AuthDrawer/AuthDrawer';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useLivreursRealtime } from '@/hooks/useLivreursRealtime';
-import { useUnlockLogic } from '@/hooks/useUnlockLogic';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 export default function Home() {
   const { user, session, role, supabase } = useSupabaseAuth();
   const [selectedCity, setSelectedCity] = useState<string>('Ouagadougou');
   const { livreurs, loading: livreursLoading } = useLivreursRealtime(selectedCity);
-  const { unlockedRiders, isUnlocking, unlockRider, fetchUnlocks } = useUnlockLogic(user?.id);
   usePushNotifications();
 
   const [selectedLivreur, setSelectedLivreur] = useState<any | null>(null);
@@ -48,6 +46,17 @@ export default function Home() {
 
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [mapCenter, setMapCenter] = useState<{ lat: number, lng: number } | null>(null);
+  const [hasPaidMapService, setHasPaidMapService] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const paid = sessionStorage.getItem('hasPaidMapService');
+      if (paid === 'true') {
+        setHasPaidMapService(true);
+      }
+    }
+  }, []);
 
   const cityCenters = {
     'Ouagadougou': { lat: 12.3714, lng: -1.5197 },
@@ -73,8 +82,13 @@ export default function Home() {
     }
   };
 
-  const handleCitySelect = (city: string) => {
+  const handleCitySelect = (city: string, lat?: number, lng?: number) => {
     setSelectedCity(city);
+    if (lat && lng) {
+      setMapCenter({ lat, lng });
+    } else {
+      setMapCenter(null);
+    }
     setShowLocationPortal(false);
     setShowWelcome(false);
   };
@@ -101,6 +115,7 @@ export default function Home() {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             setUserLocation({ lat, lng });
+            setMapCenter({ lat, lng });
             const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
             const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
             if (dBobo < dOuaga) {
@@ -132,6 +147,34 @@ export default function Home() {
     };
     
     requestLocation(true);
+  };
+
+  const handleDetectDriver = () => {
+    if (livreurs.length === 0) {
+      setToast({ message: "Aucun livreur disponible pour le moment.", type: "warning" });
+      return;
+    }
+    
+    // Position de référence : userLocation ou mapCenter ou le centre de la ville
+    const refLat = userLocation?.lat || mapCenter?.lat || cityCenters[selectedCity as keyof typeof cityCenters].lat;
+    const refLng = userLocation?.lng || mapCenter?.lng || cityCenters[selectedCity as keyof typeof cityCenters].lng;
+    
+    // Trouver le livreur le plus proche (parmi tous les livreurs connectés)
+    let closest = livreurs[0];
+    let minDist = getDistance(refLat, refLng, closest.lat, closest.lng);
+    
+    for(let i=1; i<livreurs.length; i++) {
+      const d = getDistance(refLat, refLng, livreurs[i].lat, livreurs[i].lng);
+      if (d < minDist) {
+        minDist = d;
+        closest = livreurs[i];
+      }
+    }
+    
+    // Rediriger la carte et ouvrir le profil
+    setMapCenter({ lat: closest.lat, lng: closest.lng });
+    setSelectedLivreur(closest);
+    setIsSheetOpen(true);
   };
 
   const filteredLivreurs = livreurs.map(livreur => {
@@ -190,17 +233,13 @@ export default function Home() {
     }
   };
 
-  const handleUnlockClick = async (livreurId: string) => {
+  const handlePayMapService = () => {
     setPaymentAmount(200);
-    setPaymentReason("Déblocage du numéro du livreur");
+    setPaymentReason("Accès complet à la carte des livreurs");
     setPaymentCallback(() => async () => {
-      const result = await unlockRider(livreurId);
-      if (result.success) {
-        setToast({ message: "Numéro débloqué avec succès !", type: 'success' });
-        setIsSheetOpen(false);
-      } else {
-        throw new Error(result.error || "Erreur lors du déblocage");
-      }
+      setHasPaidMapService(true);
+      sessionStorage.setItem('hasPaidMapService', 'true');
+      setToast({ message: "Paiement réussi ! Vous avez maintenant accès à tous les livreurs.", type: 'success' });
     });
     setIsPaymentOpen(true);
   };
@@ -355,11 +394,59 @@ export default function Home() {
           </button>
         )}
 
-        <MapWrapper 
-          livreurs={filteredLivreurs} 
-          cityCenter={userLocation || cityCenters[selectedCity as keyof typeof cityCenters]} 
-          onMarkerClick={handleMarkerClick} 
-        />
+        {/* Bouton "Détecter un livreur" et "Me localiser" */}
+        {!showWelcome && !showLocationPortal && (
+          <div style={{ position: 'absolute', bottom: '110px', left: '0', right: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', zIndex: 1000, pointerEvents: 'none' }}>
+            
+            <button 
+              className="btn btn-primary pulse"
+              onClick={handleDetectDriver}
+              style={{ pointerEvents: 'auto', padding: '12px 24px', borderRadius: '30px', boxShadow: '0 8px 25px rgba(232, 92, 74, 0.4)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', background: 'var(--color-primary-red)' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <span>Détecter un livreur</span>
+            </button>
+
+            <button 
+              className="btn btn-secondary"
+              onClick={handleLocateUser}
+              disabled={isLocating}
+              style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '30px', background: 'rgba(255, 255, 255, 0.95)', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', color: 'var(--color-charcoal)' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-brown)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+              <span>{isLocating ? "Recherche..." : "Me localiser"}</span>
+            </button>
+            
+          </div>
+        )}
+
+        <div style={{ width: '100%', height: '100%', filter: (!hasPaidMapService && role !== 'admin' && role !== 'rider') ? 'blur(12px) saturate(150%)' : 'none', pointerEvents: (!hasPaidMapService && role !== 'admin' && role !== 'rider') ? 'none' : 'auto', transition: 'filter 0.5s' }}>
+          <MapWrapper 
+            livreurs={filteredLivreurs} 
+            cityCenter={mapCenter || cityCenters[selectedCity as keyof typeof cityCenters] || cityCenters['Ouagadougou']} 
+            onMarkerClick={handleMarkerClick} 
+          />
+        </div>
+
+        {(!hasPaidMapService && role !== 'admin' && role !== 'rider' && !showWelcome && !showLocationPortal) && (
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.1)' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(20px)', padding: '30px', borderRadius: '24px', boxShadow: '0 24px 70px rgba(54, 42, 33, 0.2)', border: '1px solid rgba(255, 255, 255, 0.6)', textAlign: 'center', maxWidth: '90%', width: '340px' }}>
+              <div style={{ width: '60px', height: '60px', background: 'var(--color-primary-brown)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto', color: 'white', boxShadow: '0 4px 15px rgba(141, 85, 55, 0.4)' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+              <h2 style={{ color: 'var(--color-primary-brown)', fontSize: '1.4rem', marginBottom: '10px' }}>Service Premium</h2>
+              <p style={{ color: 'var(--color-charcoal)', fontSize: '0.95rem', marginBottom: '25px', lineHeight: '1.5', fontWeight: '500' }}>Découvrez en temps réel tous les livreurs disponibles autour de vous et accédez à leurs contacts.</p>
+              
+              <button 
+                className="btn pulse" 
+                onClick={handlePayMapService}
+                style={{ width: '100%', background: 'var(--color-primary-green)', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 25px rgba(39, 174, 96, 0.4)', cursor: 'pointer' }}
+              >
+                Utiliser le service 200 FCFA
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <BottomSheet isOpen={isSheetOpen} onClose={() => setIsSheetOpen(false)}>
@@ -415,7 +502,7 @@ export default function Home() {
               </div>
               <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Téléphone</div>
-                <div style={{ fontWeight: 'bold', color: 'var(--color-charcoal)', fontSize: '0.9rem' }}>{selectedLivreur.phone_display || selectedLivreur.phone}</div>
+                <div style={{ fontWeight: 'bold', color: 'var(--color-charcoal)', fontSize: '0.9rem' }}>{selectedLivreur.phone}</div>
               </div>
             </div>
 
@@ -423,7 +510,7 @@ export default function Home() {
             <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
               <button 
                 style={{ flex: 1, padding: '14px', borderRadius: '50px', background: 'var(--color-primary-red)', color: 'white', border: '1px solid rgba(255, 255, 255, 0.25)', fontWeight: 'bold', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(232, 92, 74, 0.3)', cursor: 'pointer', transition: 'all 0.2s ease-in-out' }}
-                onClick={() => { window.location.href = `tel:${selectedLivreur.phone_display || selectedLivreur.phone}`; }}
+                onClick={() => { window.location.href = `tel:${selectedLivreur.phone}`; }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                 Appeler
