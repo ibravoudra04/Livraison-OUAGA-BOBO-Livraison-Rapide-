@@ -19,12 +19,14 @@ import AuthDrawer from '@/components/AuthDrawer/AuthDrawer';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useLivreursRealtime } from '@/hooks/useLivreursRealtime';
 import { useUnlockLogic } from '@/hooks/useUnlockLogic';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 export default function Home() {
   const { user, session, role, supabase } = useSupabaseAuth();
   const [selectedCity, setSelectedCity] = useState<string>('Ouagadougou');
   const { livreurs, loading: livreursLoading } = useLivreursRealtime(selectedCity);
   const { unlockedRiders, isUnlocking, unlockRider, fetchUnlocks } = useUnlockLogic(user?.id);
+  usePushNotifications();
 
   const [selectedLivreur, setSelectedLivreur] = useState<any | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -134,10 +136,10 @@ export default function Home() {
     const dOuaga = getDistance(userLocation.lat, userLocation.lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
     const dBobo = getDistance(userLocation.lat, userLocation.lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
     
-    // If testing from abroad (> 100km away from any city), don't filter out by 10km so the map isn't empty
+    // If testing from abroad (> 100km away from any city), don't filter out by 5km so the map isn't empty
     if (dOuaga > 100 && dBobo > 100) return true;
     
-    return livreur.distanceToUser <= 10;
+    return livreur.distanceToUser <= 5;
   });
 
   React.useEffect(() => {

@@ -96,6 +96,21 @@ export function useChatRealtime(riderId?: string, clientId?: string, currentRole
       return null;
     }
 
+    // Déclenchement de la notification Push pour le destinataire
+    try {
+      const recipientId = currentRole === 'client' ? riderId : clientId;
+      const title = currentRole === 'client' ? 'Nouveau message Client' : 'Nouveau message Livreur';
+      const pushMessage = text ? text : (imageUrl ? 'Fichier joint' : 'Nouveau message');
+      
+      fetch('/api/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipientId, title, message: pushMessage, url: '/' })
+      }).catch(err => console.error("Erreur d'appel push API:", err));
+    } catch (e) {
+      console.error("Erreur lors de l'envoi de la notification push:", e);
+    }
+
     // Optionally optimistic update is handled by the insert returning data or realtime
     return data;
   };

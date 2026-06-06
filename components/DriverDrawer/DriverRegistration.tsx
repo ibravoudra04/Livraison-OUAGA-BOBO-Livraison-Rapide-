@@ -14,7 +14,6 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
     phone: '',
     pin: '',
     vehicle: 'Moto',
-    city: 'Ouagadougou',
   });
 
   const [location, setLocation] = useState({ lat: 12.3714, lng: -1.5197 });
@@ -51,17 +50,25 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
           if (error.code === 2) errorMessage = "Position introuvable (GPS désactivé ou signal faible).";
           if (error.code === 3) errorMessage = "Délai d'attente dépassé. Réessayez à l'extérieur.";
           
-          alert(`${errorMessage}\n\nUtilisation de la position par défaut de la ville.`);
-          setLocation(formData.city === 'Ouagadougou' ? { lat: 12.3714, lng: -1.5197 } : { lat: 11.1771, lng: -4.2968 });
+          alert(`${errorMessage}\n\nUne position par défaut sera utilisée temporairement.`);
+          setLocation({ lat: 12.3714, lng: -1.5197 });
           setGeoStatus('success');
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
       );
     } else {
-      alert("Géo-localisation non supportée. Utilisation de la position par défaut de la ville.");
-      setLocation(formData.city === 'Ouagadougou' ? { lat: 12.3714, lng: -1.5197 } : { lat: 11.1771, lng: -4.2968 });
+      alert("Géo-localisation non supportée. Utilisation de la position par défaut.");
+      setLocation({ lat: 12.3714, lng: -1.5197 });
       setGeoStatus('success');
     }
+  };
+
+  const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,9 +84,13 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
       return;
     }
     
+    const dOuaga = getDistance(location.lat, location.lng, 12.3714, -1.5197);
+    const dBobo = getDistance(location.lat, location.lng, 11.1771, -4.2968);
+    const inferredCity = dBobo < dOuaga ? 'bobo' : 'ouaga';
+    
     const result = await registerDriver({
       ...formData,
-      city: formData.city === 'Ouagadougou' ? 'ouaga' : 'bobo',
+      city: inferredCity,
       lat: location.lat,
       lng: location.lng,
       ...files
@@ -158,20 +169,7 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
           </div>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Ville d'activité *</label>
-          <select 
-            name="city" 
-            className="form-input" 
-            value={formData.city} 
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', background: 'var(--color-bg-warm)', fontSize: '0.95rem' }}
-          >
-            <option value="Ouagadougou">Ouagadougou</option>
-            <option value="Bobo-Dioulasso">Bobo-Dioulasso</option>
-          </select>
-        </div>
+
 
         <div className="form-group">
           <label className="form-label">Localisation GPS (Point d'attente) *</label>
