@@ -45,11 +45,17 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
           setLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
           setGeoStatus('success');
         },
-        () => {
-          alert("Géolocalisation refusée ou impossible. Utilisation de la position par défaut de la ville.");
+        (error) => {
+          let errorMessage = "Géolocalisation refusée ou impossible.";
+          if (error.code === 1) errorMessage = "Permission refusée. Veuillez activer le GPS et autoriser le navigateur.";
+          if (error.code === 2) errorMessage = "Position introuvable (GPS désactivé ou signal faible).";
+          if (error.code === 3) errorMessage = "Délai d'attente dépassé. Réessayez à l'extérieur.";
+          
+          alert(`${errorMessage}\n\nUtilisation de la position par défaut de la ville.`);
           setLocation(formData.city === 'Ouagadougou' ? { lat: 12.3714, lng: -1.5197 } : { lat: 11.1771, lng: -4.2968 });
           setGeoStatus('success');
-        }
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
       );
     } else {
       alert("Géo-localisation non supportée. Utilisation de la position par défaut de la ville.");

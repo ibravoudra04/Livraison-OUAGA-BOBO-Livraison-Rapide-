@@ -108,9 +108,14 @@ export default function Home() {
           setIsLocating(false);
         },
         (error) => {
-          setToast({ message: "Localisation refusée ou introuvable", type: "error" });
+          let errorMessage = "Localisation refusée ou introuvable";
+          if (error.code === 1) errorMessage = "Permission refusée. Activez le GPS et autorisez le navigateur.";
+          if (error.code === 2) errorMessage = "Position introuvable (signal faible).";
+          if (error.code === 3) errorMessage = "Délai d'attente dépassé.";
+          setToast({ message: errorMessage, type: "error" });
           setIsLocating(false);
-        }
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
       );
     } else {
       setToast({ message: "Géo-localisation non supportée", type: "error" });
@@ -260,9 +265,14 @@ export default function Home() {
                     resolve();
                   },
                   (error) => {
-                    setToast({ message: "Localisation refusée ou introuvable", type: "error" });
+                    let errorMessage = "Localisation refusée ou introuvable";
+                    if (error.code === 1) errorMessage = "Permission refusée. Activez le GPS et autorisez le navigateur.";
+                    if (error.code === 2) errorMessage = "Position introuvable (signal faible).";
+                    if (error.code === 3) errorMessage = "Délai d'attente dépassé.";
+                    setToast({ message: errorMessage, type: "error" });
                     resolve();
-                  }
+                  },
+                  { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
                 );
               } else {
                 setToast({ message: "Géo-localisation non supportée", type: "error" });
@@ -468,9 +478,11 @@ export default function Home() {
                     city: detectedCity === 'Ouagadougou' ? 'ouaga' : 'bobo' 
                  }).eq('id', userId);
               }
-            }, () => {
-              setToast({ message: "Connexion réussie. Pensez à activer la géolocalisation pour une meilleure expérience.", type: "success" });
-            });
+            }, (error) => {
+              let errorMessage = "Connexion réussie. Pensez à activer la géolocalisation.";
+              if (error.code === 1) errorMessage = "Connexion réussie. Géolocalisation refusée par l'appareil.";
+              setToast({ message: errorMessage, type: "success" });
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 });
           }
         }}
       />
