@@ -140,6 +140,45 @@ export default function Home() {
     return livreur.distanceToUser <= 10;
   });
 
+  React.useEffect(() => {
+    const fetchAnnonce = async () => {
+      try {
+        const { data } = await supabase.from('annonces').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(1);
+        if (data && data.length > 0 && !sessionStorage.getItem('annonce_seen_' + data[0].id)) {
+          setTimeout(() => {
+            setToast({ message: "📢 " + data[0].message, type: "info" });
+            sessionStorage.setItem('annonce_seen_' + data[0].id, 'true');
+          }, 2000);
+        }
+      } catch (err) {
+        // Ignore errors if table doesn't exist yet
+      }
+    };
+    fetchAnnonce();
+  }, [supabase]);
+
+  const handleReportProblem = async () => {
+    if (!user) {
+      setToast({ message: "Veuillez vous connecter pour signaler un problème.", type: "warning" });
+      setIsAuthDrawerOpen(true);
+      return;
+    }
+    const reason = window.prompt("Veuillez décrire le problème rencontré avec ce livreur :");
+    if (reason && reason.trim() !== '') {
+      try {
+        const { error } = await supabase.from('tickets_support').insert([{
+          client_id: user.id,
+          rider_id: selectedLivreur?.id,
+          description: reason
+        }]);
+        if (error) throw error;
+        setToast({ message: "Signalement envoyé. L'administrateur a été notifié.", type: "success" });
+      } catch (err: any) {
+        setToast({ message: "Erreur lors de l'envoi du signalement.", type: "error" });
+      }
+    }
+  };
+
   const handleUnlockClick = async (livreurId: string) => {
     setPaymentAmount(200);
     setPaymentReason("Déblocage du numéro du livreur");
@@ -321,8 +360,11 @@ export default function Home() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-primary-brown)', fontWeight: 800 }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-primary-brown)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {selectedLivreur.first_name || selectedLivreur.name}
+                    {selectedLivreur.is_verified && (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#3498db" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><title>Profil Vérifié</title><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    )}
                   </h3>
                   <span style={{ backgroundColor: '#e6f4ea', color: '#1e8e3e', padding: '4px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <div className="pulse-dot" style={{ width: '6px', height: '6px', background: '#1e8e3e' }}></div>
@@ -381,6 +423,13 @@ export default function Home() {
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                 Discuter (Chat)
+              </button>
+            </div>
+
+            {/* Link to report problem */}
+            <div style={{ textAlign: 'center', marginTop: '10px' }}>
+              <button onClick={handleReportProblem} style={{ background: 'none', border: 'none', color: 'var(--color-charcoal-muted)', fontSize: '0.8rem', textDecoration: 'underline', cursor: 'pointer' }}>
+                Signaler un problème avec ce livreur
               </button>
             </div>
           </div>

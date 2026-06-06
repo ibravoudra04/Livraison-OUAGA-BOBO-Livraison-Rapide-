@@ -8,7 +8,7 @@ interface AuthDrawerProps {
   onLoginSuccess?: (userId: string, role: string) => void;
 }
 
-export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
+export default function AuthDrawer({ isOpen, onClose, onLoginSuccess }: AuthDrawerProps) {
   const { supabase, formatPhoneForDB } = useSupabaseAuth();
   
   const [phone, setPhone] = useState('');
@@ -33,7 +33,7 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
         securePassword = 'admin_secure_password_123';
       }
 
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: virtualEmail,
         password: securePassword
       });
@@ -42,7 +42,7 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
       // On success, close the drawer. App.js/page.tsx will handle the routing
       // based on the updated session/role.
       onClose();
-      if (onLoginSuccess && authData.user) {
+      if (onLoginSuccess && authData?.user) {
         onLoginSuccess(authData.user.id, authData.user.user_metadata?.role || 'client');
       }
       // Reset form

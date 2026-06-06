@@ -9,12 +9,31 @@ interface AdminDashboardProps {
   isAdmin: boolean;
 }
 
-type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'subscriptions' | 'stats' | 'settings';
+type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'subscriptions' | 'stats' | 'settings' | 'litiges';
 
 export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashboardProps) {
-  const { stats, loading, approveDriver, suspendDriver, deleteDriver } = useAdminStats(isAdmin);
+  const { stats, loading, approveDriver, suspendDriver, deleteDriver, verifyDriver, createAnnonce, resolveTicket } = useAdminStats(isAdmin);
   const { logout } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+
+  const downloadCSV = (data: any[], filename: string) => {
+    if (!data || data.length === 0) return;
+    const headers = Object.keys(data[0]).filter(k => typeof data[0][k] !== 'object');
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + headers.join(",") + "\n" 
+      + data.map(e => headers.map(k => {
+          let val = e[k];
+          if (typeof val === 'string') return `"${val.replace(/"/g, '""')}"`;
+          return val;
+        }).join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename + ".csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -77,7 +96,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       <div className={styles.gridIcon} style={{ color: '#8e44ad', background: 'rgba(142, 68, 173, 0.1)' }}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
                       <div className={styles.gridText}>
                         <h3>Gestion des Clients</h3>
-                        <p>0 client(s)</p>
+                        <p>{stats?.totalClients || 0} client(s)</p>
                       </div>
                     </div>
 
@@ -93,7 +112,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       <div className={styles.gridIcon} style={{ color: '#16a085', background: 'rgba(22, 160, 133, 0.1)' }}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></div>
                       <div className={styles.gridText}>
                         <h3>Suivi des Abonnements</h3>
-                        <p>0 actif(s)</p>
+                        <p>{stats?.totalPremium || 0} actif(s)</p>
                       </div>
                     </div>
 
@@ -110,6 +129,14 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       <div className={styles.gridText}>
                         <h3>Configuration & Tarifs</h3>
                         <p>Modifier les frais & options</p>
+                      </div>
+                    </div>
+
+                    <div className={styles.gridCard} onClick={() => setActiveTab('litiges')}>
+                      <div className={styles.gridIcon} style={{ color: '#e74c3c', background: 'rgba(231, 76, 60, 0.1)' }}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+                      <div className={styles.gridText}>
+                        <h3>Litiges & Support</h3>
+                        <p style={{ color: stats?.tickets?.filter(t => t.statut === 'ouvert')?.length ? 'var(--color-primary-red)' : '' }}>{stats?.tickets?.filter(t => t.statut === 'ouvert')?.length || 0} ouvert(s)</p>
                       </div>
                     </div>
                   </div>
@@ -145,7 +172,10 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                 {/* DRIVERS & PENDING */}
                 {(activeTab === 'drivers' || activeTab === 'pending') && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>{activeTab === 'drivers' ? 'Gestion des Livreurs Inscrits' : 'Candidatures en Attente'}</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>{activeTab === 'drivers' ? 'Gestion des Livreurs Inscrits' : 'Candidatures en Attente'}</h3>
+                      {activeTab === 'drivers' && <button onClick={() => downloadCSV(stats?.allDrivers, 'livreurs_export')} style={{ background: '#2980b9', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold' }}>Exporter CSV</button>}
+                    </div>
                     <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                         <thead>
@@ -189,6 +219,12 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                                 {(driver.status === 'approved' || driver.status === 'actif') && (
                                   <button onClick={() => { if(window.confirm('Suspendre ce livreur ?')) suspendDriver(driver.id); }} style={{ background: '#f39c12', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Suspendre</button>
                                 )}
+                                {(driver.status === 'approved' || driver.status === 'actif') && !driver.is_verified && (
+                                  <button onClick={() => verifyDriver(driver.id, true)} style={{ background: '#3498db', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Vérifier (Badge)</button>
+                                )}
+                                {(driver.status === 'approved' || driver.status === 'actif') && driver.is_verified && (
+                                  <button onClick={() => verifyDriver(driver.id, false)} style={{ background: '#bdc3c7', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Retirer Badge</button>
+                                )}
                                 <button onClick={() => { if(window.confirm('Supprimer définitivement ce livreur ?')) deleteDriver(driver.id); }} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
                               </td>
                             </tr>
@@ -204,12 +240,155 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                   </div>
                 )}
 
-                {/* OTHER TABS */}
-                {['clients', 'subscriptions', 'stats', 'settings'].includes(activeTab) && (
+                {/* CLIENTS & SUBSCRIPTIONS */}
+                {(activeTab === 'clients' || activeTab === 'subscriptions') && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h3>
-                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', padding: '30px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>
-                      Module en cours de développement...
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>{activeTab === 'clients' ? 'Gestion des Clients' : 'Abonnements Premium'}</h3>
+                      {activeTab === 'clients' && <button onClick={() => downloadCSV(stats?.allClients, 'clients_export')} style={{ background: '#2980b9', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold' }}>Exporter CSV</button>}
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
+                            <th style={{ padding: '12px 15px' }}>Nom</th>
+                            <th style={{ padding: '12px 15px' }}>Contact</th>
+                            <th style={{ padding: '12px 15px' }}>Abonnement Premium</th>
+                            <th style={{ padding: '12px 15px' }}>Date d'inscription</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(activeTab === 'clients' ? stats?.allClients : stats?.allClients?.filter(c => c.subscription_paid))?.map(client => (
+                            <tr key={client.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                              <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>{client.name}</td>
+                              <td style={{ padding: '12px 15px' }}>{client.phone}</td>
+                              <td style={{ padding: '12px 15px' }}>
+                                <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', background: client.subscription_paid ? '#e6f4ea' : '#fdf6e3', color: client.subscription_paid ? '#1e8e3e' : '#b58900' }}>
+                                  {client.subscription_paid ? 'Actif' : 'Inactif'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)' }}>{new Date(client.created_at).toLocaleDateString('fr-FR')}</td>
+                            </tr>
+                          ))}
+                          {(activeTab === 'clients' ? stats?.allClients : stats?.allClients?.filter(c => c.subscription_paid))?.length === 0 && (
+                            <tr>
+                              <td colSpan={4} style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucun client trouvé.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* STATS */}
+                {activeTab === 'stats' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Statistiques Plateforme</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+                      <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Revenus Estimés</h4>
+                        <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--color-primary-green)' }}>{stats?.totalRevenue?.toLocaleString('fr-FR')} FCFA</div>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Basé sur les déblocages simulés</span>
+                      </div>
+                      <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Déblocages Totaux</h4>
+                        <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--color-primary-brown)' }}>{stats?.totalUnlocks || 0}</div>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Contacts dévoilés</span>
+                      </div>
+                      <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Messages Échangés</h4>
+                        <div style={{ fontSize: '2.5rem', fontWeight: '900', color: '#8e44ad' }}>{stats?.totalMessages || 0}</div>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Dans les chats intégrés</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SETTINGS */}
+                {activeTab === 'settings' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Configuration & Tarifs</h3>
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', padding: '25px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <label style={{ fontWeight: 'bold', color: 'var(--color-charcoal)' }}>Coût de déblocage (FCFA)</label>
+                          <input type="number" defaultValue={200} style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem', width: '100%', boxSizing: 'border-box' }} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <label style={{ fontWeight: 'bold', color: 'var(--color-charcoal)' }}>Abonnement Premium Client (FCFA/mois)</label>
+                          <input type="number" defaultValue={5000} style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem', width: '100%', boxSizing: 'border-box' }} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <label style={{ fontWeight: 'bold', color: 'var(--color-charcoal)' }}>Abonnement Livreur (FCFA/semaine)</label>
+                          <input type="number" defaultValue={500} style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem', width: '100%', boxSizing: 'border-box' }} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button onClick={() => alert('Paramètres sauvegardés avec succès !')} style={{ background: 'var(--color-primary-brown)', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s', width: '100%' }}>
+                            Sauvegarder les modifications
+                          </button>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', gridColumn: '1 / -1', marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+                          <h4 style={{ margin: 0, color: 'var(--color-primary-brown)' }}>Annonce Globale (Push In-App)</h4>
+                          <textarea id="annonceText" placeholder="Saisissez un message qui s'affichera chez tous les utilisateurs..." style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem', width: '100%', boxSizing: 'border-box', minHeight: '100px' }}></textarea>
+                          <button onClick={async () => {
+                            const val = (document.getElementById('annonceText') as HTMLTextAreaElement).value;
+                            if (val) {
+                               await createAnnonce(val);
+                               alert('Annonce publiée avec succès !');
+                               (document.getElementById('annonceText') as HTMLTextAreaElement).value = '';
+                            }
+                          }} style={{ background: '#8e44ad', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s', width: 'fit-content' }}>
+                            Publier l'annonce
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* LITIGES */}
+                {activeTab === 'litiges' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Litiges & Support</h3>
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
+                            <th style={{ padding: '12px 15px' }}>Date</th>
+                            <th style={{ padding: '12px 15px' }}>Client</th>
+                            <th style={{ padding: '12px 15px' }}>Livreur concerné</th>
+                            <th style={{ padding: '12px 15px' }}>Description du problème</th>
+                            <th style={{ padding: '12px 15px' }}>Statut</th>
+                            <th style={{ padding: '12px 15px', textAlign: 'right' }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stats?.tickets?.map(ticket => (
+                            <tr key={ticket.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                              <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)', fontSize: '0.85rem' }}>{new Date(ticket.created_at).toLocaleString('fr-FR')}</td>
+                              <td style={{ padding: '12px 15px' }}><strong>{ticket.clients_livraison?.name}</strong><br/><span style={{fontSize: '0.8rem'}}>{ticket.clients_livraison?.phone}</span></td>
+                              <td style={{ padding: '12px 15px' }}><strong>{ticket.livreurs?.name}</strong><br/><span style={{fontSize: '0.8rem'}}>{ticket.livreurs?.phone}</span></td>
+                              <td style={{ padding: '12px 15px', maxWidth: '300px', whiteSpace: 'pre-wrap' }}>{ticket.description}</td>
+                              <td style={{ padding: '12px 15px' }}>
+                                <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', background: ticket.statut === 'resolu' ? '#e6f4ea' : '#fce8e6', color: ticket.statut === 'resolu' ? '#1e8e3e' : '#d93025' }}>
+                                  {ticket.statut === 'resolu' ? 'Résolu' : 'Ouvert'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                                {ticket.statut === 'ouvert' && (
+                                  <button onClick={() => { if(window.confirm('Marquer comme résolu ?')) resolveTicket(ticket.id); }} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Résoudre</button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                          {(!stats?.tickets || stats?.tickets?.length === 0) && (
+                            <tr>
+                              <td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucun litige signalé.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}

@@ -11,6 +11,9 @@ export interface AdminStats {
   pendingDrivers: any[];
   allChats: any[];
   allDrivers: any[];
+  allClients: any[];
+  annonces: any[];
+  tickets: any[];
 }
 
 export function useAdminStats(isAdmin: boolean) {
@@ -23,7 +26,10 @@ export function useAdminStats(isAdmin: boolean) {
     totalMessages: 0,
     pendingDrivers: [],
     allChats: [],
-    allDrivers: []
+    allDrivers: [],
+    allClients: [],
+    annonces: [],
+    tickets: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,16 +90,39 @@ export function useAdminStats(isAdmin: boolean) {
         
         if (allDriversError) throw allDriversError;
 
+        // Fetch all clients
+        const { data: allClientsData, count: clientsCount, error: clientsError } = await supabase
+          .from('clients_livraison')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false });
+
+        if (clientsError) throw clientsError;
+
+        // Fetch tickets (graceful fail if table not exists)
+        const { data: ticketsData } = await supabase
+          .from('tickets_support')
+          .select('*, clients_livraison(name, phone), livreurs(name, phone)')
+          .order('created_at', { ascending: false });
+
+        // Fetch annonces
+        const { data: annoncesData } = await supabase
+          .from('annonces')
+          .select('*')
+          .order('created_at', { ascending: false });
+
         setStats({
           totalUnlocks: unlocksCount || 0,
           totalRevenue: (unlocksCount || 0) * 200,
           totalDrivers: driversCount || 0,
-          totalClients: 0,
-          totalPremium: 0,
+          totalClients: clientsCount || 0,
+          totalPremium: allClientsData?.filter(c => c.subscription_paid)?.length || 0,
           totalMessages: messagesCount || 0,
           pendingDrivers: pending || [],
           allChats: chats || [],
-          allDrivers: allDriversData || []
+          allDrivers: allDriversData || [],
+          allClients: allClientsData || [],
+          annonces: annoncesData || [],
+          tickets: ticketsData || []
         });
       } catch (err: any) {
         setError(err.message);
@@ -163,5 +192,48 @@ export function useAdminStats(isAdmin: boolean) {
     return true;
   };
 
-  return { stats, loading, error, approveDriver, suspendDriver, deleteDriver };
+  const verifyDriver = async (driverId: string, isVerified: boolean) => {
+    const { error } = await supabase
+      .from('livreurs')
+      .update({ is_verified: isVerified })
+      .eq('id', driverId);
+    
+    if (error) {
+      setError(error.message);
+      return false;
+    }
+    
+    setStats(prev => ({
+      ...prev,
+      allDrivers: prev.allDrivers.map(d => d.id === driverId ? { ...d, is_verified: isVerified } : d)
+    }));
+    return true;
+  };
+
+  const createAnnonce = async (message: string) => {
+    // Disable all existing
+    await supabase.from('annonces').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+    // Create new
+    const { error } = await supabase.from('annonces').insert([{ message, is_active: true }]);
+    if (error) {
+      setError(error.message);
+      return false;
+    }
+    return true;
+  };
+
+  const resolveTicket = async (ticketId: string) => {
+    const { error } = await supabase.from('tickets_support').update({ statut: 'resolu' }).eq('id', ticketId);
+    if (error) {
+      setError(error.message);
+      return false;
+    }
+    setStats(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? { ...t, statut: 'resolu' } : t)
+    }));
+    return true;
+  };
+
+  return { stats, loading, error, approveDriver, suspendDriver, deleteDriver, verifyDriver, createAnnonce, resolveTicket };
 }

@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS public.livreurs (
     cni_recto TEXT,
     cni_verso TEXT,
     selfie TEXT,
+    is_verified BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -123,7 +124,7 @@ CREATE TRIGGER on_auth_user_created
 
 CREATE OR REPLACE VIEW public.livreurs_view AS
 SELECT 
-    l.id, l.name, l.vehicle, l.lat, l.lng, l.initial, l.contacts_count, l.subscription_paid, l.status, l.views_count, l.rating, l.city, l.created_at, l.selfie,
+    l.id, l.name, l.vehicle, l.lat, l.lng, l.initial, l.contacts_count, l.subscription_paid, l.status, l.views_count, l.rating, l.city, l.created_at, l.selfie, l.is_verified,
     CASE 
         -- Période de gratuité de 30 jours (du 1er juin au 1er juillet 2026 inclus)
         WHEN now() < '2026-07-02 00:00:00+00'::timestamptz THEN l.phone
@@ -240,6 +241,47 @@ CREATE POLICY "Users can manage own chats" ON public.chats_livraison
     );
 
 CREATE POLICY "Admins can manage all chats" ON public.chats_livraison
+    FOR ALL TO authenticated USING (
+        (auth.jwt()->'app_metadata'->>'role') = 'admin'
+    );
+
+-- 5. Politiques RLS des Annonces Globales
+CREATE TABLE IF NOT EXISTS public.annonces (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.annonces ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read active annonces" ON public.annonces
+    FOR SELECT USING (is_active = true);
+
+CREATE POLICY "Admins manage annonces" ON public.annonces
+    FOR ALL TO authenticated USING (
+        (auth.jwt()->'app_metadata'->>'role') = 'admin'
+    );
+
+-- 6. Politiques RLS des Litiges (Tickets Support)
+CREATE TABLE IF NOT EXISTS public.tickets_support (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID REFERENCES public.clients_livraison(id) ON DELETE CASCADE,
+    rider_id UUID REFERENCES public.livreurs(id) ON DELETE CASCADE,
+    description TEXT NOT NULL,
+    statut TEXT NOT NULL DEFAULT 'ouvert' CHECK (statut IN ('ouvert', 'resolu')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.tickets_support ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Clients read own tickets" ON public.tickets_support
+    FOR SELECT TO authenticated USING (auth.uid() = client_id);
+
+CREATE POLICY "Clients insert tickets" ON public.tickets_support
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = client_id);
+
+CREATE POLICY "Admins manage all tickets" ON public.tickets_support
     FOR ALL TO authenticated USING (
         (auth.jwt()->'app_metadata'->>'role') = 'admin'
     );
