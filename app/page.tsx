@@ -135,16 +135,16 @@ export default function Home() {
   };
 
   const handleMarkerClick = (livreur: any) => {
-    // Logique des 5 clics maximum pour les clients payants non-premium
+    // Logique des 3 clics maximum pour les clients payants non-premium
     if (hasPaidMapService && role !== 'admin' && role !== 'rider' && !isPremiumClient) {
       let clicks = parseInt(sessionStorage.getItem('clientClicks') || '0');
       clicks += 1;
       
-      if (clicks > 5) {
+      if (clicks > 3) {
         setHasPaidMapService(false);
         sessionStorage.setItem('hasPaidMapService', 'false');
         setUssdDialed(false); // Réinitialiser le paiement
-        setToast({ message: "Vous avez consulté 5 livreurs. Veuillez renouveler l'accès.", type: "warning" });
+        setToast({ message: "Vous avez consulté 3 livreurs. Veuillez renouveler l'accès.", type: "warning" });
         return; // Bloque l'ouverture du profil
       } else {
         sessionStorage.setItem('clientClicks', clicks.toString());
@@ -552,22 +552,23 @@ export default function Home() {
                       width: '100%', 
                       background: 'var(--color-primary-green)', 
                       color: 'white', 
-                      padding: '16px', 
+                      padding: '20px 16px', 
                       borderRadius: '16px', 
-                      fontSize: '0.92rem', 
+                      fontSize: '1.1rem', 
                       fontWeight: 'bold', 
                       border: 'none', 
                       display: 'flex', 
+                      flexDirection: 'column',
                       alignItems: 'center', 
                       justifyContent: 'center', 
-                      gap: '10px', 
+                      gap: '12px', 
                       boxShadow: '0 8px 25px rgba(39, 174, 96, 0.4)', 
                       cursor: 'pointer', 
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <img src="/orange_money.png" alt="OM" style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: 'white', padding: '2px' }} />
-                    Utiliser les services — 200 FCFA
+                    <img src="/orange_money.png" alt="OM" style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'contain', background: 'white', padding: '5px' }} />
+                    <span>Utiliser le service 200 Francs</span>
                   </button>
                 </div>
               )}
