@@ -140,6 +140,14 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                         <p style={{ color: stats?.tickets?.filter(t => t.statut === 'ouvert')?.length ? 'var(--color-primary-red)' : '' }}>{stats?.tickets?.filter(t => t.statut === 'ouvert')?.length || 0} ouvert(s)</p>
                       </div>
                     </div>
+
+                    <div className={styles.gridCard} onClick={() => setActiveTab('paiements')}>
+                      <div className={styles.gridIcon} style={{ color: '#27ae60', background: 'rgba(39, 174, 96, 0.1)' }}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                      <div className={styles.gridText}>
+                        <h3>Reçus de Paiement</h3>
+                        <p>{stats?.paiements?.length || 0} reçu(s) vérifié(s)</p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -457,6 +465,53 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                   </div>
                 )}
                 
+                {/* PAIEMENTS */}
+                {activeTab === 'paiements' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Reçus de Paiement Vérifiés (IA)</h3>
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
+                            <th style={{ padding: '12px 15px' }}>Date</th>
+                            <th style={{ padding: '12px 15px' }}>ID Transaction</th>
+                            <th style={{ padding: '12px 15px' }}>Montant</th>
+                            <th style={{ padding: '12px 15px' }}>Image Reçu</th>
+                            <th style={{ padding: '12px 15px' }}>Statut</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stats?.paiements?.map(paiement => (
+                            <tr key={paiement.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                              <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)', fontSize: '0.85rem' }}>{new Date(paiement.created_at).toLocaleString('fr-FR')}</td>
+                              <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>{paiement.transaction_id}</td>
+                              <td style={{ padding: '12px 15px', color: 'var(--color-primary-green)', fontWeight: 'bold' }}>{paiement.montant} FCFA</td>
+                              <td style={{ padding: '12px 15px' }}>
+                                {paiement.image_url ? (
+                                  <a href={paiement.image_url} target="_blank" rel="noopener noreferrer" style={{ color: '#3498db', textDecoration: 'underline' }}>
+                                    Voir la capture
+                                  </a>
+                                ) : (
+                                  <span style={{ color: 'var(--color-charcoal-muted)' }}>Aucune</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '12px 15px' }}>
+                                <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', background: paiement.statut === 'VALIDE' ? '#e6f4ea' : '#fce8e6', color: paiement.statut === 'VALIDE' ? '#1e8e3e' : '#d93025' }}>
+                                  {paiement.statut}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                          {(!stats?.paiements || stats?.paiements?.length === 0) && (
+                            <tr>
+                              <td colSpan={5} style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucun paiement enregistré.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -14,6 +14,7 @@ export interface AdminStats {
   allClients: any[];
   annonces: any[];
   tickets: any[];
+  paiements: any[];
 }
 
 export function useAdminStats(isAdmin: boolean) {
@@ -29,7 +30,8 @@ export function useAdminStats(isAdmin: boolean) {
     allDrivers: [],
     allClients: [],
     annonces: [],
-    tickets: []
+    tickets: [],
+    paiements: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +112,12 @@ export function useAdminStats(isAdmin: boolean) {
           .select('*')
           .order('created_at', { ascending: false });
 
+        // Fetch paiements
+        const { data: paiementsData } = await supabase
+          .from('paiements')
+          .select('*')
+          .order('created_at', { ascending: false });
+
         setStats({
           totalUnlocks: unlocksCount || 0,
           totalRevenue: (unlocksCount || 0) * 200,
@@ -122,7 +130,8 @@ export function useAdminStats(isAdmin: boolean) {
           allDrivers: allDriversData || [],
           allClients: allClientsData || [],
           annonces: annoncesData || [],
-          tickets: ticketsData || []
+          tickets: ticketsData || [],
+          paiements: paiementsData || []
         });
       } catch (err: any) {
         setError(err.message);

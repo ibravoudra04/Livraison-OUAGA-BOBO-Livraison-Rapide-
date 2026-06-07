@@ -64,27 +64,71 @@ export default function Home() {
   }, []);
 
   React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    let isApiDone = false;
+    let apiSuccess = false;
+    let apiErrorMsg = "";
+
     if (paymentFlowStep === 'VERIFYING') {
       setVerificationSeconds(7);
-      const interval = setInterval(() => {
+      
+      const verifyPayment = async () => {
+        try {
+          const response = await fetch('/api/verify-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              imageBase64: screenshotPreview, 
+              montantAttendu: 200, 
+              userId: user?.id 
+            })
+          });
+          const data = await response.json();
+          isApiDone = true;
+          apiSuccess = data.success;
+          if (!data.success) {
+            apiErrorMsg = data.message || "Erreur de vérification.";
+          }
+        } catch (err) {
+          isApiDone = true;
+          apiSuccess = false;
+          apiErrorMsg = "Erreur de connexion au serveur.";
+        }
+      };
+      
+      verifyPayment();
+
+      interval = setInterval(() => {
         setVerificationSeconds((prev) => {
+          if (isApiDone && !apiSuccess) {
+            clearInterval(interval);
+            setPaymentFlowStep('UPLOAD');
+            setToast({ message: apiErrorMsg, type: "error" });
+            return prev;
+          }
+
           if (prev <= 1) {
             clearInterval(interval);
-            sessionStorage.setItem('hasPaidMapService', 'true');
-            sessionStorage.setItem('clientClicks', '0');
-            setHasPaidMapService(true);
-            setPaymentFlowStep('DIAL');
-            setUssdDialed(false);
-            setScreenshotPreview(null);
-            setToast({ message: "Vérification réussie ! La carte est débloquée.", type: "success" });
+            if (isApiDone && apiSuccess) {
+              sessionStorage.setItem('hasPaidMapService', 'true');
+              sessionStorage.setItem('clientClicks', '0');
+              setHasPaidMapService(true);
+              setPaymentFlowStep('DIAL');
+              setUssdDialed(false);
+              setScreenshotPreview(null);
+              setToast({ message: "Paiement vérifié avec succès !", type: "success" });
+            } else {
+              setPaymentFlowStep('UPLOAD');
+              setToast({ message: "Le délai a expiré ou l'analyse a échoué.", type: "error" });
+            }
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
-      return () => clearInterval(interval);
     }
-  }, [paymentFlowStep]);
+    return () => clearInterval(interval);
+  }, [paymentFlowStep, screenshotPreview, user]);
 
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -485,9 +529,26 @@ export default function Home() {
                   setPaymentFlowStep('DIAL');
                   setScreenshotPreview(null);
                 }}
-                style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(255, 255, 255, 0.65)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-charcoal)', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', zIndex: 1010 }}
+                style={{ 
+                  position: 'absolute', 
+                  top: '15px', 
+                  left: '15px', 
+                  zIndex: 1010, 
+                  backgroundColor: 'rgba(255,255,255,0.95)', 
+                  border: '1px solid rgba(0,0,0,0.05)', 
+                  borderRadius: '12px', 
+                  width: '45px', 
+                  height: '45px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
+                  cursor: 'pointer',
+                  color: '#8D5537',
+                  transition: 'transform 0.2s'
+                }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
               </button>
 
             <div style={{ 
@@ -529,7 +590,7 @@ export default function Home() {
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <img src="/orange_money.png" alt="OM" style={{ width: '26px', height: '26px', borderRadius: '4px', objectFit: 'contain', background: 'white', padding: '1px' }} />
+                    <img src="/orange_money.png" alt="OM" style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: 'white', padding: '2px' }} />
                     Utiliser les services — 200 FCFA
                   </button>
                 </div>
