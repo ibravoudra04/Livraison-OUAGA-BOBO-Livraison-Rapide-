@@ -1,6 +1,23 @@
 import React, { useState } from 'react';
 import { useDriverOnboarding } from '@/hooks/useDriverOnboarding';
 
+const ouagaQuartiers = [
+  { name: "Sélectionnez votre quartier...", lat: 0, lng: 0 },
+  { name: "Centre-ville (Koulouba / ZACA)", lat: 12.3714, lng: -1.5197 },
+  { name: "Ouaga 2000", lat: 12.3167, lng: -1.4988 },
+  { name: "Patte d'Oie", lat: 12.3333, lng: -1.5167 },
+  { name: "Gounghin", lat: 12.3619, lng: -1.5458 },
+  { name: "Pissy", lat: 12.3556, lng: -1.5644 },
+  { name: "Zogona", lat: 12.3833, lng: -1.4981 },
+  { name: "Dassasgho", lat: 12.3789, lng: -1.4883 },
+  { name: "Tampouy", lat: 12.4083, lng: -1.5583 },
+  { name: "Somgandé", lat: 12.4167, lng: -1.4833 },
+  { name: "Cissin", lat: 12.3422, lng: -1.5411 },
+  { name: "Kalgondé", lat: 12.3486, lng: -1.5033 },
+  { name: "Karpala", lat: 12.3333, lng: -1.4667 },
+  { name: "Rayongo / Zone 1", lat: 12.3500, lng: -1.4500 },
+];
+
 interface DriverRegistrationProps {
   onGoToLogin: () => void;
   onSuccess: () => void;
@@ -179,24 +196,7 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
 
 
 
-const ouagaQuartiers = [
-  { name: "Sélectionnez votre quartier...", lat: 0, lng: 0 },
-  { name: "Centre-ville (Koulouba / ZACA)", lat: 12.3714, lng: -1.5197 },
-  { name: "Ouaga 2000", lat: 12.3167, lng: -1.4988 },
-  { name: "Patte d'Oie", lat: 12.3333, lng: -1.5167 },
-  { name: "Gounghin", lat: 12.3619, lng: -1.5458 },
-  { name: "Pissy", lat: 12.3556, lng: -1.5644 },
-  { name: "Zogona", lat: 12.3833, lng: -1.4981 },
-  { name: "Dassasgho", lat: 12.3789, lng: -1.4883 },
-  { name: "Tampouy", lat: 12.4083, lng: -1.5583 },
-  { name: "Somgandé", lat: 12.4167, lng: -1.4833 },
-  { name: "Cissin", lat: 12.3422, lng: -1.5411 },
-  { name: "Kalgondé", lat: 12.3486, lng: -1.5033 },
-  { name: "Karpala", lat: 12.3333, lng: -1.4667 },
-  { name: "Rayongo / Zone 1", lat: 12.3500, lng: -1.4500 },
-];
 
-// ... inside the component, replacing the geo-status-card block:
         <div className="form-group">
           <label className="form-label">Localisation GPS (Point d'attente) *</label>
           <div className="geo-status-card" style={{ flexDirection: 'column', alignItems: 'stretch' }}>

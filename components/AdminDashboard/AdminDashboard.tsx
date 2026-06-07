@@ -9,7 +9,7 @@ interface AdminDashboardProps {
   isAdmin: boolean;
 }
 
-type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'subscriptions' | 'stats' | 'settings' | 'litiges';
+type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'subscriptions' | 'stats' | 'settings' | 'litiges' | 'paiements';
 
 export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashboardProps) {
   const { stats, loading, approveDriver, suspendDriver, deleteDriver, verifyDriver, createAnnonce, resolveTicket } = useAdminStats(isAdmin);
