@@ -64,14 +64,9 @@ export default function Home() {
   }, []);
 
   React.useEffect(() => {
-    let interval: NodeJS.Timeout;
-    let isApiDone = false;
-    let apiSuccess = false;
-    let apiErrorMsg = "";
+    let isMounted = true;
 
     if (paymentFlowStep === 'VERIFYING') {
-      setVerificationSeconds(7);
-      
       const verifyPayment = async () => {
         try {
           const response = await fetch('/api/verify-payment', {
@@ -84,50 +79,31 @@ export default function Home() {
             })
           });
           const data = await response.json();
-          isApiDone = true;
-          apiSuccess = data.success;
-          if (!data.success) {
-            apiErrorMsg = data.message || "Erreur de vérification.";
+          
+          if (!isMounted) return;
+
+          if (data.success) {
+            sessionStorage.setItem('hasPaidMapService', 'true');
+            sessionStorage.setItem('clientClicks', '0');
+            setHasPaidMapService(true);
+            setPaymentFlowStep('DIAL');
+            setUssdDialed(false);
+            setScreenshotPreview(null);
+            setToast({ message: "Paiement vérifié avec succès par l'IA !", type: "success" });
+          } else {
+            setPaymentFlowStep('UPLOAD');
+            setToast({ message: data.message || "Erreur : reçu invalide.", type: "error" });
           }
         } catch (err) {
-          isApiDone = true;
-          apiSuccess = false;
-          apiErrorMsg = "Erreur de connexion au serveur.";
+          if (!isMounted) return;
+          setPaymentFlowStep('UPLOAD');
+          setToast({ message: "Erreur de connexion au serveur d'IA.", type: "error" });
         }
       };
       
       verifyPayment();
-
-      interval = setInterval(() => {
-        setVerificationSeconds((prev) => {
-          if (isApiDone && !apiSuccess) {
-            clearInterval(interval);
-            setPaymentFlowStep('UPLOAD');
-            setToast({ message: apiErrorMsg, type: "error" });
-            return prev;
-          }
-
-          if (prev <= 1) {
-            clearInterval(interval);
-            if (isApiDone && apiSuccess) {
-              sessionStorage.setItem('hasPaidMapService', 'true');
-              sessionStorage.setItem('clientClicks', '0');
-              setHasPaidMapService(true);
-              setPaymentFlowStep('DIAL');
-              setUssdDialed(false);
-              setScreenshotPreview(null);
-              setToast({ message: "Paiement vérifié avec succès !", type: "success" });
-            } else {
-              setPaymentFlowStep('UPLOAD');
-              setToast({ message: "Le délai a expiré ou l'analyse a échoué.", type: "error" });
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
     }
-    return () => clearInterval(interval);
+    return () => { isMounted = false; };
   }, [paymentFlowStep, screenshotPreview, user]);
 
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -668,9 +644,9 @@ export default function Home() {
                     }
                   `}</style>
                   
-                  <h3 style={{ color: 'var(--color-primary-green)', fontSize: '1.25rem', fontWeight: 800, marginBottom: '8px', margin: 0 }}>Vérification en cours...</h3>
+                  <h3 style={{ color: 'var(--color-primary-green)', fontSize: '1.25rem', fontWeight: 800, marginBottom: '8px', margin: 0 }}>Vérification IA en cours...</h3>
                   <p style={{ color: 'var(--color-charcoal-light)', fontSize: '0.9rem', lineHeight: '1.4', margin: 0 }}>
-                    Vérification de la capture d'écran. Veuillez patienter <strong>{verificationSeconds}s</strong>.
+                    L'intelligence artificielle analyse votre capture d'écran. Veuillez patienter un instant.
                   </p>
                 </div>
               )}
