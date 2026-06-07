@@ -57,16 +57,14 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
             if (error.code === 2) errorMessage = "Position introuvable (GPS désactivé ou signal faible).";
             if (error.code === 3) errorMessage = "Délai d'attente dépassé. Réessayez à l'extérieur.";
             
-            alert(`${errorMessage}\n\nUne position par défaut sera utilisée temporairement.`);
-            setLocation({ lat: 12.3714, lng: -1.5197 });
-            setGeoStatus('success');
+            alert(`${errorMessage}\n\nVeuillez sélectionner votre quartier manuellement.`);
+            setGeoStatus('error');
           },
           { enableHighAccuracy: highAccuracy, timeout: 15000, maximumAge: 60000 }
         );
       } else {
-        alert("Géo-localisation non supportée. Utilisation de la position par défaut.");
-        setLocation({ lat: 12.3714, lng: -1.5197 });
-        setGeoStatus('success');
+        alert("Géo-localisation non supportée. Veuillez sélectionner votre quartier manuellement.");
+        setGeoStatus('error');
       }
     };
     
@@ -181,19 +179,68 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
 
 
 
+const ouagaQuartiers = [
+  { name: "Sélectionnez votre quartier...", lat: 0, lng: 0 },
+  { name: "Centre-ville (Koulouba / ZACA)", lat: 12.3714, lng: -1.5197 },
+  { name: "Ouaga 2000", lat: 12.3167, lng: -1.4988 },
+  { name: "Patte d'Oie", lat: 12.3333, lng: -1.5167 },
+  { name: "Gounghin", lat: 12.3619, lng: -1.5458 },
+  { name: "Pissy", lat: 12.3556, lng: -1.5644 },
+  { name: "Zogona", lat: 12.3833, lng: -1.4981 },
+  { name: "Dassasgho", lat: 12.3789, lng: -1.4883 },
+  { name: "Tampouy", lat: 12.4083, lng: -1.5583 },
+  { name: "Somgandé", lat: 12.4167, lng: -1.4833 },
+  { name: "Cissin", lat: 12.3422, lng: -1.5411 },
+  { name: "Kalgondé", lat: 12.3486, lng: -1.5033 },
+  { name: "Karpala", lat: 12.3333, lng: -1.4667 },
+  { name: "Rayongo / Zone 1", lat: 12.3500, lng: -1.4500 },
+];
+
+// ... inside the component, replacing the geo-status-card block:
         <div className="form-group">
           <label className="form-label">Localisation GPS (Point d'attente) *</label>
-          <div className="geo-status-card">
-            <div className="geo-status-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <div className="geo-status-card" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <div className="geo-status-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              </div>
+              <div className="geo-status-details" style={{ flex: 1 }}>
+                <h4>{geoStatus === 'success' ? 'Position enregistrée' : geoStatus === 'error' ? 'Saisie manuelle requise' : 'Détection GPS requise'}</h4>
+                <p>{geoStatus === 'success' ? `Lat: ${location.lat.toFixed(4)}, Lng: ${location.lng.toFixed(4)}` : 'Pour apparaître sur la carte, nous devons enregistrer votre position.'}</p>
+              </div>
+              {geoStatus !== 'error' && (
+                <button type="button" className="btn btn-primary" onClick={handleGeolocation} style={{ width:'auto', padding:'8px 12px', fontSize:'0.8rem' }}>
+                  {geoStatus === 'loading' ? 'Recherche...' : 'Me géolocaliser'}
+                </button>
+              )}
             </div>
-            <div className="geo-status-details">
-              <h4>{geoStatus === 'success' ? 'Position enregistrée' : 'Détection GPS requise'}</h4>
-              <p>{geoStatus === 'success' ? `Lat: ${location.lat.toFixed(4)}, Lng: ${location.lng.toFixed(4)}` : 'Pour apparaître sur la carte, nous devons enregistrer votre position.'}</p>
-            </div>
-            <button type="button" className="btn btn-primary" onClick={handleGeolocation} style={{ width:'auto', padding:'8px 12px', fontSize:'0.8rem' }}>
-              {geoStatus === 'loading' ? 'Recherche...' : 'Me géolocaliser'}
-            </button>
+            
+            {geoStatus === 'error' && (
+              <div style={{ marginTop: '15px' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-primary-red)', marginBottom: '8px' }}>
+                  Échec du GPS. Veuillez sélectionner votre quartier :
+                </p>
+                <select 
+                  className="form-input" 
+                  style={{ width: '100%', padding: '12px' }}
+                  onChange={(e) => {
+                    const selected = ouagaQuartiers.find(q => q.name === e.target.value);
+                    if (selected && selected.lat !== 0) {
+                      setLocation({ lat: selected.lat, lng: selected.lng });
+                      setGeoStatus('success');
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  {ouagaQuartiers.map(q => (
+                    <option key={q.name} value={q.name} disabled={q.lat === 0}>{q.name}</option>
+                  ))}
+                </select>
+                <button type="button" onClick={handleGeolocation} style={{ background: 'none', border: 'none', color: '#3498db', textDecoration: 'underline', marginTop: '10px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                  Réessayer la localisation automatique
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
