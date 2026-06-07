@@ -644,10 +644,7 @@ export default function Home() {
                     }
                   `}</style>
                   
-                  <h3 style={{ color: 'var(--color-primary-green)', fontSize: '1.25rem', fontWeight: 800, marginBottom: '8px', margin: 0 }}>Vérification IA en cours...</h3>
-                  <p style={{ color: 'var(--color-charcoal-light)', fontSize: '0.9rem', lineHeight: '1.4', margin: 0 }}>
-                    L'intelligence artificielle analyse votre capture d'écran. Veuillez patienter un instant.
-                  </p>
+                  <h3 style={{ color: 'var(--color-primary-green)', fontSize: '1.25rem', fontWeight: 800, marginBottom: '8px', margin: 0 }}>Vérification en cours...</h3>
                 </div>
               )}
             </div>
