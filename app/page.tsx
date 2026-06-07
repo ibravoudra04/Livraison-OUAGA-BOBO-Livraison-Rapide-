@@ -50,6 +50,9 @@ export default function Home() {
   const [hasPaidMapService, setHasPaidMapService] = useState<boolean>(false);
   const [isPremiumClient, setIsPremiumClient] = useState<boolean>(false);
   const [ussdDialed, setUssdDialed] = useState<boolean>(false);
+  const [paymentFlowStep, setPaymentFlowStep] = useState<'DIAL' | 'UPLOAD' | 'VERIFYING'>('DIAL');
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [verificationSeconds, setVerificationSeconds] = useState<number>(7);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -61,16 +64,38 @@ export default function Home() {
   }, []);
 
   React.useEffect(() => {
-    if (ussdDialed) {
-      const timer = setTimeout(() => {
-        sessionStorage.setItem('hasPaidMapService', 'true');
-        sessionStorage.setItem('clientClicks', '0'); // Reset clicks on payment
-        setHasPaidMapService(true);
-        setUssdDialed(false);
-      }, 15000);
-      return () => clearTimeout(timer);
+    if (paymentFlowStep === 'VERIFYING') {
+      setVerificationSeconds(7);
+      const interval = setInterval(() => {
+        setVerificationSeconds((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            sessionStorage.setItem('hasPaidMapService', 'true');
+            sessionStorage.setItem('clientClicks', '0');
+            setHasPaidMapService(true);
+            setPaymentFlowStep('DIAL');
+            setUssdDialed(false);
+            setScreenshotPreview(null);
+            setToast({ message: "Vérification réussie ! La carte est débloquée.", type: "success" });
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
     }
-  }, [ussdDialed]);
+  }, [paymentFlowStep]);
+
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshotPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   React.useEffect(() => {
     if (user && role === 'client') {
@@ -450,44 +475,142 @@ export default function Home() {
         </div>
 
         {(!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider' && !showWelcome && !showLocationPortal) && (
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.4)' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(54, 42, 33, 0.25)' }}>
               {/* Bouton Retour (Home) */}
               <button 
                 onClick={() => {
                   setShowLocationPortal(false);
                   setShowWelcome(true);
                   setUssdDialed(false);
+                  setPaymentFlowStep('DIAL');
+                  setScreenshotPreview(null);
                 }}
-                style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-charcoal-muted)' }}
+                style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(255, 255, 255, 0.65)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-charcoal)', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', zIndex: 1010 }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
               </button>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)', padding: '25px', borderRadius: '24px', boxShadow: '0 24px 70px rgba(54, 42, 33, 0.2)', border: '1px solid rgba(255, 255, 255, 0.8)', textAlign: 'center', maxWidth: '90%', width: '320px' }}>
-              {!ussdDialed ? (
-                <>
+            <div style={{ 
+              background: 'rgba(255, 255, 255, 0.45)', 
+              border: '1px solid rgba(255, 255, 255, 0.55)', 
+              backdropFilter: 'blur(35px) saturate(180%)', 
+              WebkitBackdropFilter: 'blur(35px) saturate(180%)', 
+              padding: '30px 25px', 
+              borderRadius: '28px', 
+              boxShadow: '0 24px 70px rgba(54, 42, 33, 0.12), inset 0 1px 2.5px rgba(255, 255, 255, 0.95)', 
+              textAlign: 'center', 
+              maxWidth: '90%', 
+              width: '340px' 
+            }}>
+              {paymentFlowStep === 'DIAL' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   <button 
                     className="btn pulse" 
                     onClick={() => {
                       window.location.href = "tel:*144*2*1*67370909*200%23";
                       setUssdDialed(true);
+                      setPaymentFlowStep('UPLOAD');
                     }}
-                    style={{ width: '100%', background: 'var(--color-primary-green)', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 'bold', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 25px rgba(39, 174, 96, 0.4)', cursor: 'pointer', marginBottom: '15px' }}
+                    style={{ 
+                      width: '100%', 
+                      background: 'var(--color-primary-green)', 
+                      color: 'white', 
+                      padding: '16px', 
+                      borderRadius: '16px', 
+                      fontSize: '0.92rem', 
+                      fontWeight: 'bold', 
+                      border: 'none', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '10px', 
+                      boxShadow: '0 8px 25px rgba(39, 174, 96, 0.4)', 
+                      cursor: 'pointer', 
+                      whiteSpace: 'nowrap'
+                    }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                    Utiliser le service à 200 FCFA
+                    <img src="/orange_money.png" alt="OM" style={{ width: '26px', height: '26px', borderRadius: '4px', objectFit: 'contain', background: 'white', padding: '1px' }} />
+                    Utiliser les services — 200 FCFA
                   </button>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--color-charcoal)' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>Paiement sécurisé via</span>
-                    <div style={{ background: '#FF7900', color: 'white', fontWeight: '900', fontSize: '0.8rem', padding: '3px 6px', borderRadius: '4px', letterSpacing: '0.5px' }}>OM</div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#FF7900' }}>Orange Money</span>
-                  </div>
-                </>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
-                  <div className="geo-spinner" style={{ width: '40px', height: '40px', borderTopColor: 'var(--color-primary-green)', marginBottom: '20px' }}></div>
-                  <h3 style={{ color: 'var(--color-primary-green)', fontSize: '1.2rem', marginBottom: '8px' }}>Paiement en cours...</h3>
-                  <p style={{ color: 'var(--color-charcoal-muted)', fontSize: '0.9rem', lineHeight: '1.4' }}>Veuillez valider le transfert sur votre téléphone. La carte se débloquera automatiquement.</p>
+                </div>
+              )}
+
+              {paymentFlowStep === 'UPLOAD' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <h3 style={{ color: 'var(--color-primary-brown)', fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>Vérification Orange Money</h3>
+                  <p style={{ color: 'var(--color-charcoal-light)', fontSize: '0.85rem', lineHeight: '1.4', margin: 0 }}>
+                    Veuillez uploader la capture d'écran du SMS reçu pour finaliser l'accès.
+                  </p>
+
+                  <label style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    border: '2px dashed var(--color-charcoal-muted)', 
+                    borderRadius: '16px', 
+                    padding: '20px', 
+                    cursor: 'pointer', 
+                    background: 'rgba(255,255,255,0.25)', 
+                    transition: 'background 0.2s',
+                    minHeight: '120px'
+                  }}>
+                    <input type="file" accept="image/*" onChange={handleScreenshotChange} style={{ display: 'none' }} />
+                    {screenshotPreview ? (
+                      <img src={screenshotPreview} alt="Aperçu" style={{ maxWidth: '100%', maxHeight: '100px', borderRadius: '8px', objectFit: 'contain' }} />
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-brown)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '8px' }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal)', fontWeight: 'bold' }}>Ajouter la capture d'écran</span>
+                      </>
+                    )}
+                  </label>
+
+                  <button 
+                    onClick={() => setPaymentFlowStep('VERIFYING')}
+                    disabled={!screenshotPreview}
+                    style={{ 
+                      width: '100%', 
+                      background: screenshotPreview ? 'var(--color-primary-brown)' : 'var(--color-charcoal-muted)', 
+                      color: 'white', 
+                      padding: '14px', 
+                      borderRadius: '16px', 
+                      fontSize: '1rem', 
+                      fontWeight: 'bold', 
+                      border: 'none', 
+                      cursor: screenshotPreview ? 'pointer' : 'not-allowed', 
+                      boxShadow: screenshotPreview ? '0 8px 25px rgba(141, 85, 55, 0.3)' : 'none',
+                      transition: 'background 0.2s'
+                    }}
+                  >
+                    Confirmer le transfert
+                  </button>
+                </div>
+              )}
+
+              {paymentFlowStep === 'VERIFYING' && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '10px 0' }}>
+                  <div className="geo-spinner" style={{ 
+                    width: '45px', 
+                    height: '45px', 
+                    border: '4px solid rgba(39, 174, 96, 0.1)', 
+                    borderTopColor: 'var(--color-primary-green)', 
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    marginBottom: '20px' 
+                  }}></div>
+                  
+                  <style>{`
+                    @keyframes spin {
+                      0% { transform: rotate(0deg); }
+                      100% { transform: rotate(360deg); }
+                    }
+                  `}</style>
+                  
+                  <h3 style={{ color: 'var(--color-primary-green)', fontSize: '1.25rem', fontWeight: 800, marginBottom: '8px', margin: 0 }}>Vérification en cours...</h3>
+                  <p style={{ color: 'var(--color-charcoal-light)', fontSize: '0.9rem', lineHeight: '1.4', margin: 0 }}>
+                    Vérification de la capture d'écran. Veuillez patienter <strong>{verificationSeconds}s</strong>.
+                  </p>
                 </div>
               )}
             </div>
