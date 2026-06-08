@@ -6,10 +6,6 @@ const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:contact@livraisonrapide.app';
 
-if (vapidPublicKey && vapidPrivateKey) {
-  webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-}
-
 // Initialize inside the handler to prevent Next.js build-time errors if env vars are missing
 const getSupabaseAdmin = () => {
   return createClient(
@@ -25,6 +21,8 @@ export async function POST(request: Request) {
   }
 
   try {
+    webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+
     const { recipientId, title, message, url } = await request.json();
 
     if (!recipientId || !title || !message) {
