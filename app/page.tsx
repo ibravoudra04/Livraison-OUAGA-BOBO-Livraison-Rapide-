@@ -568,7 +568,7 @@ export default function Home() {
                     }}
                   >
                     <img src="/orange_money.png" alt="OM" style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'contain', background: 'white', padding: '5px' }} />
-                    <span>Utiliser le service 200 Francs</span>
+                    <span>Utiliser les services — 200 FCFA</span>
                   </button>
                 </div>
               )}
