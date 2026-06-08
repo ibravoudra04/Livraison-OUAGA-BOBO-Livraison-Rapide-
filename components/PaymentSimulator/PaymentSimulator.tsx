@@ -12,7 +12,7 @@ interface PaymentSimulatorProps {
 export default function PaymentSimulator({ isOpen, onClose, amount, reasonText, onPaymentSuccess }: PaymentSimulatorProps) {
   const {
     step, network, phone, pin, loading, error,
-    startPayment, selectNetwork, submitPhone, submitPin, setPhone, setPin
+    startPayment, selectNetwork, submitPhone, submitPin, setPhone, setPin, setError
   } = usePaymentSimulation();
 
   useEffect(() => {

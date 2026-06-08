@@ -2,13 +2,20 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // Using service role to bypass RLS for inserts
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const getSupabaseAdmin = () => {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key'
+  );
+};
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const getGoogleAI = () => {
+  return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'placeholder_key' });
+};
 
 export async function POST(req: Request) {
+  const supabase = getSupabaseAdmin();
+  const ai = getGoogleAI();
   try {
     const { imageBase64, montantAttendu, userId } = await req.json();
 

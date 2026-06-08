@@ -83,6 +83,7 @@ export function usePaymentSimulation() {
     submitPhone,
     submitPin,
     setPhone,
-    setPin
+    setPin,
+    setError
   };
 }
