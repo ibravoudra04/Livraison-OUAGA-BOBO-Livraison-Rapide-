@@ -55,21 +55,21 @@ export async function POST(req: Request) {
 
     // 2. Vérification mathématique (Regex + Montant)
     if (!dataIA.is_orange_money) {
-      return NextResponse.json({ success: false, message: "Ceci ne ressemble pas à un SMS Orange Money valide." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Reçu non validé. Après vérification, cette image ne correspond pas à un SMS de confirmation Orange Money valide. Veuillez uploader la capture d'écran originale du SMS reçu après votre paiement." }, { status: 400 });
     }
 
     if (dataIA.montant < montantAttendu) {
-      return NextResponse.json({ success: false, message: `Montant insuffisant. Attendu: ${montantAttendu} FCFA, Trouvé: ${dataIA.montant} FCFA.` }, { status: 400 });
+      return NextResponse.json({ success: false, message: `Vérification échouée. Le montant identifié est insuffisant (Attendu : ${montantAttendu} FCFA, Trouvé : ${dataIA.montant} FCFA).` }, { status: 400 });
     }
 
     if (!dataIA.transaction_id) {
-      return NextResponse.json({ success: false, message: "Impossible de lire l'ID de transaction." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Reçu non validé. Impossible de lire l'identifiant unique de la transaction. Veuillez vous assurer que la capture d'écran est nette et lisible." }, { status: 400 });
     }
 
     // Regex basique pour Orange Money BF (ex: commence par 2 lettres, puis des chiffres/lettres)
     const txRegex = /^[A-Z]{2}[0-9A-Z.]+$/i;
     if (!txRegex.test(dataIA.transaction_id) || dataIA.transaction_id.length < 10) {
-       return NextResponse.json({ success: false, message: "Le format de l'ID de transaction est suspect." }, { status: 400 });
+       return NextResponse.json({ success: false, message: "Reçu non validé. Le format de la référence de transaction extrait semble incorrect. Veuillez uploader la capture d'écran originale du SMS." }, { status: 400 });
     }
 
     // 3. Upload de l'image sur Supabase Storage (optionnel pour l'admin)
@@ -97,7 +97,7 @@ export async function POST(req: Request) {
       .single();
 
     if (transactionExistante) {
-      return NextResponse.json({ success: false, message: "Ce reçu a déjà été utilisé !" }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Reçu rejeté. Ce reçu de paiement a déjà été enregistré et validé pour un autre déblocage." }, { status: 400 });
     }
 
     // 5. Enregistrer le paiement validé

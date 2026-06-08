@@ -15,6 +15,17 @@ export default function PaymentSimulator({ isOpen, onClose, amount, reasonText, 
     startPayment, selectNetwork, submitPhone, submitPin, setPhone, setPin, setError
   } = usePaymentSimulation();
 
+  const [simulatorAttempts, setSimulatorAttempts] = React.useState<number>(0);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const atts = sessionStorage.getItem('simulatorAttempts');
+      if (atts) {
+        setSimulatorAttempts(parseInt(atts));
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       startPayment();
@@ -112,14 +123,27 @@ export default function PaymentSimulator({ isOpen, onClose, amount, reasonText, 
                   <div style={{ width: '100%', height: '180px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.1)' }}>
                     <img src={window['__paymentScreenshot']} alt="Reçu" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
+                  {simulatorAttempts > 0 && (
+                    <div style={{ color: simulatorAttempts >= 5 ? 'var(--color-primary-red)' : 'var(--color-primary-brown)', fontSize: '0.85rem', fontWeight: 'bold', margin: '5px 0 10px 0', textAlign: 'center' }}>
+                      {simulatorAttempts >= 5 
+                        ? "Nombre maximum d'essais atteint (5/5). Veuillez contacter le support."
+                        : `Tentative de vérification : ${simulatorAttempts} / 5`}
+                    </div>
+                  )}
+
                   <button 
                     className="btn btn-primary" 
-                    style={{ width: '100%', background: 'var(--color-primary-green)', color: 'white' }}
+                    style={{ 
+                      width: '100%', 
+                      background: simulatorAttempts >= 5 ? 'var(--color-charcoal-muted)' : 'var(--color-primary-green)', 
+                      color: 'white',
+                      cursor: simulatorAttempts >= 5 ? 'not-allowed' : 'pointer'
+                    }}
+                    disabled={simulatorAttempts >= 5}
                     onClick={async () => {
+                      if (simulatorAttempts >= 5) return;
                       // set loading and call API
                       const base64 = window['__paymentScreenshot'];
-                      // We abuse submitPin to bypass hook's state and go into loading.
-                      // Actually, let's just use the hook's standard logic to show loading, but do our fetch here
                       const loadingBtn = document.getElementById('verify-btn');
                       if(loadingBtn) loadingBtn.innerText = 'Vérification en cours...';
                       
@@ -132,21 +156,29 @@ export default function PaymentSimulator({ isOpen, onClose, amount, reasonText, 
                         const data = await res.json();
                         if (data.success) {
                            delete window['__paymentScreenshot'];
+                           sessionStorage.setItem('simulatorAttempts', '0');
+                           setSimulatorAttempts(0);
                            submitPin('0000', onPaymentSuccess); // trigger SUCCESS step
                         } else {
+                           const nextAtts = simulatorAttempts + 1;
+                           setSimulatorAttempts(nextAtts);
+                           sessionStorage.setItem('simulatorAttempts', nextAtts.toString());
                            alert(data.message || "Erreur de vérification.");
                            delete window['__paymentScreenshot'];
                            setPin(''); // trigger render to reset
                            if(loadingBtn) loadingBtn.innerText = 'Vérifier le paiement';
                         }
                       } catch(e) {
+                         const nextAtts = simulatorAttempts + 1;
+                         setSimulatorAttempts(nextAtts);
+                         sessionStorage.setItem('simulatorAttempts', nextAtts.toString());
                          alert("Erreur de connexion serveur.");
                          if(loadingBtn) loadingBtn.innerText = 'Vérifier le paiement';
                       }
                     }}
                     id="verify-btn"
                   >
-                    Vérifier le paiement
+                    {simulatorAttempts >= 5 ? "Limite d'essais atteinte (5/5)" : "Vérifier le paiement"}
                   </button>
                   <button onClick={() => { delete window['__paymentScreenshot']; setPin(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-charcoal-muted)', textDecoration: 'underline', cursor: 'pointer' }}>
                     Changer d'image

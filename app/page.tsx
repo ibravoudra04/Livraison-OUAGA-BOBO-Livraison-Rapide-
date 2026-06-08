@@ -53,12 +53,17 @@ export default function Home() {
   const [paymentFlowStep, setPaymentFlowStep] = useState<'DIAL' | 'UPLOAD' | 'VERIFYING'>('DIAL');
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [verificationSeconds, setVerificationSeconds] = useState<number>(7);
+  const [paymentAttempts, setPaymentAttempts] = useState<number>(0);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const paid = sessionStorage.getItem('hasPaidMapService');
       if (paid === 'true') {
         setHasPaidMapService(true);
+      }
+      const attempts = sessionStorage.getItem('paymentAttempts');
+      if (attempts) {
+        setPaymentAttempts(parseInt(attempts));
       }
     }
   }, []);
@@ -85,17 +90,25 @@ export default function Home() {
           if (data.success) {
             sessionStorage.setItem('hasPaidMapService', 'true');
             sessionStorage.setItem('clientClicks', '0');
+            sessionStorage.setItem('paymentAttempts', '0');
+            setPaymentAttempts(0);
             setHasPaidMapService(true);
             setPaymentFlowStep('DIAL');
             setUssdDialed(false);
             setScreenshotPreview(null);
             setToast({ message: "Paiement vérifié avec succès par l'IA !", type: "success" });
           } else {
+            const nextAttempts = paymentAttempts + 1;
+            setPaymentAttempts(nextAttempts);
+            sessionStorage.setItem('paymentAttempts', nextAttempts.toString());
             setPaymentFlowStep('UPLOAD');
             setToast({ message: data.message || "Erreur : reçu invalide.", type: "error" });
           }
         } catch (err) {
           if (!isMounted) return;
+          const nextAttempts = paymentAttempts + 1;
+          setPaymentAttempts(nextAttempts);
+          sessionStorage.setItem('paymentAttempts', nextAttempts.toString());
           setPaymentFlowStep('UPLOAD');
           setToast({ message: "Erreur de connexion au serveur d'IA.", type: "error" });
         }
@@ -104,7 +117,7 @@ export default function Home() {
       verifyPayment();
     }
     return () => { isMounted = false; };
-  }, [paymentFlowStep, screenshotPreview, user]);
+  }, [paymentFlowStep, screenshotPreview, user, paymentAttempts]);
 
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -604,24 +617,35 @@ export default function Home() {
                     )}
                   </label>
 
+                  {paymentAttempts > 0 && (
+                    <div style={{ color: paymentAttempts >= 5 ? 'var(--color-primary-red)' : 'var(--color-primary-brown)', fontSize: '0.85rem', fontWeight: 'bold', margin: '5px 0 10px 0', textAlign: 'center' }}>
+                      {paymentAttempts >= 5 
+                        ? "Nombre maximum d'essais atteint (5/5). Veuillez contacter le support."
+                        : `Tentative de vérification : ${paymentAttempts} / 5`}
+                    </div>
+                  )}
+
                   <button 
-                    onClick={() => setPaymentFlowStep('VERIFYING')}
-                    disabled={!screenshotPreview}
+                    onClick={() => {
+                      if (paymentAttempts >= 5) return;
+                      setPaymentFlowStep('VERIFYING');
+                    }}
+                    disabled={!screenshotPreview || paymentAttempts >= 5}
                     style={{ 
                       width: '100%', 
-                      background: screenshotPreview ? 'var(--color-primary-brown)' : 'var(--color-charcoal-muted)', 
+                      background: (screenshotPreview && paymentAttempts < 5) ? 'var(--color-primary-brown)' : 'var(--color-charcoal-muted)', 
                       color: 'white', 
                       padding: '14px', 
                       borderRadius: '16px', 
                       fontSize: '1rem', 
                       fontWeight: 'bold', 
                       border: 'none', 
-                      cursor: screenshotPreview ? 'pointer' : 'not-allowed', 
-                      boxShadow: screenshotPreview ? '0 8px 25px rgba(141, 85, 55, 0.3)' : 'none',
+                      cursor: (screenshotPreview && paymentAttempts < 5) ? 'pointer' : 'not-allowed', 
+                      boxShadow: (screenshotPreview && paymentAttempts < 5) ? '0 8px 25px rgba(141, 85, 55, 0.3)' : 'none',
                       transition: 'background 0.2s'
                     }}
                   >
-                    Confirmer le transfert
+                    {paymentAttempts >= 5 ? "Limite d'essais atteinte (5/5)" : "Confirmer le transfert"}
                   </button>
                 </div>
               )}
