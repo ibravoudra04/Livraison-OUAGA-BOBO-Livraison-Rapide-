@@ -166,6 +166,17 @@ export default function Home() {
     
     setSelectedLivreur(livreur);
     setIsSheetOpen(true);
+
+    // Incrémenter les vues du livreur de manière asynchrone
+    if (role !== 'admin' && role !== 'rider') {
+      (async () => {
+        try {
+          await supabase.rpc('increment_livreur_views', { target_rider_id: livreur.id });
+        } catch (e) {
+          // Ignorer l'erreur silencieusement
+        }
+      })();
+    }
   };
 
   const handleLoginClick = () => {

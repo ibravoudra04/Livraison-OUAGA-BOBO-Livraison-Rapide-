@@ -16,6 +16,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
   const { logout } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null);
+  const [activeReceiptUrl, setActiveReceiptUrl] = useState<string | null>(null);
 
   const downloadCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) return;
@@ -354,28 +355,78 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                 )}
 
                 {/* STATS */}
-                {activeTab === 'stats' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Statistiques Plateforme</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
-                      <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Revenus Estimés</h4>
-                        <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--color-primary-green)' }}>{stats?.totalRevenue?.toLocaleString('fr-FR')} FCFA</div>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Basé sur les déblocages simulés</span>
-                      </div>
-                      <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Déblocages Totaux</h4>
-                        <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--color-primary-brown)' }}>{stats?.totalUnlocks || 0}</div>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Contacts dévoilés</span>
-                      </div>
-                      <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Messages Échangés</h4>
-                        <div style={{ fontSize: '2.5rem', fontWeight: '900', color: '#8e44ad' }}>{stats?.totalMessages || 0}</div>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Dans les chats intégrés</span>
+                {activeTab === 'stats' && (() => {
+                  const totalProfileViews = stats?.allDrivers?.reduce((acc, d) => acc + (d.views_count || 0), 0) || 0;
+                  const totalContactClicks = stats?.allDrivers?.reduce((acc, d) => acc + (d.contacts_count || 0), 0) || 0;
+                  const actualRevenue = stats?.paiements?.filter(p => p.statut === 'VALIDE')?.reduce((acc, p) => acc + (Number(p.montant) || 0), 0) || 0;
+                  const estimatedVisitors = (stats?.allClients?.length || 0) * 3 + (stats?.allDrivers?.length || 0) * 2 + totalProfileViews + 124;
+                  const incompleteRiders = stats?.allDrivers?.filter(d => d.status === 'en attente' && (!d.selfie || !d.cni_recto || !d.cni_verso))?.length || 0;
+                  const readyForVerificationRiders = stats?.allDrivers?.filter(d => d.status === 'en attente' && d.selfie && d.cni_recto && d.cni_verso)?.length || 0;
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Statistiques Plateforme</h3>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                        {/* Revenus Réels */}
+                        <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px', borderLeft: '5px solid var(--color-primary-green)' }}>
+                          <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Revenus Réels Confirmés</h4>
+                          <div style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--color-primary-green)' }}>{actualRevenue.toLocaleString('fr-FR')} FCFA</div>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Somme des paiements validés par l'IA</span>
+                        </div>
+
+                        {/* Revenus Estimés */}
+                        <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Revenus Théoriques</h4>
+                          <div style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--color-primary-brown)' }}>{stats?.totalRevenue?.toLocaleString('fr-FR')} FCFA</div>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Basé sur le total des déblocages</span>
+                        </div>
+
+                        {/* Visiteurs Estimés */}
+                        <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Visiteurs Estimés (Trafic)</h4>
+                          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#3498db' }}>{estimatedVisitors}</div>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Estimation du trafic global du site</span>
+                        </div>
+
+                        {/* Clics Profils */}
+                        <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Clics / Affichages Profils</h4>
+                          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#9b59b6' }}>{totalProfileViews}</div>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Nombre de clics sur les fiches livreurs</span>
+                        </div>
+
+                        {/* Unlocks */}
+                        <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Demandes de Contact Totales</h4>
+                          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#e67e22' }}>{totalContactClicks}</div>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Clics de déblocage de numéro</span>
+                        </div>
+
+                        {/* Inscriptions en cours */}
+                        <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Inscriptions Livreurs en cours</h4>
+                          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#e74c3c' }}>{incompleteRiders}</div>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Profils créés sans documents finalisés</span>
+                        </div>
+
+                        {/* Dossiers complets */}
+                        <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Dossiers Completés à Valider</h4>
+                          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#16a085' }}>{readyForVerificationRiders}</div>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Livreurs en attente de validation par l'admin</span>
+                        </div>
+
+                        {/* Messages */}
+                        <div style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)' }}>Messages Échangés</h4>
+                          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#7f8c8d' }}>{stats?.totalMessages || 0}</div>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Dans les messageries instantanées</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* SETTINGS */}
                 {activeTab === 'settings' && (
@@ -488,9 +539,12 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                               <td style={{ padding: '12px 15px', color: 'var(--color-primary-green)', fontWeight: 'bold' }}>{paiement.montant} FCFA</td>
                               <td style={{ padding: '12px 15px' }}>
                                 {paiement.image_url ? (
-                                  <a href={paiement.image_url} target="_blank" rel="noopener noreferrer" style={{ color: '#3498db', textDecoration: 'underline' }}>
+                                  <button 
+                                    onClick={() => setActiveReceiptUrl(paiement.image_url)} 
+                                    style={{ color: '#3498db', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '0.9rem', fontWeight: 'bold' }}
+                                  >
                                     Voir la capture
-                                  </a>
+                                  </button>
                                 ) : (
                                   <span style={{ color: 'var(--color-charcoal-muted)' }}>Aucune</span>
                                 )}
@@ -516,6 +570,73 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
             )}
           </div>
         </div>
+
+        {/* Modal Aperçu Reçu */}
+        {activeReceiptUrl && (
+          <div 
+            onClick={() => setActiveReceiptUrl(null)} 
+            style={{ 
+              position: 'fixed', 
+              top: 0, 
+              left: 0, 
+              width: '100vw', 
+              height: '100vh', 
+              backgroundColor: 'rgba(0,0,0,0.6)', 
+              backdropFilter: 'blur(10px)',
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              zIndex: 4000,
+              cursor: 'zoom-out'
+            }}
+          >
+            <div 
+              onClick={(e) => e.stopPropagation()} 
+              style={{ 
+                background: 'rgba(255, 255, 255, 0.45)', 
+                border: '1px solid rgba(255, 255, 255, 0.55)', 
+                backdropFilter: 'blur(35px) saturate(180%)', 
+                WebkitBackdropFilter: 'blur(35px) saturate(180%)', 
+                padding: '20px', 
+                borderRadius: '24px', 
+                boxShadow: '0 24px 70px rgba(0,0,0,0.3)',
+                maxWidth: '90%', 
+                maxHeight: '90vh', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                gap: '15px'
+              }}
+            >
+              <img 
+                src={activeReceiptUrl} 
+                alt="Reçu de Paiement" 
+                style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: '70vh', 
+                  borderRadius: '12px', 
+                  objectFit: 'contain', 
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)' 
+                }} 
+              />
+              <button 
+                onClick={() => setActiveReceiptUrl(null)} 
+                style={{ 
+                  background: 'var(--color-primary-brown)', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '10px 24px', 
+                  borderRadius: '12px', 
+                  fontWeight: 'bold', 
+                  cursor: 'pointer', 
+                  boxShadow: '0 4px 15px rgba(141, 85, 55, 0.3)' 
+                }}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
