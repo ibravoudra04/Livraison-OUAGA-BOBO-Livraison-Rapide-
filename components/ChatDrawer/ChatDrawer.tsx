@@ -12,6 +12,17 @@ interface ChatDrawerProps {
   otherPartyName: string;
 }
 
+const SUPABASE_HOSTNAME = (() => {
+  try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '').hostname; } catch { return ''; }
+})();
+
+const isSafeMediaUrl = (url: string): boolean => {
+  try {
+    const { hostname } = new URL(url);
+    return hostname === SUPABASE_HOSTNAME || hostname.endsWith('.supabase.co');
+  } catch { return false; }
+};
+
 export default function ChatDrawer({ isOpen, onClose, riderId, clientId, currentRole, otherPartyName }: ChatDrawerProps) {
   const { messages, loading, error: chatError, sendMessage } = useChatRealtime(riderId, clientId, currentRole);
   const [inputText, setInputText] = useState("");
@@ -199,7 +210,7 @@ export default function ChatDrawer({ isOpen, onClose, riderId, clientId, current
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               fontSize: '0.95rem'
             }}>
-              {msg.image_url && (
+              {msg.image_url && isSafeMediaUrl(msg.image_url) && (
                 <div style={{ marginBottom: '8px' }}>
                   {msg.image_url.match(/\.(jpeg|jpg|gif|png|webp|bmp)(\?.*)?$/i) ? (
                     <img src={msg.image_url} alt="Photo" style={{ maxWidth: '100%', borderRadius: '12px' }} />

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import webPush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
+import { createClient as createServerClient } from '@/utils/supabase/server';
 
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
@@ -15,6 +17,13 @@ const getSupabaseAdmin = () => {
 };
 
 export async function POST(request: Request) {
+  const cookieStore = await cookies();
+  const supabaseServer = createServerClient(cookieStore);
+  const { data: { session } } = await supabaseServer.auth.getSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   if (!vapidPublicKey || !vapidPrivateKey) {
     console.error('VAPID keys are not configured.');
     return NextResponse.json({ error: 'Push notifications are not configured on the server.' }, { status: 500 });

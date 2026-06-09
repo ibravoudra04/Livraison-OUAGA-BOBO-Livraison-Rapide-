@@ -16,11 +16,7 @@ export function useSupabaseAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-         let userRole = session.user.app_metadata?.role || session.user.user_metadata?.role || null;
-         if (session.user.user_metadata?.phone?.includes('67370909')) {
-           userRole = 'admin';
-         }
-         setRole(userRole);
+         setRole(session.user.app_metadata?.role || null);
       }
       setLoading(false);
     };
@@ -31,11 +27,7 @@ export function useSupabaseAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-         let userRole = session.user.app_metadata?.role || session.user.user_metadata?.role || null;
-         if (session.user.user_metadata?.phone?.includes('67370909')) {
-           userRole = 'admin';
-         }
-         setRole(userRole);
+         setRole(session.user.app_metadata?.role || null);
       } else {
          setRole(null);
       }
