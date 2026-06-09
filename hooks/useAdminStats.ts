@@ -145,7 +145,7 @@ export function useAdminStats(isAdmin: boolean) {
     };
 
     fetchStats();
-  }, [isAdmin, supabase]);
+  }, [isAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const approveDriver = async (driverId: string) => {
     const { error } = await supabase.from('livreurs').update({ status: 'actif' }).eq('id', driverId);
