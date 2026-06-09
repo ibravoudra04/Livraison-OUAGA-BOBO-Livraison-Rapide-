@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
 export interface DailyStat {
@@ -52,7 +52,7 @@ export function useAdminStats(isAdmin: boolean) {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -63,31 +63,38 @@ export function useAdminStats(isAdmin: boolean) {
     const fetchStats = async () => {
       setLoading(true);
       try {
+        // Requêtes indépendantes — chaque erreur est ignorée individuellement
+        const safe = (query: PromiseLike<any>) =>
+          Promise.resolve(query).catch(() => ({ data: null, count: null, error: null }));
+
         const [
-          { count: unlocksCount },
-          { count: driversCount },
-          { data: pending },
-          { count: messagesCount },
-          { data: chats },
-          { data: allDriversData },
-          { data: allClientsData, count: clientsCount },
-          { data: ticketsData },
-          { data: annoncesData },
-          { data: paiementsData },
+          r0, r1, r2, r3, r4, r5, r6, r7, r8, r9
         ] = await Promise.all([
-          supabase.from('deblocages').select('*', { count: 'exact', head: true }),
-          supabase.from('livreurs').select('*', { count: 'exact', head: true }),
-          supabase.from('livreurs').select('*').eq('status', 'en attente'),
-          supabase.from('chats_livraison').select('*', { count: 'exact', head: true }),
-          supabase.from('chats_livraison').select('*, livreurs(name), clients_livraison(name)').order('created_at', { ascending: false }).limit(50),
-          supabase.from('livreurs').select('*').order('created_at', { ascending: false }),
-          supabase.from('clients_livraison').select('*', { count: 'exact' }).order('created_at', { ascending: false }),
-          supabase.from('tickets_support').select('*, clients_livraison(name, phone), livreurs(name, phone)').order('created_at', { ascending: false }),
-          supabase.from('annonces').select('*').order('created_at', { ascending: false }),
-          supabase.from('paiements').select('*').order('created_at', { ascending: false }),
+          safe(supabase.from('deblocages').select('*', { count: 'exact', head: true })),
+          safe(supabase.from('livreurs').select('*', { count: 'exact', head: true })),
+          safe(supabase.from('livreurs').select('*').eq('status', 'en attente')),
+          safe(supabase.from('chats_livraison').select('*', { count: 'exact', head: true })),
+          safe(supabase.from('chats_livraison').select('*, livreurs(name), clients_livraison(name)').order('created_at', { ascending: false }).limit(50)),
+          safe(supabase.from('livreurs').select('*').order('created_at', { ascending: false })),
+          safe(supabase.from('clients_livraison').select('*', { count: 'exact' }).order('created_at', { ascending: false })),
+          safe(supabase.from('tickets_support').select('*, clients_livraison(name, phone), livreurs(name, phone)').order('created_at', { ascending: false })),
+          safe(supabase.from('annonces').select('*').order('created_at', { ascending: false })),
+          safe(supabase.from('paiements').select('*').order('created_at', { ascending: false })),
         ]);
 
-        // Fetch message dates for the last 14 days (for daily analytics)
+        const unlocksCount = r0.count;
+        const driversCount = r1.count;
+        const pending      = r2.data;
+        const messagesCount = r3.count;
+        const chats        = r4.data;
+        const allDriversData = r5.data;
+        const allClientsData = r6.data;
+        const clientsCount   = r6.count;
+        const ticketsData  = r7.data;
+        const annoncesData = r8.data;
+        const paiementsData = r9.data;
+
+        // Dates des messages des 14 derniers jours
         const twoWeeksAgo = new Date();
         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
         const { data: chatDatesData } = await supabase
