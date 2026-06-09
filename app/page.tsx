@@ -36,6 +36,7 @@ export default function Home() {
   const [isClientDrawerOpen, setIsClientDrawerOpen] = useState(false);
   const [isAuthDrawerOpen, setIsAuthDrawerOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
+  const [chatPartner, setChatPartner] = useState<{ id: string; name: string; role: 'client' | 'rider' } | null>(null);
   const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   
@@ -838,6 +839,10 @@ export default function Home() {
         isOpen={isDriverDrawerOpen}
         onClose={() => setIsDriverDrawerOpen(false)}
         initialView={driverDrawerInitialView}
+        onChatClient={(clientId, clientName) => {
+          setChatPartner({ id: clientId, name: clientName, role: 'client' });
+          setIsChatDrawerOpen(true);
+        }}
       />
 
       <ClientDrawer 
@@ -886,16 +891,40 @@ export default function Home() {
 
       <PwaInstallPrompt />
 
-      {selectedLivreur && user && (
-        <ChatDrawer 
-          isOpen={isChatDrawerOpen}
-          onClose={() => setIsChatDrawerOpen(false)}
-          riderId={selectedLivreur.id}
-          clientId={user.id}
-          currentRole={role === 'client' ? 'client' : 'rider'}
-          otherPartyName={selectedLivreur.name || selectedLivreur.first_name}
-        />
-      )}
+      {user && isChatDrawerOpen && (() => {
+        // Déterminer les IDs et rôles pour le ChatDrawer
+        let chatRiderId: string | undefined;
+        let chatClientId: string | undefined;
+        let chatCurrentRole: 'client' | 'rider' = 'client';
+        let chatOtherName: string = '';
+
+        if (chatPartner) {
+          // Mode livreur→client : le livreur (user) discute avec un client
+          chatRiderId = user.id;
+          chatClientId = chatPartner.id;
+          chatCurrentRole = 'rider';
+          chatOtherName = chatPartner.name;
+        } else if (selectedLivreur) {
+          // Mode client→livreur : le client (user) discute avec un livreur
+          chatRiderId = selectedLivreur.id;
+          chatClientId = user.id;
+          chatCurrentRole = role === 'client' ? 'client' : 'rider';
+          chatOtherName = selectedLivreur.name || selectedLivreur.first_name;
+        }
+
+        if (!chatRiderId || !chatClientId) return null;
+
+        return (
+          <ChatDrawer 
+            isOpen={isChatDrawerOpen}
+            onClose={() => { setIsChatDrawerOpen(false); setChatPartner(null); }}
+            riderId={chatRiderId}
+            clientId={chatClientId}
+            currentRole={chatCurrentRole}
+            otherPartyName={chatOtherName}
+          />
+        );
+      })()}
 
       {selectedLivreur && (
         <ReviewsModal 

@@ -1,14 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { createClient } from '@/utils/supabase/client';
 
 interface DriverDashboardProps {
   driverData: any;
   onLogout: () => void;
   onSimulatePayment: () => void;
+  onChatClient: (clientId: string, clientName: string) => void;
 }
 
-export default function DriverDashboard({ driverData, onLogout, onSimulatePayment }: DriverDashboardProps) {
+interface ChatConversation {
+  clientId: string;
+  clientName: string;
+  lastMessage: string;
+  lastTime: string;
+  unread: boolean;
+}
+
+export default function DriverDashboard({ driverData, onLogout, onSimulatePayment, onChatClient }: DriverDashboardProps) {
   const { logout } = useSupabaseAuth();
+  const supabase = createClient();
+  const [conversations, setConversations] = useState<ChatConversation[]>([]);
+  const [loadingChats, setLoadingChats] = useState(true);
   
   if (!driverData) return <div>Chargement...</div>;
 
@@ -59,6 +72,90 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
     if (v?.toLowerCase().includes('voiture')) return <img src="/icons/voiture.png" alt="Voiture" width="20" height="20" style={{ objectFit: 'contain' }} />;
     return <span style={{fontSize: '16px'}}>🚚</span>;
   }
+
+  // Charger les conversations du livreur
+  useEffect(() => {
+    if (!driverData?.id) return;
+
+    const loadConversations = async () => {
+      setLoadingChats(true);
+      try {
+        // Récupérer tous les messages du livreur, ordonnés par date décroissante
+        const { data: allMessages, error } = await supabase
+          .from('chats_livraison')
+          .select('client_id, text, time, created_at, sender')
+          .eq('rider_id', driverData.id)
+          .order('created_at', { ascending: false });
+
+        if (error || !allMessages) {
+          setLoadingChats(false);
+          return;
+        }
+
+        // Regrouper par client_id, garder le dernier message
+        const clientMap = new Map<string, { text: string; time: string; sender: string }>();
+        for (const msg of allMessages) {
+          if (!clientMap.has(msg.client_id)) {
+            clientMap.set(msg.client_id, { text: msg.text || '📎 Fichier', time: msg.time, sender: msg.sender });
+          }
+        }
+
+        if (clientMap.size === 0) {
+          setConversations([]);
+          setLoadingChats(false);
+          return;
+        }
+
+        // Récupérer les noms des clients
+        const clientIds = Array.from(clientMap.keys());
+        const { data: clients } = await supabase
+          .from('clients_livraison')
+          .select('id, name')
+          .in('id', clientIds);
+
+        const convos: ChatConversation[] = clientIds.map(cid => {
+          const lastMsg = clientMap.get(cid)!;
+          const clientInfo = clients?.find(c => c.id === cid);
+          return {
+            clientId: cid,
+            clientName: clientInfo?.name || 'Client',
+            lastMessage: lastMsg.text,
+            lastTime: lastMsg.time,
+            unread: lastMsg.sender === 'client'
+          };
+        });
+
+        setConversations(convos);
+      } catch (e) {
+        console.error("Erreur chargement conversations:", e);
+      }
+      setLoadingChats(false);
+    };
+
+    loadConversations();
+
+    // S'abonner aux nouveaux messages en temps réel
+    const channel = supabase
+      .channel(`driver_chats_${driverData.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chats_livraison',
+          filter: `rider_id=eq.${driverData.id}`,
+        },
+        () => {
+          // Recharger les conversations quand un nouveau message arrive
+          loadConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [driverData?.id, supabase]);
 
   return (
     <div id="driver-dashboard-panel">
@@ -130,11 +227,89 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
         </div>
       </div>
 
-      {/* Messagerie locale intégrée pour Livreur */}
+      {/* Messagerie interactive pour Livreur */}
       <div className="driver-terms-info" style={{ marginTop: '15px' }}>
-        <h4>💬 Messages Clients (Messagerie Locale)</h4>
+        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-brown)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+          Messages Clients
+        </h4>
         <div id="driver-dash-chats-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-          <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic' }}>Aucun message reçu pour le moment.</p>
+          {loadingChats ? (
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic' }}>Chargement des discussions...</p>
+          ) : conversations.length === 0 ? (
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic' }}>Aucun message reçu pour le moment.</p>
+          ) : (
+            conversations.map((convo) => (
+              <button
+                key={convo.clientId}
+                type="button"
+                onClick={() => onChatClient(convo.clientId, convo.clientName)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  backgroundColor: convo.unread ? 'rgba(39, 174, 96, 0.08)' : 'rgba(0,0,0,0.03)',
+                  border: convo.unread ? '1.5px solid rgba(39, 174, 96, 0.3)' : '1px solid rgba(0,0,0,0.06)',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {/* Avatar */}
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--color-primary-brown)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  flexShrink: 0
+                }}>
+                  {convo.clientName.charAt(0).toUpperCase()}
+                </div>
+                {/* Texte */}
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: convo.unread ? 800 : 600, fontSize: '0.85rem', color: 'var(--color-charcoal)' }}>
+                      {convo.clientName}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--color-charcoal-muted)', flexShrink: 0 }}>
+                      {convo.lastTime}
+                    </span>
+                  </div>
+                  <p style={{
+                    margin: '2px 0 0 0',
+                    fontSize: '0.78rem',
+                    color: convo.unread ? 'var(--color-charcoal)' : 'var(--color-charcoal-muted)',
+                    fontWeight: convo.unread ? 600 : 400,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {convo.lastMessage}
+                  </p>
+                </div>
+                {/* Indicateur nouveau message */}
+                {convo.unread && (
+                  <div style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--color-primary-green)',
+                    flexShrink: 0,
+                    boxShadow: '0 0 6px rgba(39, 174, 96, 0.5)'
+                  }} />
+                )}
+              </button>
+            ))
+          )}
         </div>
       </div>
       
@@ -160,3 +335,4 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
     </div>
   );
 }
+

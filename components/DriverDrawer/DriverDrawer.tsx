@@ -9,9 +9,10 @@ interface DriverDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   initialView?: 'login' | 'register' | 'dashboard';
+  onChatClient: (clientId: string, clientName: string) => void;
 }
 
-export default function DriverDrawer({ isOpen, onClose, initialView = 'login' }: DriverDrawerProps) {
+export default function DriverDrawer({ isOpen, onClose, initialView = 'login', onChatClient }: DriverDrawerProps) {
   const { user, role, supabase } = useSupabaseAuth();
   
   const [view, setView] = useState<'login' | 'register' | 'dashboard'>(initialView);
@@ -89,6 +90,10 @@ export default function DriverDrawer({ isOpen, onClose, initialView = 'login' }:
           driverData={driverData} 
           onLogout={() => setView('login')}
           onSimulatePayment={() => alert("Simulation Paiement...")}
+          onChatClient={(clientId, clientName) => {
+            onClose();
+            onChatClient(clientId, clientName);
+          }}
         />
       )}
     </Drawer>

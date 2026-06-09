@@ -56,8 +56,8 @@ export default function ClientDashboard({ clientData, onLogout, onSimulatePremiu
         
         if (distinctRiderIds.length > 0) {
           const { data: riders } = await supabase
-            .from('livreurs')
-            .select('id, name, first_name, selfie')
+            .from('livreurs_view')
+            .select('id, name, selfie')
             .in('id', distinctRiderIds);
           
           if (riders) {

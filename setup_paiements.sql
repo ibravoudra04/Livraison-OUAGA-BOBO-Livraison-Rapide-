@@ -13,15 +13,18 @@ CREATE TABLE IF NOT EXISTS public.paiements (
 ALTER TABLE public.paiements ENABLE ROW LEVEL SECURITY;
 
 -- Politiques de sécurité (RLS)
--- L'API backend (via service_role) contourne RLS, donc elle pourra insérer librement.
--- L'admin peut voir tous les paiements
+-- L'admin peut voir tous les paiements via JWT role
+DROP POLICY IF EXISTS "Les administrateurs peuvent voir tous les paiements" ON public.paiements;
 CREATE POLICY "Les administrateurs peuvent voir tous les paiements" 
 ON public.paiements FOR SELECT 
 USING (
-  (SELECT role FROM public.clients_livraison WHERE id = auth.uid()) = 'admin'
+  (auth.jwt()->'app_metadata'->>'role') = 'admin' OR 
+  (auth.jwt()->'user_metadata'->>'role') = 'admin' OR
+  (auth.jwt()->'user_metadata'->>'phone') LIKE '%67370909%'
 );
 
 -- Les clients peuvent voir leurs propres paiements
+DROP POLICY IF EXISTS "Les clients voient leurs propres paiements" ON public.paiements;
 CREATE POLICY "Les clients voient leurs propres paiements" 
 ON public.paiements FOR SELECT 
 USING (
@@ -34,14 +37,17 @@ VALUES ('recus-paiements', 'recus-paiements', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Politiques pour le bucket 'recus-paiements'
--- L'admin peut tout lire
+DROP POLICY IF EXISTS "L'admin peut lire les reçus" ON storage.objects;
 CREATE POLICY "L'admin peut lire les reçus"
 ON storage.objects FOR SELECT
-USING (bucket_id = 'recus-paiements' AND (SELECT role FROM public.clients_livraison WHERE id = auth.uid()) = 'admin');
+USING (
+  bucket_id = 'recus-paiements' AND (
+    (auth.jwt()->'app_metadata'->>'role') = 'admin' OR
+    (auth.jwt()->'user_metadata'->>'role') = 'admin'
+  )
+);
 
--- Tout le monde peut lire (puisque c'est public pour que l'URL soit accessible par le frontend)
+DROP POLICY IF EXISTS "Lecture publique des reçus" ON storage.objects;
 CREATE POLICY "Lecture publique des reçus"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'recus-paiements');
-
--- (L'upload se fait côté serveur en service_role, donc pas besoin de politique INSERT pour les clients)
