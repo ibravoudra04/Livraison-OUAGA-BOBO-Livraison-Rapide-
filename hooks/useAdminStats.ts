@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
 export interface DailyStat {
@@ -53,15 +53,19 @@ export function useAdminStats(isAdmin: boolean) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
     if (!isAdmin) {
       setLoading(false);
       return;
     }
+    if (hasFetched.current) return;
+    hasFetched.current = true;
 
     const fetchStats = async () => {
       setLoading(true);
+      const timeout = setTimeout(() => { setLoading(false); setError('Délai dépassé.'); }, 15000);
       try {
         // Requêtes indépendantes — chaque erreur est ignorée individuellement
         const safe = (query: PromiseLike<any>) =>
@@ -147,6 +151,7 @@ export function useAdminStats(isAdmin: boolean) {
       } catch (err: any) {
         setError(err.message);
       } finally {
+        clearTimeout(timeout);
         setLoading(false);
       }
     };
