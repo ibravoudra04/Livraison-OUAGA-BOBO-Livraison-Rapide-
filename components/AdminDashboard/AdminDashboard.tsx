@@ -22,6 +22,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
+  const [statsPeriod, setStatsPeriod] = useState<'today' | '7days' | 'all'>('all');
 
   const downloadCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) return;
@@ -426,30 +427,85 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
 
                 {/* STATS */}
                 {activeTab === 'stats' && (() => {
-                  const totalProfileViews = stats.allDrivers?.reduce((acc, d) => acc + (d.views_count || 0), 0) || 0;
-                  const totalContactClicks = stats.allDrivers?.reduce((acc, d) => acc + (d.contacts_count || 0), 0) || 0;
-                  const estimatedVisitors = (stats.totalClients || 0) * 3 + (stats.totalDrivers || 0) * 2 + totalProfileViews + 124;
-                  const incompleteRiders = stats.allDrivers?.filter(d => d.status === 'en attente' && (!d.selfie || !d.cni_recto || !d.cni_verso))?.length || 0;
-                  const readyForVerificationRiders = stats.allDrivers?.filter(d => d.status === 'en attente' && d.selfie && d.cni_recto && d.cni_verso)?.length || 0;
+                  // Filtre par période
+                  const now = new Date();
+                  const startOf = (period: typeof statsPeriod) => {
+                    if (period === 'today') {
+                      const d = new Date(now); d.setHours(0,0,0,0); return d;
+                    }
+                    if (period === '7days') {
+                      const d = new Date(now); d.setDate(d.getDate() - 7); d.setHours(0,0,0,0); return d;
+                    }
+                    return new Date(0);
+                  };
+                  const since = startOf(statsPeriod);
+                  const inPeriod = (dateStr: string) => dateStr ? new Date(dateStr) >= since : false;
+
+                  const filteredDrivers  = stats.allDrivers.filter(d => inPeriod(d.created_at));
+                  const filteredClients  = stats.allClients.filter(c => inPeriod(c.created_at));
+                  const filteredDeblocages = stats.allDeblocages.filter(d => inPeriod(d.created_at));
+                  const filteredPaiements  = stats.paiements.filter(p => inPeriod(p.created_at));
+                  const filteredChats    = stats.allChats.filter(c => inPeriod(c.created_at));
+
+                  const revenuPaye  = filteredPaiements.filter(p => p.statut === 'VALIDE').reduce((a, p) => a + (Number(p.montant) || 0), 0);
+                  const revenuTheo  = filteredDeblocages.length * 200;
+                  const totalProfileViews   = statsPeriod === 'all' ? stats.allDrivers.reduce((a, d) => a + (d.views_count || 0), 0) : '—';
+                  const totalContactClicks  = statsPeriod === 'all' ? stats.allDrivers.reduce((a, d) => a + (d.contacts_count || 0), 0) : '—';
+                  const incompleteRiders    = stats.allDrivers.filter(d => d.status === 'en attente' && (!d.selfie || !d.cni_recto || !d.cni_verso)).length;
+                  const readyRiders         = stats.allDrivers.filter(d => d.status === 'en attente' && d.selfie && d.cni_recto && d.cni_verso).length;
+                  const premiumClients      = statsPeriod === 'all' ? stats.allClients.filter(c => c.subscription_paid).length : filteredClients.filter(c => c.subscription_paid).length;
+
+                  const periodLabels = { today: "Aujourd'hui", '7days': '7 derniers jours', all: 'Tout' };
+
                   return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                      <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Statistiques Plateforme</h3>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                      {/* En-tête + sélecteur de période */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                        <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Statistiques Plateforme</h3>
+                        <div style={{ display: 'flex', background: 'white', borderRadius: '12px', padding: '4px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', gap: '2px' }}>
+                          {(['today', '7days', 'all'] as const).map(p => (
+                            <button
+                              key={p}
+                              onClick={() => setStatsPeriod(p)}
+                              style={{
+                                padding: '8px 16px',
+                                borderRadius: '9px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontWeight: statsPeriod === p ? '700' : '500',
+                                fontSize: '0.85rem',
+                                background: statsPeriod === p ? 'var(--color-primary-brown)' : 'transparent',
+                                color: statsPeriod === p ? 'white' : 'var(--color-charcoal-muted)',
+                                transition: 'all 0.2s ease',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {periodLabels[p]}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Cartes métriques */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
                         {[
-                          { label: 'Revenus Réels Confirmés', val: `${stats.totalRevenuePaid.toLocaleString('fr-FR')} FCFA`, sub: 'Paiements validés par l\'IA', color: 'var(--color-primary-green)' },
-                          { label: 'Revenus Théoriques', val: `${stats.totalRevenue?.toLocaleString('fr-FR')} FCFA`, sub: 'Basé sur le total des déblocages', color: 'var(--color-primary-brown)' },
-                          { label: 'Visiteurs Estimés', val: estimatedVisitors.toString(), sub: 'Estimation du trafic global', color: '#3498db' },
-                          { label: 'Clics / Affichages Profils', val: totalProfileViews.toString(), sub: 'Nombre de clics sur les fiches livreurs', color: '#9b59b6' },
-                          { label: 'Demandes de Contact Totales', val: totalContactClicks.toString(), sub: 'Clics de déblocage de numéro', color: '#e67e22' },
-                          { label: 'Inscriptions Livreurs en cours', val: incompleteRiders.toString(), sub: 'Profils sans documents finalisés', color: '#e74c3c' },
-                          { label: 'Dossiers Completés à Valider', val: readyForVerificationRiders.toString(), sub: 'En attente de validation admin', color: '#16a085' },
-                          { label: 'Messages Échangés', val: (stats.totalMessages || 0).toString(), sub: 'Dans les messageries instantanées', color: '#7f8c8d' },
-                          { label: 'Clients Premium Actifs', val: (stats.totalPremium || 0).toString(), sub: 'Abonnements 5000 FCFA/mois actifs', color: '#f39c12' },
+                          { label: 'Revenus Confirmés (IA)', val: `${revenuPaye.toLocaleString('fr-FR')} FCFA`, sub: 'Paiements validés par l\'IA', color: 'var(--color-primary-green)' },
+                          { label: 'Revenus Théoriques', val: `${revenuTheo.toLocaleString('fr-FR')} FCFA`, sub: `${filteredDeblocages.length} déblocage(s) × 200 FCFA`, color: 'var(--color-primary-brown)' },
+                          { label: 'Nouveaux Livreurs', val: filteredDrivers.length.toString(), sub: 'Inscriptions sur la période', color: '#2c3e50' },
+                          { label: 'Nouveaux Clients', val: filteredClients.length.toString(), sub: 'Inscriptions sur la période', color: '#8e44ad' },
+                          { label: 'Messages Échangés', val: filteredChats.length.toString(), sub: 'Dans les messageries instantanées', color: '#7f8c8d' },
+                          { label: 'Déblocages de Numéro', val: filteredDeblocages.length.toString(), sub: 'Contacts débloqués sur la période', color: '#e67e22' },
+                          { label: 'Paiements Reçus', val: filteredPaiements.filter(p => p.statut === 'VALIDE').length.toString(), sub: 'Reçus validés sur la période', color: '#27ae60' },
+                          { label: 'Clients Premium Actifs', val: premiumClients.toString(), sub: statsPeriod === 'all' ? 'Total abonnés premium' : 'Nouveaux premium sur la période', color: '#f39c12' },
+                          { label: 'Clics sur Profils', val: totalProfileViews.toString(), sub: 'Vues des fiches livreurs (total)', color: '#9b59b6' },
+                          { label: 'Demandes de Contact', val: totalContactClicks.toString(), sub: 'Clics téléphone (total)', color: '#3498db' },
+                          { label: 'Dossiers Incomplets', val: incompleteRiders.toString(), sub: 'Livreurs sans documents complets', color: '#e74c3c' },
+                          { label: 'Dossiers Prêts à Valider', val: readyRiders.toString(), sub: 'En attente de validation admin', color: '#16a085' },
                         ].map(({ label, val, sub, color }) => (
-                          <div key={label} style={{ background: 'white', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: `5px solid ${color}` }}>
-                            <h4 style={{ margin: 0, color: 'var(--color-charcoal-muted)', fontSize: '0.85rem' }}>{label}</h4>
-                            <div style={{ fontSize: '2rem', fontWeight: '900', color }}>{val}</div>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)' }}>{sub}</span>
+                          <div key={label} style={{ background: 'white', borderRadius: '16px', padding: '22px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '6px', borderLeft: `5px solid ${color}` }}>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600' }}>{label}</div>
+                            <div style={{ fontSize: '1.9rem', fontWeight: '900', color }}>{val}</div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--color-charcoal-muted)' }}>{sub}</div>
                           </div>
                         ))}
                       </div>

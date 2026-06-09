@@ -24,6 +24,7 @@ export interface AdminStats {
   allChats: any[];
   allDrivers: any[];
   allClients: any[];
+  allDeblocages: any[];
   annonces: any[];
   tickets: any[];
   paiements: any[];
@@ -45,6 +46,7 @@ export function useAdminStats(isAdmin: boolean) {
     allChats: [],
     allDrivers: [],
     allClients: [],
+    allDeblocages: [],
     annonces: [],
     tickets: [],
     paiements: [],
@@ -74,10 +76,10 @@ export function useAdminStats(isAdmin: boolean) {
         const [
           r0, r1, r2, r3, r4, r5, r6, r7, r8, r9
         ] = await Promise.all([
-          safe(supabase.from('deblocages').select('*', { count: 'exact', head: true })),
+          safe(supabase.from('deblocages').select('created_at').order('created_at', { ascending: false })),
           safe(supabase.from('livreurs').select('*', { count: 'exact', head: true })),
           safe(supabase.from('livreurs').select('*').eq('status', 'en attente')),
-          safe(supabase.from('chats_livraison').select('*', { count: 'exact', head: true })),
+          safe(supabase.from('chats_livraison').select('created_at').order('created_at', { ascending: false })),
           safe(supabase.from('chats_livraison').select('*, livreurs(name), clients_livraison(name)').order('created_at', { ascending: false }).limit(50)),
           safe(supabase.from('livreurs').select('*').order('created_at', { ascending: false })),
           safe(supabase.from('clients_livraison').select('*', { count: 'exact' }).order('created_at', { ascending: false })),
@@ -86,27 +88,21 @@ export function useAdminStats(isAdmin: boolean) {
           safe(supabase.from('paiements').select('*').order('created_at', { ascending: false })),
         ]);
 
-        const unlocksCount = r0.count;
-        const driversCount = r1.count;
-        const pending      = r2.data;
-        const messagesCount = r3.count;
-        const chats        = r4.data;
+        const allDeblocagesData = r0.data || [];
+        const unlocksCount  = allDeblocagesData.length;
+        const driversCount  = r1.count;
+        const pending       = r2.data;
+        const allChatsData  = r3.data || [];
+        const messagesCount = allChatsData.length;
+        const chats         = r4.data;
         const allDriversData = r5.data;
         const allClientsData = r6.data;
         const clientsCount   = r6.count;
-        const ticketsData  = r7.data;
-        const annoncesData = r8.data;
+        const ticketsData   = r7.data;
+        const annoncesData  = r8.data;
         const paiementsData = r9.data;
 
-        // Dates des messages des 14 derniers jours
-        const twoWeeksAgo = new Date();
-        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-        const { data: chatDatesData } = await supabase
-          .from('chats_livraison')
-          .select('created_at')
-          .gte('created_at', twoWeeksAgo.toISOString());
-
-        // Compute daily stats for last 14 days
+        // Compute daily stats for last 14 days (utilise allChatsData déjà chargé)
         const dailyStatsArr: DailyStat[] = [];
         for (let i = 13; i >= 0; i--) {
           const date = new Date();
@@ -117,7 +113,7 @@ export function useAdminStats(isAdmin: boolean) {
             label: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
             newDrivers: (allDriversData || []).filter(d => d.created_at?.startsWith(dateStr)).length,
             newClients: (allClientsData || []).filter(c => c.created_at?.startsWith(dateStr)).length,
-            messages: (chatDatesData || []).filter(m => m.created_at?.startsWith(dateStr)).length,
+            messages: allChatsData.filter((m: any) => m.created_at?.startsWith(dateStr)).length,
             payments: (paiementsData || []).filter(p => p.created_at?.startsWith(dateStr) && p.statut === 'VALIDE').length,
           });
         }
@@ -143,6 +139,7 @@ export function useAdminStats(isAdmin: boolean) {
           allChats: chats || [],
           allDrivers: allDriversData || [],
           allClients: allClientsData || [],
+          allDeblocages: allDeblocagesData,
           annonces: annoncesData || [],
           tickets: ticketsData || [],
           paiements: paiementsData || [],
