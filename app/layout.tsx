@@ -1,4 +1,5 @@
 import '../style.css'; // Import global de votre CSS existant
+import SwUpdateHandler from '@/components/SwUpdateHandler/SwUpdateHandler';
 
 export const metadata = {
   title: 'Livraison Rapide - Ouaga & Bobo',
@@ -18,8 +19,8 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/delivery_logo_premium.jpg" />
       </head>
       <body>
+        <SwUpdateHandler />
         {children}
-
       </body>
     </html>
   );

@@ -1,40 +1,51 @@
 // Ce script est injecté dans le nouveau Service Worker.
-// Il détecte les anciens caches de l'application Vanille JS.
-// S'il trouve un ancien cache, cela signifie que c'est un ancien utilisateur coincé sur l'ancienne version.
-// Il supprime alors le cache et FORCE le rechargement de la page pour afficher la nouvelle application Next.js.
+// Gère deux cas :
+// 1. Migration depuis l'ancienne app Vanilla JS → nettoie les anciens caches
+// 2. Mise à jour de l'app Next.js → nettoie les caches de pages/chunks périmés
+//    pour éviter "This page couldn't load" après chaque déploiement.
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
-      let isMigration = false;
-      const deletePromises = cacheNames.map((cacheName) => {
-        // Les nouveaux caches de next-pwa/workbox commencent par ces préfixes.
-        // Tout autre cache est considéré comme appartenant à l'ancienne application.
-        const isNewCache = cacheName.startsWith('workbox-') || 
-                           cacheName.startsWith('next-') || 
+      const deletePromises = [];
+      let needsReload = false;
+
+      for (const cacheName of cacheNames) {
+        const isNewCache = cacheName.startsWith('workbox-') ||
+                           cacheName.startsWith('next-') ||
                            cacheName.startsWith('start-url') ||
                            cacheName.startsWith('google-fonts') ||
                            cacheName.startsWith('static-') ||
                            cacheName.startsWith('apis') ||
                            cacheName.startsWith('pages') ||
                            cacheName.startsWith('cross-origin');
-                           
+
         if (!isNewCache) {
-          console.log('[Migration SW] Ancien cache détecté et supprimé :', cacheName);
-          isMigration = true;
-          return caches.delete(cacheName);
+          // Ancien cache Vanilla JS → migration
+          console.log('[SW] Ancien cache supprimé (migration):', cacheName);
+          needsReload = true;
+          deletePromises.push(caches.delete(cacheName));
+        } else if (
+          // Caches de pages et chunks JS : toujours vider à l'activation
+          // pour éviter que d'anciens chunks cassent la page après un redéploiement
+          cacheName.startsWith('pages') ||
+          cacheName.startsWith('next-static-js') ||
+          cacheName.startsWith('start-url')
+        ) {
+          console.log('[SW] Cache de pages/chunks périmé vidé:', cacheName);
+          needsReload = true;
+          deletePromises.push(caches.delete(cacheName));
         }
-      });
-      
+      }
+
       return Promise.all(deletePromises).then(() => {
-        if (isMigration) {
-          console.log('[Migration SW] Migration détectée. Forçage du rechargement des clients...');
+        if (needsReload) {
+          console.log('[SW] Caches nettoyés. Rechargement des clients...');
           return self.clients.claim().then(() => {
             return self.clients.matchAll({ type: 'window', includeUncontrolled: true });
           }).then((windowClients) => {
-            windowClients.forEach((windowClient) => {
-              console.log('[Migration SW] Rechargement du client :', windowClient.url);
-              windowClient.navigate(windowClient.url);
+            windowClients.forEach((client) => {
+              client.navigate(client.url);
             });
           });
         }
