@@ -22,58 +22,8 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
   const supabase = createClient();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [loadingChats, setLoadingChats] = useState(true);
-  
-  if (!driverData) return <div>Chargement...</div>;
 
-  const contacts = driverData.contacts_count || 0;
-  const views = driverData.views_count || 0;
-  const isPaid = driverData.subscription_paid || false;
-  const status = driverData.status;
-
-  let statusBadgeText = "";
-  let visibilityText = "";
-  let visibilityColor = "";
-  let subTextHTML = "";
-  let showPayBtn = false;
-  let remainingDays = "6 jours"; // Simulées pour l'UI comme avant
-  
-  if (status === 'en attente') {
-    statusBadgeText = "En attente";
-    visibilityText = "🔴 Hors ligne";
-    visibilityColor = "var(--color-primary-red)";
-    subTextHTML = "Votre compte est en cours de validation par notre équipe d'administration.";
-  } else if (contacts < 5) {
-    statusBadgeText = "Disponible";
-    visibilityText = "🟢 En ligne";
-    visibilityColor = "var(--color-green-soft)";
-    subTextHTML = `Vous bénéficiez de 4 mises en relation offertes. (Vous êtes à ${contacts}/4).`;
-  } else if (isPaid) {
-    statusBadgeText = "Disponible";
-    visibilityText = "🟢 En ligne";
-    visibilityColor = "var(--color-green-soft)";
-    subTextHTML = "Votre abonnement hebdomadaire de 500 FCFA est actif. Vous êtes visible par tous les clients.";
-  } else {
-    statusBadgeText = "Suspendu";
-    visibilityText = "🔴 Hors ligne";
-    visibilityColor = "var(--color-primary-red)";
-    subTextHTML = `Vous avez atteint 4 contacts (${contacts}). Veuillez payer votre abonnement de 500 FCFA pour la semaine afin de rester visible.`;
-    showPayBtn = true;
-    remainingDays = "Expiré";
-  }
-
-  const handleLogout = async () => {
-    await logout();
-    onLogout();
-  };
-
-  const getVehicleEmoji = (v: string) => {
-    if (v?.toLowerCase().includes('moto')) return <img src="/icons/moto.png" alt="Moto" width="20" height="20" style={{ objectFit: 'contain' }} />;
-    if (v?.toLowerCase().includes('tricycle')) return <img src="/icons/tricycle.png" alt="Tricycle" width="20" height="20" style={{ objectFit: 'contain' }} />;
-    if (v?.toLowerCase().includes('voiture')) return <img src="/icons/voiture.png" alt="Voiture" width="20" height="20" style={{ objectFit: 'contain' }} />;
-    return <span style={{fontSize: '16px'}}>🚚</span>;
-  }
-
-  // Charger les conversations du livreur
+  // useEffect MUST be before any early return (Rules of Hooks)
   useEffect(() => {
     if (!driverData?.id) return;
 
@@ -156,6 +106,56 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
       supabase.removeChannel(channel);
     };
   }, [driverData?.id, supabase]);
+
+  if (!driverData) return <div>Chargement...</div>;
+
+  const contacts = driverData.contacts_count || 0;
+  const views = driverData.views_count || 0;
+  const isPaid = driverData.subscription_paid || false;
+  const status = driverData.status;
+
+  let statusBadgeText = "";
+  let visibilityText = "";
+  let visibilityColor = "";
+  let subTextHTML = "";
+  let showPayBtn = false;
+  let remainingDays = "6 jours";
+
+  if (status === 'en attente') {
+    statusBadgeText = "En attente";
+    visibilityText = "🔴 Hors ligne";
+    visibilityColor = "var(--color-primary-red)";
+    subTextHTML = "Votre compte est en cours de validation par notre équipe d'administration.";
+  } else if (contacts < 5) {
+    statusBadgeText = "Disponible";
+    visibilityText = "🟢 En ligne";
+    visibilityColor = "var(--color-green-soft)";
+    subTextHTML = `Vous bénéficiez de 4 mises en relation offertes. (Vous êtes à ${contacts}/4).`;
+  } else if (isPaid) {
+    statusBadgeText = "Disponible";
+    visibilityText = "🟢 En ligne";
+    visibilityColor = "var(--color-green-soft)";
+    subTextHTML = "Votre abonnement hebdomadaire de 500 FCFA est actif. Vous êtes visible par tous les clients.";
+  } else {
+    statusBadgeText = "Suspendu";
+    visibilityText = "🔴 Hors ligne";
+    visibilityColor = "var(--color-primary-red)";
+    subTextHTML = `Vous avez atteint 4 contacts (${contacts}). Veuillez payer votre abonnement de 500 FCFA pour la semaine afin de rester visible.`;
+    showPayBtn = true;
+    remainingDays = "Expiré";
+  }
+
+  const handleLogout = async () => {
+    await logout();
+    onLogout();
+  };
+
+  const getVehicleEmoji = (v: string) => {
+    if (v?.toLowerCase().includes('moto')) return <img src="/icons/moto.png" alt="Moto" width="20" height="20" style={{ objectFit: 'contain' }} />;
+    if (v?.toLowerCase().includes('tricycle')) return <img src="/icons/tricycle.png" alt="Tricycle" width="20" height="20" style={{ objectFit: 'contain' }} />;
+    if (v?.toLowerCase().includes('voiture')) return <img src="/icons/voiture.png" alt="Voiture" width="20" height="20" style={{ objectFit: 'contain' }} />;
+    return <span style={{fontSize: '16px'}}>🚚</span>;
+  };
 
   return (
     <div id="driver-dashboard-panel">
