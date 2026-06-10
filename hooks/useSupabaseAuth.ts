@@ -18,7 +18,8 @@ export function useSupabaseAuth() {
       if (session?.user) {
         const u = session.user;
         const r = u.app_metadata?.role
-          || (u.user_metadata?.phone?.includes('67370909') ? 'admin' : null)
+          || (u.user_metadata?.phone?.replace(/\s+/g, '').includes('67370909') ? 'admin' : null)
+          || u.user_metadata?.role
           || null;
         setRole(r);
       }
@@ -33,7 +34,8 @@ export function useSupabaseAuth() {
       if (session?.user) {
         const u = session.user;
         const r = u.app_metadata?.role
-          || (u.user_metadata?.phone?.includes('67370909') ? 'admin' : null)
+          || (u.user_metadata?.phone?.replace(/\s+/g, '').includes('67370909') ? 'admin' : null)
+          || u.user_metadata?.role
           || null;
         setRole(r);
       } else {
