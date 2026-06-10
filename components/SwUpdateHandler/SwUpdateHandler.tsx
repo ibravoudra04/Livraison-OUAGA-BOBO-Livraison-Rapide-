@@ -3,11 +3,10 @@ import { useEffect } from 'react';
 
 // Clears all SW caches and does a hard reload to recover from stale assets
 function clearCachesAndReload() {
-  if ('caches' in window) {
+  if (typeof caches !== 'undefined') {
     caches.keys()
       .then(keys => Promise.all(keys.map(k => caches.delete(k))))
-      .then(() => window.location.reload())
-      .catch(() => window.location.reload());
+      .finally(() => window.location.reload());
   } else {
     window.location.reload();
   }
