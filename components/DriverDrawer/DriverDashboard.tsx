@@ -160,7 +160,7 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
   return (
     <div id="driver-dashboard-panel">
       <div className="driver-dashboard-welcome">
-        <h3 id="driver-dash-name">Bonjour, {driverData.name.split(' ')[0]} !</h3>
+        <h3 id="driver-dash-name">Bonjour, {(driverData.name || driverData.first_name || 'Livreur').split(' ')[0]} !</h3>
         <p id="driver-dash-vehicle" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{getVehicleEmoji(driverData.vehicle)} {driverData.vehicle}</p>
       </div>
 
@@ -215,7 +215,7 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
         <h4>⭐ Notes & Avis Clients</h4>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', marginBottom: '12px' }}>
           <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-primary-yellow)' }} id="driver-dash-rating-val">
-            {(driverData.rating || 5).toFixed(1)}
+            {Number(driverData.rating || 5).toFixed(1)}
           </span>
           <div>
             <div style={{ color: 'var(--color-primary-yellow)', fontSize: '0.85rem' }} id="driver-dash-stars">★★★★★</div>

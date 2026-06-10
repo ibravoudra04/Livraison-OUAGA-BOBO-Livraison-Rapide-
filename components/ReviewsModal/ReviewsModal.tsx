@@ -193,13 +193,13 @@ export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, ri
 
           <div className="reviews-summary-block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', borderBottom: '1.5px solid var(--color-border)', paddingBottom: '20px', marginBottom: '20px', textAlign: 'center' }}>
             <div>
-              <span style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--color-primary-yellow)', lineHeight: 1 }}>{riderRating.toFixed(1)}</span>
+              <span style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--color-primary-yellow)', lineHeight: 1 }}>{Number(riderRating || 5).toFixed(1)}</span>
               <div style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)', fontWeight: 600, marginTop: '6px' }}>Basé sur {riderReviewsCount} avis</div>
             </div>
             <div style={{ textAlign: 'left' }}>
               <div style={{ display: 'flex', gap: '2px', justifyContent: 'center' }}>
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <svg key={i} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={i < Math.round(riderRating) ? "var(--color-primary-yellow)" : "none"} stroke="var(--color-primary-yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  <svg key={i} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={i < Math.round(Number(riderRating || 5)) ? "var(--color-primary-yellow)" : "none"} stroke="var(--color-primary-yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 ))}
               </div>
               <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-light)', margin: '8px 0 0 0', lineHeight: 1.4 }}>Moyenne générale calculée sur les retours d'expériences clients.</p>
