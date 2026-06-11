@@ -122,7 +122,10 @@ CREATE POLICY "push_admin_read" ON public.push_subscriptions
     FOR SELECT TO authenticated USING ((auth.jwt()->'app_metadata'->>'role') = 'admin');
 
 -- ===== 3. Vue sécurisée : masquage téléphone basé sur app_metadata uniquement =====
-CREATE OR REPLACE VIEW public.livreurs_view AS
+-- On SUPPRIME d'abord la vue : un simple CREATE OR REPLACE échoue si l'ordre des
+-- colonnes diffère de la vue existante (ce qui annulerait tout le script).
+DROP VIEW IF EXISTS public.livreurs_view CASCADE;
+CREATE VIEW public.livreurs_view AS
 SELECT
     l.id, l.name, l.vehicle, l.lat, l.lng, l.initial,
     l.contacts_count, l.subscription_paid, l.status, l.views_count,
