@@ -79,8 +79,17 @@ export function useDriverOnboarding() {
         }
       }), 45000);
 
+      // Si l'email existe déjà, Supabase (protection anti-énumération) ne renvoie
+      // PAS d'erreur : il renvoie un faux utilisateur sans session ni identities.
+      // Sans session, les uploads partent en anonyme et la RLS du bucket les rejette
+      // ("new row violates row-level security policy"). On doit donc traiter ce cas
+      // comme "déjà inscrit" et tenter une connexion.
+      const alreadyRegistered =
+        (authError && authError.message.toLowerCase().includes('already registered')) ||
+        (!authError && authData.user && !authData.session);
+
       // If user already exists but onboarding failed previously, try logging them in
-      if (authError && authError.message.toLowerCase().includes('already registered')) {
+      if (alreadyRegistered) {
         const { data: loginData, error: loginError } = await withTimeout(supabase.auth.signInWithPassword({
           email: virtualEmail,
           password: securePassword,
@@ -101,6 +110,13 @@ export function useDriverOnboarding() {
 
       const userId = authData.user?.id;
       if (!userId) throw new Error("Erreur de création de profil");
+
+      // Les uploads vers le bucket 'identities' exigent une session authentifiée
+      // (policy RLS) : sans elle, on s'arrête avec un message clair plutôt que
+      // de laisser le storage renvoyer une erreur RLS incompréhensible.
+      if (!authData.session) {
+        throw new Error("Votre session n'a pas pu être établie. Fermez l'application, rouvrez-la puis réessayez.");
+      }
 
       // Upload files if provided
       const updatePayload: any = {};
