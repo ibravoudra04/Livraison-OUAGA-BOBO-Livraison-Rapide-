@@ -24,7 +24,7 @@ interface DriverRegistrationProps {
 }
 
 export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverRegistrationProps) {
-  const { registerDriver, loading, error } = useDriverOnboarding();
+  const { registerDriver, loading, progress, error } = useDriverOnboarding();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -267,8 +267,14 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
           </div>
         </div>
 
+        {error && !loading && (
+          <div style={{ color: 'red', fontWeight: 'bold', marginTop: '15px', fontSize: '0.9rem' }}>
+            ❌ {error}
+          </div>
+        )}
+
         <button type="submit" className="btn btn-primary" disabled={loading} style={{ width:'100%', padding:'14px', borderRadius:'16px', fontSize:'1rem', marginTop:'15px' }}>
-          {loading ? 'Inscription en cours...' : 'Soumettre mon inscription'}
+          {loading ? (progress || 'Inscription en cours...') : 'Soumettre mon inscription'}
         </button>
       </form>
       
