@@ -3,7 +3,7 @@ import { createClient } from '@/utils/supabase/client';
 
 interface Review {
   id: string;
-  rating: number;
+  stars: number;
   text: string;
   created_at: string;
 }
@@ -74,8 +74,8 @@ export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, ri
       .insert({
         client_id: user.id,
         rider_id: riderId,
-        rating: rating,
-        text: reviewText
+        stars: rating,
+        text: reviewText || ''
       });
       
     setSubmitting(false);
@@ -97,7 +97,7 @@ export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, ri
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" id="reviews-modal" style={{ display: 'flex' }}>
+    <div className="modal-overlay open" id="reviews-modal" style={{ display: 'flex' }}>
       <div className="payment-card" style={{ maxWidth: '480px', width: '95%' }}>
         <div className="payment-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%' }}>
           <button className="btn-back-modal" onClick={onClose} aria-label="Fermer">
@@ -217,7 +217,7 @@ export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, ri
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <div style={{ display: 'flex', gap: '2px' }}>
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <svg key={i} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={i < review.rating ? "var(--color-primary-yellow)" : "none"} stroke="var(--color-primary-yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg key={i} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={i < review.stars ? "var(--color-primary-yellow)" : "none"} stroke="var(--color-primary-yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                       ))}
                     </div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--color-charcoal-muted)' }}>

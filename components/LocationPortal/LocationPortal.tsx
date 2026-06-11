@@ -14,9 +14,10 @@ export default function LocationPortal({ onClose, onCitySelect, onAutoDetect }: 
   const [isDetecting, setIsDetecting] = useState(false);
 
   // Fetch real counts from DB
-  const { livreurs } = useLivreursRealtime();
+  const { livreurs, loading: countsLoading } = useLivreursRealtime();
   const ouagaCount = livreurs.filter((l: any) => l.city === 'ouaga').length;
   const boboCount = livreurs.filter((l: any) => l.city === 'bobo').length;
+  const cityLabel = (n: number) => countsLoading ? '…' : `${n} livreur${n !== 1 ? 's' : ''} actif${n !== 1 ? 's' : ''}`;
 
   // Full exhaustive list of sectors & neighborhoods based on administrative divisions
   const sectorsData: Record<string, string[]> = {
@@ -152,12 +153,12 @@ export default function LocationPortal({ onClose, onCitySelect, onAutoDetect }: 
                <div className="loc-city-card" onClick={() => handleCityClick('Ouagadougou')}>
                   <img loading="lazy" src="/ouaga_monument.png" alt="Ouagadougou Place des Cinéastes" className="city-card-img" />
                   <h4>Ouagadougou</h4>
-                  <span className="city-desc">{ouagaCount} livreur{ouagaCount !== 1 ? 's' : ''} actif{ouagaCount !== 1 ? 's' : ''}</span>
+                  <span className="city-desc">{cityLabel(ouagaCount)}</span>
               </div>
               <div className="loc-city-card" onClick={() => handleCityClick('Bobo-Dioulasso')}>
                   <img loading="lazy" src="/bobo_mosque.png" alt="Bobo-Dioulasso Grande Mosquée" className="city-card-img" />
                   <h4>Bobo-Dioulasso</h4>
-                  <span className="city-desc">{boboCount} livreur{boboCount !== 1 ? 's' : ''} actif{boboCount !== 1 ? 's' : ''}</span>
+                  <span className="city-desc">{cityLabel(boboCount)}</span>
               </div>
             </div>
           </div>

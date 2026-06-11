@@ -6,9 +6,10 @@ interface AuthDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onLoginSuccess?: (userId: string, role: string) => void;
+  onRegisterClient?: () => void;
 }
 
-export default function AuthDrawer({ isOpen, onClose, onLoginSuccess }: AuthDrawerProps) {
+export default function AuthDrawer({ isOpen, onClose, onLoginSuccess, onRegisterClient }: AuthDrawerProps) {
   const { supabase, formatPhoneForDB } = useSupabaseAuth();
   
   const [phone, setPhone] = useState('');
@@ -24,13 +25,14 @@ export default function AuthDrawer({ isOpen, onClose, onLoginSuccess }: AuthDraw
     try {
       let phoneNormalized = formatPhoneForDB(phone);
       let virtualEmail = phoneNormalized.replace(/\s+/g, '').replace('+', '') + '@livraison.com';
-      let securePassword = pin.length < 6 ? pin + "_secure_pad" : pin;
+      const securePassword = pin.length < 6 ? pin + "_secure_pad" : pin;
 
-      // Special case: Admin Login
-      // If the user uses the known admin phone number and pin 1234, redirect to true admin account
-      if ((phoneNormalized.includes('67 37 09 09') || phoneNormalized.includes('00 00 00 00')) && pin === '1234') {
+      // Compte administrateur : le numéro dédié pointe vers le compte admin.
+      // Le mot de passe saisi est utilisé tel quel — JAMAIS de mot de passe en
+      // dur ici (le code client est public). C'est app_metadata.role='admin',
+      // fixé côté serveur, qui accorde réellement les droits admin.
+      if (phoneNormalized.includes('67 37 09 09') || phoneNormalized.includes('00 00 00 00')) {
         virtualEmail = 'admin@livraison.com';
-        securePassword = 'admin_secure_password_123';
       }
 
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -38,12 +40,17 @@ export default function AuthDrawer({ isOpen, onClose, onLoginSuccess }: AuthDraw
         password: securePassword
       });
       if (authError) throw authError;
-      
+
       // On success, close the drawer. App.js/page.tsx will handle the routing
       // based on the updated session/role.
       onClose();
       if (onLoginSuccess && authData?.user) {
-        onLoginSuccess(authData.user.id, authData.user.user_metadata?.role || 'client');
+        // 'admin' ne peut venir QUE de app_metadata (non modifiable par l'usager).
+        // Tout le reste est routé comme client/livreur — jamais admin.
+        const resolvedRole = authData.user.app_metadata?.role === 'admin'
+          ? 'admin'
+          : (authData.user.user_metadata?.role === 'rider' ? 'rider' : 'client');
+        onLoginSuccess(authData.user.id, resolvedRole);
       }
       // Reset form
       setPhone('');
@@ -119,6 +126,15 @@ export default function AuthDrawer({ isOpen, onClose, onLoginSuccess }: AuthDraw
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
+
+        {onRegisterClient && (
+          <p className="driver-login-link" style={{ textAlign: 'center', marginTop: '18px', fontSize: '0.9rem' }}>
+            Pas encore de compte ?{' '}
+            <a href="#" onClick={(e) => { e.preventDefault(); onClose(); onRegisterClient(); }}>
+              Créer un compte client
+            </a>
+          </p>
+        )}
       </div>
     </Drawer>
   );

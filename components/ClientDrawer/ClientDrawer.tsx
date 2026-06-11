@@ -9,12 +9,13 @@ interface ClientDrawerProps {
   onSimulatePremium: () => void;
   onSearch: () => void;
   onChatRider: (riderId: string, riderName: string) => void;
+  initialView?: 'login' | 'register';
 }
 
-export default function ClientDrawer({ isOpen, onClose, onSimulatePremium, onSearch, onChatRider }: ClientDrawerProps) {
+export default function ClientDrawer({ isOpen, onClose, onSimulatePremium, onSearch, onChatRider, initialView = 'login' }: ClientDrawerProps) {
   const { user, role, supabase, formatPhoneForDB } = useSupabaseAuth();
-  
-  const [view, setView] = useState<'login' | 'register' | 'dashboard'>('login');
+
+  const [view, setView] = useState<'login' | 'register' | 'dashboard'>(initialView);
   const [clientData, setClientData] = useState<any>(null);
   
   const [name, setName] = useState('');
@@ -47,10 +48,10 @@ export default function ClientDrawer({ isOpen, onClose, onSimulatePremium, onSea
         onClose();
       }
     } else {
-      setView('login');
+      setView(initialView);
       setClientData(null);
     }
-  }, [user, role, supabase]);
+  }, [user, role, supabase, initialView]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();

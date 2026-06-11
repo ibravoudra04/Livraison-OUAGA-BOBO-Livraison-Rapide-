@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
+// Le rôle admin ne doit JAMAIS être déduit de user_metadata ni du téléphone :
+// ces champs sont modifiables par l'utilisateur lui-même (faille d'élévation de
+// privilèges). Seul app_metadata.role, fixé côté serveur, fait foi pour 'admin'.
+const resolveRole = (u: User): 'admin' | 'client' | 'rider' | null => {
+  if (u.app_metadata?.role === 'admin') return 'admin';
+  const r = u.user_metadata?.role;
+  return r === 'rider' || r === 'client' ? r : null;
+};
+
 export function useSupabaseAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -16,12 +25,7 @@ export function useSupabaseAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        const u = session.user;
-        const r = u.app_metadata?.role
-          || (u.user_metadata?.phone?.replace(/\s+/g, '').includes('67370909') ? 'admin' : null)
-          || u.user_metadata?.role
-          || null;
-        setRole(r);
+        setRole(resolveRole(session.user));
       }
       setLoading(false);
     };
@@ -32,12 +36,7 @@ export function useSupabaseAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        const u = session.user;
-        const r = u.app_metadata?.role
-          || (u.user_metadata?.phone?.replace(/\s+/g, '').includes('67370909') ? 'admin' : null)
-          || u.user_metadata?.role
-          || null;
-        setRole(r);
+        setRole(resolveRole(session.user));
       } else {
          setRole(null);
       }

@@ -35,6 +35,7 @@ export default function Home() {
   const [isDriverDrawerOpen, setIsDriverDrawerOpen] = useState(false);
   const [driverDrawerInitialView, setDriverDrawerInitialView] = useState<'login' | 'register'>('login');
   const [isClientDrawerOpen, setIsClientDrawerOpen] = useState(false);
+  const [clientDrawerInitialView, setClientDrawerInitialView] = useState<'login' | 'register'>('login');
   const [isAuthDrawerOpen, setIsAuthDrawerOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [chatPartner, setChatPartner] = useState<{ id: string; name: string; role: 'client' | 'rider' } | null>(null);
@@ -846,9 +847,10 @@ export default function Home() {
         }}
       />
 
-      <ClientDrawer 
+      <ClientDrawer
         isOpen={isClientDrawerOpen}
         onClose={() => setIsClientDrawerOpen(false)}
+        initialView={clientDrawerInitialView}
         onSimulatePremium={() => {
           setPaymentAmount(5000);
           setPaymentReason("Abonnement Premium Client");
@@ -944,9 +946,13 @@ export default function Home() {
         isAdmin={role === 'admin'}
       />
 
-      <AuthDrawer 
+      <AuthDrawer
         isOpen={isAuthDrawerOpen}
         onClose={() => setIsAuthDrawerOpen(false)}
+        onRegisterClient={() => {
+          setClientDrawerInitialView('register');
+          setIsClientDrawerOpen(true);
+        }}
         onLoginSuccess={(userId, loggedInRole) => {
           setToast({ message: "Connexion réussie ! Bienvenue.", type: 'success' });
           if (loggedInRole === 'rider') {
