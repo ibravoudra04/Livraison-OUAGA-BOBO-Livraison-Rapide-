@@ -1,0 +1,33 @@
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+const envFile = 'c:/Users/HP/Livraison Rapide OUAGA et BOBO/.env.local';
+const content = fs.readFileSync(envFile, 'utf8');
+const env = {};
+content.split('\n').forEach(line => {
+  const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+  if (match) {
+    let value = match[2] || '';
+    if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+    else if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
+    env[match[1]] = value.trim();
+  }
+});
+const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+async function run() {
+  const { data, error } = await supabase.from('livreurs').insert({
+    id: '2573a387-ba37-485c-bd5d-d38eb7c9b832',
+    name: 'Carine',
+    vehicle: 'Moto',
+    phone: '+226 64 00 03 35',
+    lat: 12.3714,
+    lng: -1.5197,
+    initial: 'C',
+    contacts_count: 0,
+    subscription_paid: false,
+    status: 'en attente',
+    rating: 5.0,
+    city: 'ouaga'
+  });
+  console.log('Insert Error:', error);
+}
+run();

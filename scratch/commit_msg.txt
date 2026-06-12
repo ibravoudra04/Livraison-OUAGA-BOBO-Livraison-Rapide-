@@ -1,0 +1,21 @@
+fix(securite): durcit le role admin + repare avis, inscription client et login admin
+
+Securite (B1) : le role admin n'est plus deduit de user_metadata ni du
+telephone (modifiables par l'utilisateur = elevation de privileges). Seul
+app_metadata.role='admin' fait foi cote frontend (useSupabaseAuth, AuthDrawer).
+Le correctif RLS cote base est fourni dans CORRECTIF_SECURITE_URGENT.sql
+(a executer dans Supabase SQL Editor).
+
+Avis (B3) : ReviewsModal s'ouvre desormais visible (classe .open), insere
+dans la vraie colonne stars (et non rating), commentaire optionnel.
+
+Inscription client (B2) : lien "Creer un compte client" dans AuthDrawer relie
+au formulaire existant (ClientDrawer initialView=register).
+
+Login admin (B4) : suppression du mot de passe admin code en dur (visible dans
+le bundle) ; le mot de passe saisi est utilise. Compte admin@livraison.com
+provisionne cote serveur avec app_metadata.role=admin.
+
+Divers : compteur de ville affiche "..." pendant le chargement.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>

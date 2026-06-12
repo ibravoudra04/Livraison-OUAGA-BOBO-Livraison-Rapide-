@@ -1,0 +1,18 @@
+fix(mineurs): bouton abonnement livreur, tarifs admin honnetes, nom client cote livreur
+
+M4 : le bouton "Regler mon abonnement (500 FCFA)" du livreur declenche desormais
+un paiement Orange Money reel vers le numero de la plateforme (tel USSD), au lieu
+de ne rien faire.
+
+M3 : la section Tarifs de l'admin n'affiche plus de champs editables trompeurs ni
+de faux bouton "Sauvegarder" ; elle montre les tarifs actuels en lecture seule.
+
+M2 : la messagerie livreur affiche le vrai nom du client (et non "Client") via une
+fonction serveur securisee get_my_chat_clients() qui ne renvoie que le nom (jamais
+le telephone) des clients ayant ecrit au livreur. Repli sur "Client" si la fonction
+n'est pas encore deployee (voir AJOUT_NOMS_CLIENTS_LIVREUR.sql).
+
+Inclut la reparation "livreur fantome" a l'inscription (recree le profil livreur
+si le trigger initial avait echoue lors d'une tentative precedente).
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>

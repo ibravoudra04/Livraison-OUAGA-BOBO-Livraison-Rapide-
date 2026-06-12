@@ -83,7 +83,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
 
   return (
     <div className="location-portal-overlay open" style={{ zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="location-portal-card" style={{ maxWidth: '1600px', width: '98%', height: '95vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(35px) saturate(180%)', border: '1px solid rgba(255,255,255,0.6)' }}>
+      <div className="location-portal-card" style={{ maxWidth: '1600px', width: '98%', height: '95vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.6)' }}>
 
         {/* Header Admin */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 24px', background: 'var(--color-bg-warm)', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
@@ -213,7 +213,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       </>
                     ) : (
                       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'var(--color-bg-warm)', zIndex: 10, display: 'flex', flexDirection: 'column', borderRadius: '16px', overflow: 'hidden' }}>
-                        <div style={{ padding: '15px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(35px)' }}>
+                        <div style={{ padding: '15px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(16px)' }}>
                           <button onClick={() => setSelectedDriver(null)} style={{ background: 'white', border: '1px solid rgba(0,0,0,0.1)', color: 'var(--color-charcoal)', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                             Retour
@@ -696,7 +696,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
         {/* Modal Aperçu Reçu */}
         {activeReceiptUrl && (
           <div onClick={() => setActiveReceiptUrl(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000, cursor: 'zoom-out' }}>
-            <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.55)', backdropFilter: 'blur(35px) saturate(180%)', WebkitBackdropFilter: 'blur(35px) saturate(180%)', padding: '20px', borderRadius: '24px', boxShadow: '0 24px 70px rgba(0,0,0,0.3)', maxWidth: '90%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.55)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', padding: '20px', borderRadius: '24px', boxShadow: '0 24px 70px rgba(0,0,0,0.3)', maxWidth: '90%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
               <img src={activeReceiptUrl} alt="Reçu de Paiement" style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '12px', objectFit: 'contain', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }} />
               <button onClick={() => setActiveReceiptUrl(null)} style={{ background: 'var(--color-primary-brown)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>Fermer</button>
             </div>

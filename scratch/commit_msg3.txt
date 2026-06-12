@@ -1,0 +1,17 @@
+perf(carte): corrige le bug de deplacement + allege fortement la carte sur mobile
+
+Bug principal : la carte se recentrait a chaque rendu (cityCenter etant un nouvel
+objet a chaque fois), empechant l'utilisateur de la deplacer. On ne recadre
+desormais que lorsque les coordonnees changent vraiment, en conservant le zoom.
+
+Fluidite : on ne rend QUE les marqueurs visibles dans la zone affichee (culling
+par bounds, mis a jour au deplacement) au lieu de 50+ marqueurs animes d'un coup.
+Retrait du will-change sur l'animation des marqueurs (qui creait une couche GPU
+par marqueur). preferCanvas active sur Leaflet. -> bien plus fluide sur telephones
+d'entree de gamme et au premier chargement (moins de photos chargees a la fois).
+
+Premiere connexion : l'abonnement push n'est plus reinsere a chaque visite
+(verification de l'endpoint existant) -> evite de regonfler la table et allege
+le premier chargement.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>

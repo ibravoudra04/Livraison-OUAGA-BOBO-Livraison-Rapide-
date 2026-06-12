@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\('playwright'\\)\")",
+      "Bash(npx --yes playwright --version)",
+      "Bash(npm install *)",
+      "Bash(node -e \"const {chromium} = require\\('@playwright/test'\\); console.log\\('ok'\\)\")",
+      "Bash(node -e \"const p = require\\(require\\('path'\\).join\\(process.env.APPDATA || '', '../Local/npm/node_modules/playwright/index.js'\\)\\); console.log\\('found'\\)\")",
+      "Bash(ls \"/c/Program Files/nodejs/node_modules/\" 2>/dev/null | head -10 && find \"/c/Program Files/nodejs\" -name \"playwright\" -maxdepth 4 2>/dev/null | head -5)",
+      "Read(//c/Program Files/nodejs/node_modules//**)",
+      "Read(//c/Program Files/nodejs/**)"
+    ]
+  }
+}

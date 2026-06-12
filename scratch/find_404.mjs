@@ -1,0 +1,17 @@
+import { chromium } from 'playwright';
+const BASE='http://localhost:3000';
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const ctx=await browser.newContext({viewport:{width:390,height:844}});
+await ctx.addInitScript(()=>{try{sessionStorage.setItem('hasPaidMapService','true');}catch(e){}});
+const page=await ctx.newPage();
+const failed=[];
+page.on('response', r=>{ if(r.status()>=400) failed.push(r.status()+' '+r.url()); });
+await page.goto(BASE,{waitUntil:'networkidle',timeout:60000}); await page.waitForTimeout(1500);
+await page.click('#portal-btn-find'); await page.waitForTimeout(900);
+await page.locator('.loc-city-card',{hasText:'Ouagadougou'}).click(); await page.waitForTimeout(500);
+await page.locator('.loc-option-btn-card',{hasText:'Voir la carte'}).click(); await page.waitForTimeout(3000);
+await page.locator('text=Détecter un livreur').click().catch(()=>{}); await page.waitForTimeout(1500);
+console.log('Ressources en erreur (>=400):');
+[...new Set(failed)].forEach(f=>console.log('  ', f));
+if(failed.length===0) console.log('  aucune');
+await browser.close();

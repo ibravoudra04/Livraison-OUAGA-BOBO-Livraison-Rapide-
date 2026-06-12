@@ -242,7 +242,7 @@ export default function ChatDrawer({ isOpen, onClose, riderId, clientId, current
             bottom: '70px', 
             left: '20px', 
             backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-            backdropFilter: 'blur(20px)',
+            backdropFilter: 'blur(14px)',
             borderRadius: '16px', 
             boxShadow: '0 10px 30px rgba(0,0,0,0.15)', 
             padding: '10px', 

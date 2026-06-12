@@ -21,6 +21,18 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useLivreursRealtime } from '@/hooks/useLivreursRealtime';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
+const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
 export default function Home() {
   const { user, session, role, supabase } = useSupabaseAuth();
   const [selectedCity, setSelectedCity] = useState<string>('Ouagadougou');
@@ -150,7 +162,7 @@ export default function Home() {
     'Bobo-Dioulasso': { lat: 11.1771, lng: -4.2968 }
   };
 
-  const handleMarkerClick = (livreur: any) => {
+  const handleMarkerClick = React.useCallback((livreur: any) => {
     // Logique des 3 clics maximum pour les clients payants non-premium
     if (hasPaidMapService && role !== 'admin' && role !== 'rider' && !isPremiumClient) {
       let clicks = parseInt(sessionStorage.getItem('clientClicks') || '0');
@@ -180,7 +192,7 @@ export default function Home() {
         }
       })();
     }
-  };
+  }, [hasPaidMapService, role, isPremiumClient, supabase]);
 
   const handleLoginClick = () => {
     if (!user) {
@@ -207,17 +219,7 @@ export default function Home() {
     setShowWelcome(false);
   };
 
-  const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // Radius of the earth in km
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
+  // getDistance moved outside component
 
   const handleLocateUser = () => {
     setIsLocating(true);
@@ -291,11 +293,13 @@ export default function Home() {
     setIsSheetOpen(true);
   };
 
-  const filteredLivreurs = livreurs.map(livreur => {
-    if (!userLocation) return livreur;
-    const dist = getDistance(userLocation.lat, userLocation.lng, livreur.lat, livreur.lng);
-    return { ...livreur, distanceToUser: dist };
-  });
+  const filteredLivreurs = React.useMemo(() => {
+    return livreurs.map(livreur => {
+      if (!userLocation) return livreur;
+      const dist = getDistance(userLocation.lat, userLocation.lng, livreur.lat, livreur.lng);
+      return { ...livreur, distanceToUser: dist };
+    });
+  }, [livreurs, userLocation]);
 
   React.useEffect(() => {
     const fetchAnnonce = async () => {
@@ -557,8 +561,8 @@ export default function Home() {
             <div style={{ 
               background: 'rgba(255, 255, 255, 0.45)', 
               border: '1px solid rgba(255, 255, 255, 0.55)', 
-              backdropFilter: 'blur(35px) saturate(180%)', 
-              WebkitBackdropFilter: 'blur(35px) saturate(180%)', 
+              backdropFilter: 'blur(16px)', 
+              WebkitBackdropFilter: 'blur(16px)', 
               padding: '30px 25px', 
               borderRadius: '28px', 
               boxShadow: '0 24px 70px rgba(54, 42, 33, 0.12), inset 0 1px 2.5px rgba(255, 255, 255, 0.95)', 

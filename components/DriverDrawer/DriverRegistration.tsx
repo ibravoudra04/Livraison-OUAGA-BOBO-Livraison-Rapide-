@@ -77,7 +77,7 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
             alert(`${errorMessage}\n\nVeuillez sélectionner votre quartier manuellement.`);
             setGeoStatus('error');
           },
-          { enableHighAccuracy: highAccuracy, timeout: 15000, maximumAge: 60000 }
+          { enableHighAccuracy: highAccuracy, timeout: 8000, maximumAge: 60000 }
         );
       } else {
         alert("Géo-localisation non supportée. Veuillez sélectionner votre quartier manuellement.");
@@ -99,8 +99,19 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (geoStatus === 'pending') {
+      alert("Votre position GPS est obligatoire. Nous allons lancer la recherche, veuillez accepter l'autorisation.");
+      handleGeolocation();
+      return;
+    }
+
+    if (geoStatus === 'loading') {
+      alert("Recherche GPS en cours, veuillez patienter...");
+      return;
+    }
+    
     if (geoStatus !== 'success') {
-      alert("Veuillez patienter ou relancer la géolocalisation. Votre position est obligatoire.");
+      alert("Votre position est obligatoire. Veuillez sélectionner un quartier manuellement.");
       return;
     }
     

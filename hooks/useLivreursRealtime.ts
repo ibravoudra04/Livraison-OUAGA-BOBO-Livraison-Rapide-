@@ -33,8 +33,43 @@ export function useLivreursRealtime(city?: string) {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'livreurs' },
-        (_payload) => {
-          fetchLivreurs(); 
+        async (payload) => {
+          if (payload.eventType === 'DELETE') {
+            setLivreurs(prev => prev.filter(l => l.id !== payload.old.id));
+            return;
+          }
+
+          const newRecord = payload.new;
+          const isActive = ['actif', 'approved'].includes(newRecord.status);
+
+          if (payload.eventType === 'UPDATE') {
+            setLivreurs(prev => {
+              const exists = prev.some(l => l.id === newRecord.id);
+              if (exists) {
+                if (!isActive) return prev.filter(l => l.id !== newRecord.id);
+                return prev.map(l => l.id === newRecord.id ? { ...l, ...newRecord } : l);
+              }
+              return prev;
+            });
+
+            // Si le livreur passe en ligne (il n'était pas dans la liste), on fetch ses infos complètes via la vue
+            if (isActive) {
+              const { data } = await supabase.from('livreurs_view').select('*').eq('id', newRecord.id).single();
+              if (data) {
+                setLivreurs(prev => {
+                  if (!prev.some(l => l.id === data.id)) return [...prev, data];
+                  return prev;
+                });
+              }
+            }
+          }
+
+          if (payload.eventType === 'INSERT' && isActive) {
+            const { data } = await supabase.from('livreurs_view').select('*').eq('id', newRecord.id).single();
+            if (data) {
+              setLivreurs(prev => [...prev, data]);
+            }
+          }
         }
       )
       .subscribe();

@@ -1,0 +1,25 @@
+{
+  "ids": [
+    "7c0c6f8d-5bea-4093-ba29-be3483519eb1",
+    "adc2975f-fa07-4be2-9ee6-9a8897d5cc71",
+    "5de5ac07-d430-496b-bdfd-0be4dabffe9e",
+    "807e694b-4915-4fc6-a73d-964daaeb05c8"
+  ],
+  "emails": [
+    "22609000001@livraison.com",
+    "22609000002@livraison.com",
+    "22609000005@livraison.com",
+    "22609000011@livraison.com"
+  ],
+  "clientPhone": "+226 09 00 00 01",
+  "driverPhone": "+226 09 00 00 02",
+  "cEmail": "22609000001@livraison.com",
+  "dEmail": "22609000002@livraison.com",
+  "PIN": "1234",
+  "clientId": "7c0c6f8d-5bea-4093-ba29-be3483519eb1",
+  "driverId": "adc2975f-fa07-4be2-9ee6-9a8897d5cc71",
+  "driverLat": 12.4,
+  "driverLng": -1.45,
+  "uiClientId": "5de5ac07-d430-496b-bdfd-0be4dabffe9e",
+  "fauxAdminUiId": "807e694b-4915-4fc6-a73d-964daaeb05c8"
+}
