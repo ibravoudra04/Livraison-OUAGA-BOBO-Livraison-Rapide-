@@ -46,22 +46,41 @@ export function usePushNotifications() {
           applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
         });
 
-        // Save subscription to Supabase
+        const subJson = JSON.parse(JSON.stringify(subscription));
+        const endpoint: string | undefined = subJson?.endpoint;
+
+        // Éviter d'insérer un doublon à CHAQUE visite (c'est ce qui avait fait
+        // gonfler la table à des centaines de lignes). On enregistre cet appareil
+        // une seule fois : si l'endpoint existe déjà pour cet utilisateur, on sort.
+        if (endpoint) {
+          const { data: existing } = await supabase
+            .from('push_subscriptions')
+            .select('id, subscription')
+            .eq('user_id', session.user.id);
+
+          const alreadySaved = (existing || []).some((row: any) => {
+            const ep = typeof row.subscription === 'string'
+              ? JSON.parse(row.subscription)?.endpoint
+              : row.subscription?.endpoint;
+            return ep === endpoint;
+          });
+
+          if (alreadySaved) {
+            return; // cet appareil est déjà enregistré
+          }
+        }
+
         const { error } = await supabase
           .from('push_subscriptions')
           .insert([
             {
               user_id: session.user.id,
-              subscription: JSON.parse(JSON.stringify(subscription))
+              subscription: subJson
             }
           ]);
 
-        // Note: It might error if we violate a unique constraint if we added one, 
-        // but currently we just allow multiple subscriptions per user (multiple devices).
         if (error) {
           console.error('Error saving push subscription to DB:', error);
-        } else {
-          console.log('Push subscription saved successfully.');
         }
 
       } catch (err) {

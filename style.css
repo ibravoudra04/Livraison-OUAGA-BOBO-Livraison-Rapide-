@@ -4339,8 +4339,8 @@ input, select, textarea, .form-input, .ussd-input { font-size: 16px !important; 
 /* Custom Driver Dot Marker */
 .custom-driver-dot { position: relative; }
 .driver-dot-core { width: 14px; height: 14px; background-color: var(--color-primary-green, #27AE60); border-radius: 50%; position: absolute; top: 3px; left: 3px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-.driver-dot-pulse { width: 20px; height: 20px; background-color: rgba(39, 174, 96, 0.4); border-radius: 50%; position: absolute; top: 0; left: 0; animation: pulsate-dot 1.5s ease-out infinite; }
-@keyframes pulsate-dot { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+.driver-dot-pulse { width: 20px; height: 20px; background-color: rgba(39, 174, 96, 0.4); border-radius: 50%; position: absolute; top: 0; left: 0; animation: pulsate-dot 1.8s ease-out infinite; }
+@keyframes pulsate-dot { 0% { transform: scale(0.8) translateZ(0); opacity: 1; } 100% { transform: scale(2.5) translateZ(0); opacity: 0; } }
 
 /* Hide Leaflet Attribution */
 .leaflet-control-attribution { display: none !important; }
