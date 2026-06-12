@@ -520,23 +520,21 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
 
                     {/* Tarifs */}
                     <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', padding: '25px' }}>
-                      <h4 style={{ margin: '0 0 16px 0', color: 'var(--color-primary-brown)' }}>💰 Tarifs de la Plateforme</h4>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '15px' }}>
+                      <h4 style={{ margin: '0 0 6px 0', color: 'var(--color-primary-brown)' }}>💰 Tarifs de la Plateforme</h4>
+                      <p style={{ margin: '0 0 16px 0', fontSize: '0.82rem', color: 'var(--color-charcoal-muted)' }}>
+                        Tarifs actuellement appliqués dans l'application. Pour les modifier, contactez votre développeur.
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '15px' }}>
                         {[
-                          { label: 'Coût de déblocage (FCFA)', defaultVal: 200 },
-                          { label: 'Abonnement Premium Client (FCFA/mois)', defaultVal: 5000 },
-                          { label: 'Abonnement Livreur (FCFA/semaine)', defaultVal: 500 },
-                        ].map(({ label, defaultVal }) => (
-                          <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <label style={{ fontWeight: 'bold', color: 'var(--color-charcoal)', fontSize: '0.9rem' }}>{label}</label>
-                            <input type="number" defaultValue={defaultVal} style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem', width: '100%', boxSizing: 'border-box' }} />
+                          { label: 'Coût de déblocage', val: '200 FCFA' },
+                          { label: 'Abonnement Premium Client', val: '5 000 FCFA / mois' },
+                          { label: 'Abonnement Livreur', val: '500 FCFA / semaine' },
+                        ].map(({ label, val }) => (
+                          <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'var(--color-bg-warm)', borderRadius: '10px', padding: '14px' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--color-charcoal-muted)', fontWeight: 600 }}>{label}</span>
+                            <span style={{ fontWeight: 800, color: 'var(--color-charcoal)', fontSize: '1.1rem' }}>{val}</span>
                           </div>
                         ))}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'flex-end' }}>
-                          <button onClick={() => alert('Paramètres sauvegardés !')} style={{ background: 'var(--color-primary-brown)', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>
-                            Sauvegarder les modifications
-                          </button>
-                        </div>
                       </div>
                     </div>
 

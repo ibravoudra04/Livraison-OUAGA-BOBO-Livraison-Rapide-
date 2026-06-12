@@ -95,7 +95,7 @@ export function useDriverOnboarding() {
           password: securePassword,
         }), 45000);
 
-        if (loginError) throw new Error("Ce numéro est déjà inscrit. Vérifiez votre mot de passe secret ou contactez le support.");
+        if (loginError) throw new Error("Ce numéro est déjà inscrit ou l'inscription précédente n'a pas été terminée. Vérifiez que votre mot de passe secret est le bon pour finaliser l'inscription.");
 
         if (loginData.user?.user_metadata?.role && loginData.user.user_metadata.role !== 'rider') {
           await supabase.auth.signOut();
@@ -116,6 +116,35 @@ export function useDriverOnboarding() {
       // de laisser le storage renvoyer une erreur RLS incompréhensible.
       if (!authData.session) {
         throw new Error("Votre session n'a pas pu être établie. Fermez l'application, rouvrez-la puis réessayez.");
+      }
+
+      // --- RÉPARATION DU BUG "LIVREUR FANTÔME" ---
+      // Si l'utilisateur existait déjà (alreadyRegistered), il se peut qu'il ne soit jamais 
+      // entré dans la table `livreurs` (par ex. si le trigger initial a échoué par le passé).
+      // On vérifie sa présence, et on le recrée manuellement si besoin.
+      if (alreadyRegistered && userId) {
+        setProgress('Vérification de votre profil...');
+        const { data: profileCheck } = await supabase
+          .from('livreurs')
+          .select('id')
+          .eq('id', userId)
+          .single();
+          
+        if (!profileCheck) {
+           setProgress('Réparation de votre profil...');
+           await supabase.from('livreurs').insert({
+              id: userId,
+              name: formData.name,
+              phone: phoneNormalized,
+              vehicle: formData.vehicle,
+              lat: formData.lat,
+              lng: formData.lng,
+              initial: formData.name.charAt(0).toUpperCase(),
+              city: formData.city || 'ouaga',
+              status: 'en attente',
+              subscription_paid: false
+           });
+        }
       }
 
       // Upload files if provided

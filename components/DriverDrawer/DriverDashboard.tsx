@@ -6,6 +6,7 @@ interface DriverDashboardProps {
   driverData: any;
   onLogout: () => void;
   onSimulatePayment: () => void;
+  onPaySubscription: () => void;
   onChatClient: (clientId: string, clientName: string) => void;
 }
 
@@ -17,7 +18,7 @@ interface ChatConversation {
   unread: boolean;
 }
 
-export default function DriverDashboard({ driverData, onLogout, onSimulatePayment, onChatClient }: DriverDashboardProps) {
+export default function DriverDashboard({ driverData, onLogout, onSimulatePayment, onPaySubscription, onChatClient }: DriverDashboardProps) {
   const { logout } = useSupabaseAuth();
   const supabase = createClient();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
@@ -56,16 +57,16 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
           return;
         }
 
-        // Récupérer les noms des clients
+        // Récupérer les noms des clients via une fonction serveur sécurisée :
+        // un livreur n'a pas le droit de lire la table clients (RLS), mais cette
+        // RPC ne renvoie QUE le nom (pas le téléphone) des clients qui lui ont écrit.
+        // Repli sur "Client" si la fonction n'est pas encore déployée en base.
         const clientIds = Array.from(clientMap.keys());
-        const { data: clients } = await supabase
-          .from('clients_livraison')
-          .select('id, name')
-          .in('id', clientIds);
+        const { data: clients } = await supabase.rpc('get_my_chat_clients');
 
         const convos: ChatConversation[] = clientIds.map(cid => {
           const lastMsg = clientMap.get(cid)!;
-          const clientInfo = clients?.find(c => c.id === cid);
+          const clientInfo = clients?.find((c: { id: string; name: string }) => c.id === cid);
           return {
             clientId: cid,
             clientName: clientInfo?.name || 'Client',
@@ -320,7 +321,7 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
           {subTextHTML}
         </p>
         {showPayBtn && (
-          <button className="btn-unlock" id="btn-driver-pay-sub" style={{ width: '100%', marginTop: '12px', padding: '10px', fontSize: '0.9rem' }}>
+          <button className="btn-unlock" id="btn-driver-pay-sub" onClick={onPaySubscription} style={{ width: '100%', marginTop: '12px', padding: '10px', fontSize: '0.9rem' }}>
             Régler mon abonnement (500 FCFA)
           </button>
         )}
