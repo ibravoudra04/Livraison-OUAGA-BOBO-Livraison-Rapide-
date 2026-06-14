@@ -28,6 +28,7 @@ export interface AdminStats {
   annonces: any[];
   tickets: any[];
   paiements: any[];
+  allVisits: any[];
   dailyStats: DailyStat[];
 }
 
@@ -50,6 +51,7 @@ export function useAdminStats(isAdmin: boolean) {
     annonces: [],
     tickets: [],
     paiements: [],
+    allVisits: [],
     dailyStats: [],
   });
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,7 @@ export function useAdminStats(isAdmin: boolean) {
           Promise.resolve(query).catch(() => ({ data: null, count: null, error: null }));
 
         const [
-          r0, r1, r2, r3, r4, r5, r6, r7, r8, r9
+          r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10
         ] = await Promise.all([
           safe(supabase.from('deblocages').select('created_at').order('created_at', { ascending: false })),
           safe(supabase.from('livreurs').select('*', { count: 'exact', head: true })),
@@ -86,6 +88,7 @@ export function useAdminStats(isAdmin: boolean) {
           safe(supabase.from('tickets_support').select('*, clients_livraison(name, phone), livreurs(name, phone)').order('created_at', { ascending: false })),
           safe(supabase.from('annonces').select('*').order('created_at', { ascending: false })),
           safe(supabase.from('paiements').select('*').order('created_at', { ascending: false })),
+          safe(supabase.from('plateforme_visites').select('created_at').order('created_at', { ascending: false })),
         ]);
 
         const allDeblocagesData = r0.data || [];
@@ -101,6 +104,7 @@ export function useAdminStats(isAdmin: boolean) {
         const ticketsData   = r7.data;
         const annoncesData  = r8.data;
         const paiementsData = r9.data;
+        const visitsData    = r10.data || [];
 
         // Compute daily stats for last 14 days (utilise allChatsData déjà chargé)
         const dailyStatsArr: DailyStat[] = [];
@@ -143,6 +147,7 @@ export function useAdminStats(isAdmin: boolean) {
           annonces: annoncesData || [],
           tickets: ticketsData || [],
           paiements: paiementsData || [],
+          allVisits: visitsData,
           dailyStats: dailyStatsArr,
         });
       } catch (err: any) {

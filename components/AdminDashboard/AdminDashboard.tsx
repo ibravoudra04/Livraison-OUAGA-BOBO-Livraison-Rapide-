@@ -199,7 +199,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                   <strong style={{ fontSize: '1rem', color: 'var(--color-charcoal)' }}>{driver.first_name || driver.name}</strong>
                                   <span style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)' }}>
-                                    {driver.status === 'approved' || driver.status === 'actif' ? '🟢 Actif' : driver.status === 'suspendu' ? '🟠 Suspendu' : '🔴 En attente'} • {driver.city === 'ouaga' ? 'Ouagadougou' : 'Bobo-Dioulasso'} • {driver.phone}
+                                    {driver.status === 'approved' || driver.status === 'actif' ? '🟢 Actif' : driver.status === 'suspendu' ? '🟠 Suspendu' : '🔴 En attente'} • {driver.city === 'ouaga' ? 'Ouagadougou' : 'Bobo-Dioulasso'} • {driver.phone} • Inscrit le {new Date(driver.created_at).toLocaleDateString('fr-FR')}
                                   </span>
                                 </div>
                               </div>
@@ -446,6 +446,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                   const filteredDeblocages = stats.allDeblocages.filter(d => inPeriod(d.created_at));
                   const filteredPaiements  = stats.paiements.filter(p => inPeriod(p.created_at));
                   const filteredChats    = stats.allChats.filter(c => inPeriod(c.created_at));
+                  const filteredVisits   = (stats.allVisits || []).filter(v => inPeriod(v.created_at));
 
                   const revenuPaye  = filteredPaiements.filter(p => p.statut === 'VALIDE').reduce((a, p) => a + (Number(p.montant) || 0), 0);
                   const revenuTheo  = filteredDeblocages.length * 200;
@@ -494,6 +495,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                           { label: 'Nouveaux Livreurs', val: filteredDrivers.length.toString(), sub: 'Inscriptions sur la période', color: '#2c3e50' },
                           { label: 'Nouveaux Clients', val: filteredClients.length.toString(), sub: 'Inscriptions sur la période', color: '#8e44ad' },
                           { label: 'Messages Échangés', val: filteredChats.length.toString(), sub: 'Dans les messageries instantanées', color: '#7f8c8d' },
+                          { label: 'Visites Plateforme', val: statsPeriod === 'all' ? (stats.allVisits?.length || 0).toString() : filteredVisits.length.toString(), sub: 'Visites uniques de l\'application', color: '#1abc9c' },
                           { label: 'Déblocages de Numéro', val: filteredDeblocages.length.toString(), sub: 'Contacts débloqués sur la période', color: '#e67e22' },
                           { label: 'Paiements Reçus', val: filteredPaiements.filter(p => p.statut === 'VALIDE').length.toString(), sub: 'Reçus validés sur la période', color: '#27ae60' },
                           { label: 'Clients Premium Actifs', val: premiumClients.toString(), sub: statsPeriod === 'all' ? 'Total abonnés premium' : 'Nouveaux premium sur la période', color: '#f39c12' },

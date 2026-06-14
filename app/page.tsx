@@ -80,8 +80,23 @@ export default function Home() {
       if (attempts) {
         setPaymentAttempts(parseInt(attempts));
       }
+      
+      // Enregistrer la visite unique par session
+      const hasVisited = sessionStorage.getItem('hasVisitedPlatform');
+      if (!hasVisited && supabase) {
+        (async () => {
+          try {
+            await supabase.from('plateforme_visites').insert([
+              { session_id: navigator.userAgent }
+            ]);
+            sessionStorage.setItem('hasVisitedPlatform', 'true');
+          } catch (e) {
+            // Ignorer silencieusement
+          }
+        })();
+      }
     }
-  }, []);
+  }, [supabase]);
 
   React.useEffect(() => {
     let isMounted = true;
