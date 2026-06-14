@@ -163,16 +163,16 @@ export default function Home() {
   };
 
   const handleMarkerClick = React.useCallback((livreur: any) => {
-    // Logique des 3 clics maximum pour les clients payants non-premium
+    // Logique des 5 clics maximum pour les clients payants non-premium
     if (hasPaidMapService && role !== 'admin' && role !== 'rider' && !isPremiumClient) {
       let clicks = parseInt(sessionStorage.getItem('clientClicks') || '0');
       clicks += 1;
       
-      if (clicks > 3) {
+      if (clicks > 5) {
         setHasPaidMapService(false);
         sessionStorage.setItem('hasPaidMapService', 'false');
         setUssdDialed(false); // Réinitialiser le paiement
-        setToast({ message: "Vous avez consulté 3 livreurs. Veuillez renouveler l'accès.", type: "warning" });
+        setToast({ message: "Vous avez consulté 5 livreurs. Veuillez renouveler l'accès.", type: "warning" });
         return; // Bloque l'ouverture du profil
       } else {
         sessionStorage.setItem('clientClicks', clicks.toString());

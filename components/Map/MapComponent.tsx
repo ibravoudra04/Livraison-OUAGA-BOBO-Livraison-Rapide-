@@ -48,7 +48,7 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
     livreursRef.current.forEach((livreur: any) => {
       const pos = computePos(livreur);
       if (!pos) return;
-      if (!bounds.contains(pos)) return; // hors écran : on ne le rend pas
+      // if (!bounds.contains(pos)) return; // hors écran : on ne le rend pas
       visibleIds.add(livreur.id);
 
       const existing = markersMapRef.current[livreur.id];

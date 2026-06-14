@@ -1,24 +1,38 @@
 import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const supabase = createClient(
-  'https://ftbhmfdlvrykfbanajfp.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YmhtZmRsdnJ5a2ZiYW5hamZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjEwNzAsImV4cCI6MjA5NTM5NzA3MH0.dK8-E2psZ4oCY6P8GXHsREWBFORLRI9H71x-mT82Pp8'
-);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-async function check() {
-  const { data, error } = await supabase.from('livreurs_view').select('*');
+const envPath = path.join(__dirname, '..', '.env.local');
+const envContent = fs.readFileSync(envPath, 'utf-8');
+const SUPABASE_URL = envContent.match(/NEXT_PUBLIC_SUPABASE_URL=(.*)/)?.[1]?.trim();
+const SUPABASE_ANON_KEY = envContent.match(/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=(.*)/)?.[1]?.trim();
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function checkDrivers() {
+  const { data, error } = await supabase.from('livreurs_view').select('id, name, city, status, lat, lng');
   if (error) {
-    console.error('Error:', error);
+    console.error("Error fetching drivers:", error);
     return;
   }
   
-  console.log(`Total drivers in livreurs_view: ${data.length}`);
+  console.log("Total drivers:", data.length);
   
-  const active = data.filter(d => d.status === 'actif' || d.status === 'approved');
-  console.log(`Active/Approved drivers: ${active.length}`);
-  
-  active.forEach(d => {
-    console.log(`- ${d.name} | City: ${d.city} | Lat: ${d.lat}, Lng: ${d.lng} | Distance to Ouaga: ${Math.sqrt(Math.pow((d.lat || 0) - 12.3714, 2) + Math.pow((d.lng || 0) - -1.5197, 2))}`);
+  // Count by city and status
+  const summary = {};
+  data.forEach(d => {
+    const key = `city:${d.city} | status:${d.status}`;
+    summary[key] = (summary[key] || 0) + 1;
   });
+  console.log("Drivers Summary:");
+  console.log(JSON.stringify(summary, null, 2));
+
+  console.log("\nSample 10 drivers:");
+  console.log(data.slice(0, 10));
 }
-check();
+
+checkDrivers();
