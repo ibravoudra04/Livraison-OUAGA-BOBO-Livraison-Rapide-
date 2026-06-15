@@ -1,16 +1,16 @@
-'use client';
-
+import React from 'react';
 import dynamic from 'next/dynamic';
 
-const MapWithNoSSR = dynamic(() => import('./MapComponent'), {
+// Disable SSR for the map component
+const MapComponent = dynamic(() => import('./MapComponent'), {
   ssr: false,
   loading: () => (
-    <div style={{ height: '100%', width: '100%', backgroundColor: '#e5e7eb', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      Chargement de la carte et des livreurs...
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e0e0e0' }}>
+      <div className="pulse-dot" style={{ width: '20px', height: '20px' }}></div>
     </div>
   )
 });
 
 export default function MapWrapper(props: any) {
-  return <MapWithNoSSR {...props} />;
+  return <MapComponent {...props} />;
 }

@@ -42,7 +42,6 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
     const group = markersRef.current;
     if (!map || !group) return;
 
-    const bounds = map.getBounds().pad(0.25);
     const visibleIds = new Set<string>();
 
     livreursRef.current.forEach((livreur: any) => {
@@ -53,7 +52,11 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
 
       const existing = markersMapRef.current[livreur.id];
       if (existing) {
-        existing.setLatLng(pos);
+        const oldPos = existing.getLatLng();
+        // Eviter de mettre à jour le DOM si la position n'a pas changé (Gain de perf massif)
+        if (Math.abs(oldPos.lat - pos[0]) > 0.00001 || Math.abs(oldPos.lng - pos[1]) > 0.00001) {
+          existing.setLatLng(pos);
+        }
       } else {
         const hasSelfie = livreur.selfie && livreur.selfie !== '';
         const iconHtml = hasSelfie
@@ -85,6 +88,8 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
   }, []);
 
   useEffect(() => {
+    let resizeObserver: ResizeObserver | null = null;
+
     if (typeof window !== 'undefined' && !mapRef.current && containerRef.current) {
       mapRef.current = L.map(containerRef.current, {
         zoomControl: false,
@@ -100,9 +105,20 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
       // Re-rendre les marqueurs visibles quand l'utilisateur déplace/zoome la carte
       mapRef.current.on('moveend', renderMarkers);
       renderMarkers();
+
+      // Écouter les changements de taille du conteneur pour éviter les artefacts d'affichage
+      resizeObserver = new ResizeObserver(() => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize();
+        }
+      });
+      resizeObserver.observe(containerRef.current);
     }
 
     return () => {
+      if (resizeObserver && containerRef.current) {
+        resizeObserver.unobserve(containerRef.current);
+      }
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;

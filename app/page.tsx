@@ -308,13 +308,7 @@ export default function Home() {
     setIsSheetOpen(true);
   };
 
-  const filteredLivreurs = React.useMemo(() => {
-    return livreurs.map(livreur => {
-      if (!userLocation) return livreur;
-      const dist = getDistance(userLocation.lat, userLocation.lng, livreur.lat, livreur.lng);
-      return { ...livreur, distanceToUser: dist };
-    });
-  }, [livreurs, userLocation]);
+
 
   React.useEffect(() => {
     const fetchAnnonce = async () => {
@@ -534,7 +528,7 @@ export default function Home() {
 
         <div style={{ width: '100%', height: '100%', filter: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'blur(8px) saturate(120%)' : 'none', pointerEvents: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'none' : 'auto', transition: 'filter 0.5s' }}>
           <MapWrapper 
-            livreurs={filteredLivreurs} 
+            livreurs={livreurs} 
             cityCenter={mapCenter || cityCenters[selectedCity as keyof typeof cityCenters] || cityCenters['Ouagadougou']} 
             onMarkerClick={handleMarkerClick} 
           />
