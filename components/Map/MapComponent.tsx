@@ -42,12 +42,17 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
     const group = markersRef.current;
     if (!map || !group) return;
 
+    // Récupérer les limites visibles de la carte (+ une marge de 50%) pour le rendu virtuel
+    const bounds = map.getBounds().pad(0.5);
     const visibleIds = new Set<string>();
 
     livreursRef.current.forEach((livreur: any) => {
       const pos = computePos(livreur);
       if (!pos) return;
-      // if (!bounds.contains(pos)) return; // hors écran : on ne le rend pas
+      
+      // Ne rendre QUE les marqueurs dans la zone visible pour éviter le crash (optimisation de perf)
+      if (!bounds.contains(pos)) return;
+      
       visibleIds.add(livreur.id);
 
       const existing = markersMapRef.current[livreur.id];
@@ -58,28 +63,21 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
           existing.setLatLng(pos);
         }
       } else {
-        // Affichage de la photo de profil (selfie) au lieu du point vert
+        // Affichage de la photo de profil (selfie)
         let iconHtml;
         if (livreur.selfie) {
-          // On utilise un conteneur circulaire avec object-fit: cover et object-position: top pour cibler le visage.
-          // On ajoute loading="lazy" pour améliorer les performances.
-          iconHtml = `<div class="driver-avatar-marker" style="width: 40px; height: 40px; border-radius: 50%; border: 2.5px solid var(--color-primary-green); overflow: hidden; background: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.25); position: relative;">
-            <img src="${livreur.selfie}" alt="Driver" style="width: 100%; height: 100%; object-fit: cover; object-position: top; transform: scale(1.15);" loading="lazy" />
-            <div style="position: absolute; bottom: 0px; right: 0px; width: 10px; height: 10px; background: var(--color-primary-green); border: 2px solid white; border-radius: 50%;"></div>
-          </div>`;
+          // Utilisation de background-image pour une bien meilleure fluidité que les balises <img>
+          iconHtml = `<div class="driver-avatar-marker" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--color-primary-green); background-image: url('${livreur.selfie}'); background-size: cover; background-position: top; background-color: white; will-change: transform;"></div>`;
         } else {
           const initial = (livreur.first_name || livreur.name || 'L').charAt(0).toUpperCase();
-          iconHtml = `<div class="driver-avatar-marker" style="width: 40px; height: 40px; border-radius: 50%; border: 2.5px solid var(--color-primary-green); background: var(--color-primary-brown); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); position: relative;">
-            ${initial}
-            <div style="position: absolute; bottom: 0px; right: 0px; width: 10px; height: 10px; background: var(--color-primary-green); border: 2px solid white; border-radius: 50%;"></div>
-          </div>`;
+          iconHtml = `<div class="driver-avatar-marker" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--color-primary-green); background-color: var(--color-primary-brown); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; will-change: transform;">${initial}</div>`;
         }
 
         const icon = L.divIcon({
           className: 'custom-driver-avatar-icon',
           html: iconHtml,
-          iconSize: [40, 40],
-          iconAnchor: [20, 20],
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
         });
 
         const marker = L.marker(pos, { icon });
