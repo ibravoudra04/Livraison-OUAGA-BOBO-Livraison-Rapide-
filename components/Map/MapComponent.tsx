@@ -58,14 +58,28 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
           existing.setLatLng(pos);
         }
       } else {
-        // Rendu simplifié : juste un point vert sans clignotement ni selfie (pour la perf et la clarté)
-        const iconHtml = `<div class="driver-dot-core"></div>`;
+        // Affichage de la photo de profil (selfie) au lieu du point vert
+        let iconHtml;
+        if (livreur.selfie) {
+          // On utilise un conteneur circulaire avec object-fit: cover et object-position: top pour cibler le visage.
+          // On ajoute loading="lazy" pour améliorer les performances.
+          iconHtml = `<div class="driver-avatar-marker" style="width: 40px; height: 40px; border-radius: 50%; border: 2.5px solid var(--color-primary-green); overflow: hidden; background: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.25); position: relative;">
+            <img src="${livreur.selfie}" alt="Driver" style="width: 100%; height: 100%; object-fit: cover; object-position: top; transform: scale(1.15);" loading="lazy" />
+            <div style="position: absolute; bottom: 0px; right: 0px; width: 10px; height: 10px; background: var(--color-primary-green); border: 2px solid white; border-radius: 50%;"></div>
+          </div>`;
+        } else {
+          const initial = (livreur.first_name || livreur.name || 'L').charAt(0).toUpperCase();
+          iconHtml = `<div class="driver-avatar-marker" style="width: 40px; height: 40px; border-radius: 50%; border: 2.5px solid var(--color-primary-green); background: var(--color-primary-brown); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); position: relative;">
+            ${initial}
+            <div style="position: absolute; bottom: 0px; right: 0px; width: 10px; height: 10px; background: var(--color-primary-green); border: 2px solid white; border-radius: 50%;"></div>
+          </div>`;
+        }
 
         const icon = L.divIcon({
-          className: 'custom-driver-dot',
+          className: 'custom-driver-avatar-icon',
           html: iconHtml,
-          iconSize: [20, 20],
-          iconAnchor: [10, 10],
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
         });
 
         const marker = L.marker(pos, { icon });
