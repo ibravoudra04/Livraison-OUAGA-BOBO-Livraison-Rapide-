@@ -151,7 +151,7 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
     visibilityText = "🟢 En ligne";
     visibilityColor = "var(--color-green-soft)";
     subTextHTML = `Vous bénéficiez de 4 mises en relation offertes. (Vous êtes à ${contacts}/4).`;
-  } else if (isPaid) {
+  } else if (isPremium) {
     statusBadgeText = "Disponible";
     visibilityText = "🟢 En ligne";
     visibilityColor = "var(--color-green-soft)";
