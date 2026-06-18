@@ -128,12 +128,30 @@ export default function AuthDrawer({ isOpen, onClose, onLoginSuccess, onRegister
         </form>
 
         {onRegisterClient && (
-          <p className="driver-login-link" style={{ textAlign: 'center', marginTop: '18px', fontSize: '0.9rem' }}>
-            Pas encore de compte ?{' '}
-            <a href="#" onClick={(e) => { e.preventDefault(); onClose(); onRegisterClient(); }}>
-              Créer un compte client
-            </a>
-          </p>
+          <div style={{ marginTop: '25px', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+            <div style={{ width: '100%', height: '1px', background: 'var(--color-charcoal-muted)', opacity: 0.2 }}></div>
+            <p style={{ margin: '5px 0', fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Pas encore de compte ?</p>
+            <button 
+              type="button" 
+              onClick={() => { onClose(); onRegisterClient(); }}
+              style={{ 
+                width: '100%', 
+                padding: '14px', 
+                borderRadius: '16px', 
+                fontSize: '1rem', 
+                fontWeight: 'bold',
+                background: 'rgba(141, 85, 55, 0.1)', 
+                color: 'var(--color-primary-brown)', 
+                border: '1px solid rgba(141, 85, 55, 0.3)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(141, 85, 55, 0.15)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(141, 85, 55, 0.1)'}
+            >
+              S'inscrire (Compte Client)
+            </button>
+          </div>
         )}
       </div>
     </Drawer>

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Drawer from '@/components/Drawer/Drawer';
 import { useChatRealtime } from '@/hooks/useChatRealtime';
 import { createClient } from '@/utils/supabase/client';
+import { compressImage } from '@/utils/compressImage';
 
 interface ChatDrawerProps {
   isOpen: boolean;
@@ -55,13 +56,14 @@ export default function ChatDrawer({ isOpen, onClose, riderId, clientId, current
 
     try {
       setUploadingImage(true);
-      const fileExt = file.name.split('.').pop();
+      const compressedFile = await compressImage(file);
+      const fileExt = file.name.split('.').pop() || 'jpg';
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${clientId}_${riderId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('chat_images')
-        .upload(filePath, file);
+        .upload(filePath, compressedFile);
 
       if (uploadError) throw uploadError;
 
@@ -289,7 +291,6 @@ export default function ChatDrawer({ isOpen, onClose, riderId, clientId, current
           <input 
             type="file" 
             accept="image/*" 
-            capture="environment"
             ref={photoInputRef} 
             style={{ display: 'none' }} 
             onChange={handleImageUpload} 
