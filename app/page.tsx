@@ -55,7 +55,7 @@ export default function Home() {
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState(200);
+  const [paymentAmount, setPaymentAmount] = useState(500);
   const [paymentReason, setPaymentReason] = useState("");
   const [paymentCallback, setPaymentCallback] = useState<(() => Promise<void>) | null>(null);
 
@@ -109,7 +109,7 @@ export default function Home() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               imageBase64: screenshotPreview, 
-              montantAttendu: 200, 
+              montantAttendu: 500, 
               userId: user?.id 
             })
           });
@@ -350,7 +350,7 @@ export default function Home() {
   };
 
   const handlePayMapService = () => {
-    setPaymentAmount(200);
+    setPaymentAmount(500);
     setPaymentReason("Accès complet à la carte des livreurs");
     setPaymentCallback(() => async () => {
       setHasPaidMapService(true);
@@ -584,7 +584,7 @@ export default function Home() {
                   <button 
                     className="btn pulse" 
                     onClick={() => {
-                      window.location.href = "tel:*144*2*1*67370909*200%23";
+                      window.location.href = "tel:*144*2*1*67370909*500%23";
                       setUssdDialed(true);
                       setPaymentFlowStep('UPLOAD');
                     }}
@@ -608,7 +608,7 @@ export default function Home() {
                     }}
                   >
                     <img src="/orange_money.png" alt="OM" style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'contain', background: 'white', padding: '5px' }} />
-                    <span>Utiliser les services — 200 FCFA</span>
+                    <span>Utiliser les services — 500 Francs</span>
                   </button>
                 </div>
               )}
@@ -630,7 +630,7 @@ export default function Home() {
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginTop: '10px' }}>
                         <a 
-                          href="https://wa.me/22667370909?text=Bonjour,%20mon%20paiement%20de%20200%20FCFA%20sur%20Livraison%20Rapide%20n'a%20pas%20pu%20être%20validé%20après%205%20essais.%20Voici%20la%20capture%20d'écran%20du%20problème."
+                          href="https://wa.me/22667370909?text=Bonjour,%20mon%20paiement%20de%20500%20FCFA%20sur%20Livraison%20Rapide%20n'a%20pas%20pu%20être%20validé%20après%205%20essais.%20Voici%20la%20capture%20d'écran%20du%20problème."
                           target="_blank"
                           rel="noopener noreferrer"
                           className="btn"

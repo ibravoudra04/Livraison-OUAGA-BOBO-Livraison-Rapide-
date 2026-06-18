@@ -20,6 +20,10 @@ export function useLivreursRealtime(city?: string) {
       query = query.in('status', ['actif', 'approved']);
       
       const { data, error } = await query;
+      console.log('fetchLivreurs response:', { dataLength: data?.length, error, city });
+      if (error) {
+        console.error('Erreur fetchLivreurs:', error);
+      }
       if (!error && data) {
         setLivreurs(data);
       }

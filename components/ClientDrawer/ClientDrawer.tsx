@@ -206,17 +206,13 @@ export default function ClientDrawer({ isOpen, onClose, onSimulatePremium, onSea
       )}
 
       {view === 'dashboard' && (
-        clientData ? (
-          <ClientDashboard 
-            clientData={clientData} 
-            onLogout={handleLogout} 
-            onSimulatePremium={onSimulatePremium}
-            onSearch={onSearch}
-            onChatRider={onChatRider}
-          />
-        ) : (
-          <div style={{ textAlign: 'center', padding: '20px' }}>Chargement...</div>
-        )
+        <ClientDashboard 
+          clientData={clientData} 
+          onLogout={handleLogout} 
+          onSimulatePremium={onSimulatePremium}
+          onSearch={onSearch}
+          onChatRider={onChatRider}
+        />
       )}
     </Drawer>
   );

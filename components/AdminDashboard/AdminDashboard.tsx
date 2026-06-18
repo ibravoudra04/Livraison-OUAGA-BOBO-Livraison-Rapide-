@@ -449,7 +449,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                   const filteredVisits   = (stats.allVisits || []).filter(v => inPeriod(v.created_at));
 
                   const revenuPaye  = filteredPaiements.filter(p => p.statut === 'VALIDE').reduce((a, p) => a + (Number(p.montant) || 0), 0);
-                  const revenuTheo  = filteredDeblocages.length * 200;
+                  const revenuTheo  = filteredDeblocages.length * 500;
                   const totalProfileViews   = statsPeriod === 'all' ? stats.allDrivers.reduce((a, d) => a + (d.views_count || 0), 0) : '—';
                   const totalContactClicks  = statsPeriod === 'all' ? stats.allDrivers.reduce((a, d) => a + (d.contacts_count || 0), 0) : '—';
                   const incompleteRiders    = stats.allDrivers.filter(d => d.status === 'en attente' && (!d.selfie || !d.cni_recto || !d.cni_verso)).length;
@@ -491,7 +491,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
                         {[
                           { label: 'Revenus Confirmés (IA)', val: `${revenuPaye.toLocaleString('fr-FR')} FCFA`, sub: 'Paiements validés par l\'IA', color: 'var(--color-primary-green)' },
-                          { label: 'Revenus Théoriques', val: `${revenuTheo.toLocaleString('fr-FR')} FCFA`, sub: `${filteredDeblocages.length} déblocage(s) × 200 FCFA`, color: 'var(--color-primary-brown)' },
+                          { label: 'Revenus Théoriques', val: `${revenuTheo.toLocaleString('fr-FR')} FCFA`, sub: `${filteredDeblocages.length} déblocage(s) × 500 FCFA`, color: 'var(--color-primary-brown)' },
                           { label: 'Nouveaux Livreurs', val: filteredDrivers.length.toString(), sub: 'Inscriptions sur la période', color: '#2c3e50' },
                           { label: 'Nouveaux Clients', val: filteredClients.length.toString(), sub: 'Inscriptions sur la période', color: '#8e44ad' },
                           { label: 'Messages Échangés', val: filteredChats.length.toString(), sub: 'Dans les messageries instantanées', color: '#7f8c8d' },
@@ -528,7 +528,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       </p>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '15px' }}>
                         {[
-                          { label: 'Coût de déblocage', val: '200 FCFA' },
+                          { label: 'Coût de déblocage', val: '500 FCFA' },
                           { label: 'Abonnement Premium Client', val: '5 000 FCFA / mois' },
                           { label: 'Abonnement Livreur', val: '500 FCFA / semaine' },
                         ].map(({ label, val }) => (

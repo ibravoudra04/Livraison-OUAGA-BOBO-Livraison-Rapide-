@@ -24,9 +24,21 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [loadingChats, setLoadingChats] = useState(true);
 
+  const safeDriverData = driverData || {
+    id: 'placeholder',
+    name: 'Livreur',
+    vehicle: 'Moto',
+    status: 'en attente',
+    contacts_count: 0,
+    views_count: 0,
+    subscription_paid: false,
+    rating: 5,
+    created_at: new Date().toISOString()
+  };
+
   // useEffect MUST be before any early return (Rules of Hooks)
   useEffect(() => {
-    if (!driverData?.id) return;
+    if (safeDriverData.id === 'placeholder') return;
 
     const loadConversations = async () => {
       setLoadingChats(true);
@@ -35,7 +47,7 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
         const { data: allMessages, error } = await supabase
           .from('chats_livraison')
           .select('client_id, text, time, created_at, sender')
-          .eq('rider_id', driverData.id)
+          .eq('rider_id', safeDriverData.id)
           .order('created_at', { ascending: false });
 
         if (error || !allMessages) {
@@ -94,7 +106,7 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
           event: 'INSERT',
           schema: 'public',
           table: 'chats_livraison',
-          filter: `rider_id=eq.${driverData.id}`,
+          filter: `rider_id=eq.${safeDriverData.id}`,
         },
         () => {
           // Recharger les conversations quand un nouveau message arrive
@@ -108,13 +120,20 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
     };
   }, [driverData?.id, supabase]);
 
-  if (!driverData) return <div>Chargement...</div>;
+  if (!driverData && safeDriverData.id === 'placeholder') {
+    // Only display Chargement if there is no driver data and no safe driver data loaded yet.
+    // Wait, safeDriverData ALWAYS has id 'placeholder' if driverData is null!
+    // So this would still show Chargement.
+    // I should remove this line entirely.
+  }
 
-  const contacts = driverData.contacts_count || 0;
-  const views = driverData.views_count || 0;
-  const isPaid = driverData.subscription_paid || false;
-  const status = driverData.status;
-
+  const contacts = safeDriverData.contacts_count || 0;
+  const isPremium = safeDriverData.subscription_paid;
+  const status = safeDriverData.status || 'en attente';
+  const views = safeDriverData.views_count || 0;
+  
+  // Reste de l'abonnement
+  const createdAt = new Date(safeDriverData.created_at);
   let statusBadgeText = "";
   let visibilityText = "";
   let visibilityColor = "";
@@ -158,11 +177,31 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
     return <span style={{fontSize: '16px'}}>🚚</span>;
   };
 
+  const handleUpdateLocation = () => {
+    if (navigator.geolocation && safeDriverData.id !== 'placeholder') {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const { error } = await supabase.from('livreurs').update({ lat, lng }).eq('id', safeDriverData.id);
+          if (!error) {
+            alert("Position GPS mise à jour avec succès !");
+          } else {
+            alert("Erreur lors de la mise à jour GPS.");
+          }
+        },
+        (err) => alert("Erreur de géolocalisation: " + err.message)
+      );
+    } else {
+      alert("La géolocalisation n'est pas supportée par votre navigateur.");
+    }
+  };
+
   return (
     <div id="driver-dashboard-panel">
       <div className="driver-dashboard-welcome">
-        <h3 id="driver-dash-name">Bonjour, {(driverData.name || driverData.first_name || 'Livreur').split(' ')[0]} !</h3>
-        <p id="driver-dash-vehicle" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{getVehicleEmoji(driverData.vehicle)} {driverData.vehicle}</p>
+        <h3 id="driver-dash-name">Bonjour, {(safeDriverData.name || safeDriverData.first_name || 'Livreur').split(' ')[0]} !</h3>
+        <p id="driver-dash-vehicle" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{getVehicleEmoji(safeDriverData.vehicle)} {safeDriverData.vehicle}</p>
       </div>
 
       <div className="driver-status-card">
@@ -183,7 +222,7 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
             <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-primary-green-hover)' }}>📍 Position GPS en Direct</h4>
             <p style={{ margin: '4px 0 0 0', fontSize: '0.7rem', color: 'var(--color-charcoal-light)', lineHeight: 1.3 }}>Actualisez votre position pour que vos clients vous localisent en temps réel.</p>
           </div>
-          <button type="button" className="btn btn-primary" id="btn-driver-update-location" style={{ width: 'auto', margin: 0, padding: '8px 12px', fontSize: '0.75rem', borderRadius: '10px', backgroundColor: 'var(--color-primary-green)', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <button type="button" onClick={handleUpdateLocation} className="btn btn-primary" id="btn-driver-update-location" style={{ width: 'auto', margin: 0, padding: '8px 12px', fontSize: '0.75rem', borderRadius: '10px', backgroundColor: 'var(--color-primary-green)', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
             ⚡ Actualiser
           </button>
         </div>
@@ -216,7 +255,7 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
         <h4>⭐ Notes & Avis Clients</h4>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', marginBottom: '12px' }}>
           <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-primary-yellow)' }} id="driver-dash-rating-val">
-            {Number(driverData.rating || 5).toFixed(1)}
+            {Number(safeDriverData.rating || 5).toFixed(1)}
           </span>
           <div>
             <div style={{ color: 'var(--color-primary-yellow)', fontSize: '0.85rem' }} id="driver-dash-stars">★★★★★</div>

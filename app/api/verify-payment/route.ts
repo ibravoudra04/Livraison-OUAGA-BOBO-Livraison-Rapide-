@@ -46,24 +46,24 @@ export async function POST(req: Request) {
                     "3. S'il s'agit d'une capture d'un fil de discussion SMS ou d'un historique de transactions contenant plusieurs messages successifs, tu dois impérativement identifier le MESSAGE LE PLUS RÉCENT (qui est situé tout en bas de la capture d'écran). Extrais uniquement les informations de ce DERNIER message (en bas) et ignore tous les messages plus anciens situés plus haut dans la capture.\n\n" +
                     "Voici des exemples pour t'entraîner :\n" +
                     "- Exemple 1 (SMS valide) :\n" +
-                    "  Texte : 'Cher client, vous avez transfere 200.00 FCFA au numero 67370909,IBRAHIM. Votre solde est de... ID Trans: PP260608.1929.19338345.'\n" +
-                    "  Résultat attendu : { \"is_orange_money\": true, \"transaction_id\": \"PP260608.1929.19338345\", \"montant\": 200 }\n" +
+                    "  Texte : 'Cher client, vous avez transfere 500.00 FCFA au numero 67370909,IBRAHIM. Votre solde est de... ID Trans: PP260608.1929.19338345.'\n" +
+                    "  Résultat attendu : { \"is_orange_money\": true, \"transaction_id\": \"PP260608.1929.19338345\", \"montant\": 500 }\n" +
                     "- Exemple 2 (Pop-up USSD valide sur fond de clavier) :\n" +
-                    "  Texte : L'image montre le clavier de numérotation d'un téléphone, mais au premier plan il y a un pop-up disant 'Cher client, vous avez transfere 200 FCFA au numero 67370909 IBRAHIM OUEDRAOGO ID Trans : PP260608.1554.45366665' avec un bouton OK.\n" +
-                    "  Résultat attendu : { \"is_orange_money\": true, \"transaction_id\": \"PP260608.1554.45366665\", \"montant\": 200 }\n" +
+                    "  Texte : L'image montre le clavier de numérotation d'un téléphone, mais au premier plan il y a un pop-up disant 'Cher client, vous avez transfere 500 FCFA au numero 67370909 IBRAHIM OUEDRAOGO ID Trans : PP260608.1554.45366665' avec un bouton OK.\n" +
+                    "  Résultat attendu : { \"is_orange_money\": true, \"transaction_id\": \"PP260608.1554.45366665\", \"montant\": 500 }\n" +
                     "- Exemple 3 (Invalide - Écran de saisie du PIN secret) :\n" +
-                    "  Texte : L'image montre un clavier et une invite de saisie du code PIN Orange Money (ex: 'Entrer code secret' ou 'Veuillez entrer votre code PIN de 4 chiffres pour confirmer le transfert de 200 FCFA vers 67370909'). Aucun ID de transaction n'est présent.\n" +
+                    "  Texte : L'image montre un clavier et une invite de saisie du code PIN Orange Money (ex: 'Entrer code secret' ou 'Veuillez entrer votre code PIN de 4 chiffres pour confirmer le transfert de 500 FCFA vers 67370909'). Aucun ID de transaction n'est présent.\n" +
                     "  Résultat attendu : { \"is_orange_money\": false, \"transaction_id\": null, \"montant\": null }\n" +
                     "- Exemple 4 (Fil de discussion SMS / Historique contenant plusieurs messages) :\n" +
                     "  Texte : L'image montre une conversation SMS avec OrangeMoney affichant deux messages successifs :\n" +
                     "    - Message du haut (ancien) : 'Cher client, vous avez transfere 20,000.00 FCFA au numero 67370909,IBRAHIM. ID Trans: PP260608.1458.19309166.'\n" +
-                    "    - Message du bas (le plus récent) : 'Cher client, vous avez transfere 200.00 FCFA au numero 67370909,IBRAHIM. ID Trans: PP260608.1929.19338345.'\n" +
-                    "  Résultat attendu : { \"is_orange_money\": true, \"transaction_id\": \"PP260608.1929.19338345\", \"montant\": 200 }\n\n" +
+                    "    - Message du bas (le plus récent) : 'Cher client, vous avez transfere 500.00 FCFA au numero 67370909,IBRAHIM. ID Trans: PP260608.1929.19338345.'\n" +
+                    "  Résultat attendu : { \"is_orange_money\": true, \"transaction_id\": \"PP260608.1929.19338345\", \"montant\": 500 }\n\n" +
                     "Extrais les informations suivantes au format JSON :\n" +
                     "{\n" +
                     "  \"is_orange_money\": true (si c'est un reçu ou confirmation Orange Money BF valide envoyé à OUEDRAOGO IBRAHIM / 67370909, sinon false),\n" +
                     "  \"transaction_id\": \"ID de transaction brut extrait (ex: PP260608.1554.45366665 - extrais UNIQUEMENT le code lui-même sans labels comme 'ID Trans' ni colons/espaces)\",\n" +
-                    "  \"montant\": montant transféré en nombre (ex: 200)\n" +
+                    "  \"montant\": montant transféré en nombre (ex: 500)\n" +
                     "}\n" +
                     "Si le destinataire ou le numéro de réception ne correspond pas à OUEDRAOGO IBRAHIM / 67370909, ou si l'image n'est pas une confirmation de transfert finalisée (comme le dernier SMS du fil), renvoie is_orange_money: false."
             }

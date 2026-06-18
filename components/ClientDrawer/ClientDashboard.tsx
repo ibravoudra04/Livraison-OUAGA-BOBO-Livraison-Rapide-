@@ -17,9 +17,9 @@ export default function ClientDashboard({ clientData, onLogout, onSimulatePremiu
   const [consultedRiders, setConsultedRiders] = useState<any[]>([]);
   const [recentChats, setRecentChats] = useState<any[]>([]);
   
-  if (!clientData) return <div>Chargement...</div>;
-
-  const isPremium = clientData.subscription_paid;
+  // Safe fallback if clientData is somehow missing
+  const safeClientData = clientData || {};
+  const isPremium = safeClientData.subscription_paid;
 
   const handleLogout = async () => {
     await logout();
@@ -96,7 +96,7 @@ export default function ClientDashboard({ clientData, onLogout, onSimulatePremiu
             👑 Devenir Premium
           </h4>
           <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.4 }}>
-            Naviguez sur la carte en accès illimité. Plus besoin de payer 200F à chaque recherche !
+            Naviguez sur la carte en accès illimité. Plus besoin de payer 500F à chaque recherche !
           </p>
           <button type="button" onClick={onSimulatePremium} style={{ width: '100%', padding: '10px', fontSize: '0.9rem', borderRadius: '10px', fontWeight: 700, background: 'var(--color-primary-yellow)', color: 'var(--color-primary-brown)', border: 'none', boxShadow: '0 4px 10px rgba(246, 205, 86, 0.4)', cursor: 'pointer' }}>
             Passer Premium (5000 FCFA / mois)
