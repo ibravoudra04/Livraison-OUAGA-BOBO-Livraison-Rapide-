@@ -526,13 +526,15 @@ export default function Home() {
           </div>
         )}
 
-        <div style={{ width: '100%', height: '100%', filter: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'blur(8px) saturate(120%)' : 'none', pointerEvents: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'none' : 'auto', transition: 'filter 0.5s' }}>
-          <MapWrapper 
-            livreurs={livreurs} 
-            cityCenter={mapCenter || cityCenters[selectedCity as keyof typeof cityCenters] || cityCenters['Ouagadougou']} 
-            onMarkerClick={handleMarkerClick} 
-          />
-        </div>
+        {!showWelcome && (
+          <div style={{ width: '100%', height: '100%', filter: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'blur(8px) saturate(120%)' : 'none', pointerEvents: (!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider') ? 'none' : 'auto', transition: 'filter 0.5s' }}>
+            <MapWrapper 
+              livreurs={livreurs} 
+              cityCenter={mapCenter || cityCenters[selectedCity as keyof typeof cityCenters] || cityCenters['Ouagadougou']} 
+              onMarkerClick={handleMarkerClick} 
+            />
+          </div>
+        )}
 
         {(!hasPaidMapService && !isPremiumClient && role !== 'admin' && role !== 'rider' && !showWelcome && !showLocationPortal) && (
           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(54, 42, 33, 0.25)' }}>

@@ -9,10 +9,25 @@ interface WelcomePortalProps {
 export default function WelcomePortal({ onStartSearch, onRegisterClick }: WelcomePortalProps) {
   return (
     <div className="welcome-portal" id="welcome-portal">
+      <Image 
+        src="/african_bg.png" 
+        alt="Arrière-plan" 
+        layout="fill" 
+        objectFit="cover" 
+        quality={60} 
+        priority 
+        style={{ zIndex: -1 }}
+      />
       <div className="portal-card-container">
         <div className="portal-hero">
-          {/* Utilisation de balise img standard ou next/image, ici next/image pour l'opti */}
-          <img src="/burkina_map.png" alt="Carte du Burkina Faso" className="burkina-map-badge" />
+          <Image 
+            src="/burkina_map.png" 
+            alt="Carte du Burkina Faso" 
+            className="burkina-map-badge"
+            width={120}
+            height={120}
+            priority
+          />
           <h2>Livraison Rapide</h2>
           <p>
             Visualisez les livreurs actifs autour de vous sur la carte en temps réel et contactez-les en un clic.
