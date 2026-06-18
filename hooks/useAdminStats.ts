@@ -131,7 +131,7 @@ export function useAdminStats(isAdmin: boolean) {
 
         setStats({
           totalUnlocks: unlocksCount || 0,
-          totalRevenue: (unlocksCount || 0) * 200,
+          totalRevenue: (unlocksCount || 0) * 500,
           totalRevenuePaid,
           totalDrivers: driversCount || 0,
           totalClients: clientsCount || 0,

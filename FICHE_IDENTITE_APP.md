@@ -5,15 +5,15 @@
 Livraison Rapide est une application web (qui s'installe comme une appli mobile) qui met en relation,
 en temps réel et sur une carte, des **clients** qui cherchent un livreur et des **livreurs indépendants**
 à Ouagadougou et Bobo-Dioulasso. Le client voit les livreurs disponibles autour de lui, puis paie une
-petite somme (200 FCFA via Orange Money) pour débloquer le numéro et appeler/discuter avec le livreur.
+petite somme (500 FCFA via Orange Money) pour débloquer le numéro et appeler/discuter avec le livreur.
 Ce n'est PAS une app de commande de repas : c'est un **annuaire géolocalisé de livreurs** que l'on contacte directement.
 
 ## 2. Les profils / rôles et ce que chacun peut faire
 
 | Rôle | Ce qu'il peut faire |
 |------|---------------------|
-| **Visiteur (non connecté)** | Voir la carte (floutée tant qu'il n'a pas payé l'accès 200 F), choisir sa ville, se géolocaliser, lancer "Détecter un livreur". |
-| **Client** | S'inscrire (téléphone + code secret), voir les profils de livreurs, payer 200 F pour débloquer un numéro, **discuter par chat**, appeler, laisser un avis (étoiles), signaler un problème, passer **Premium** (5000 F/mois = accès illimité). |
+| **Visiteur (non connecté)** | Voir la carte (floutée tant qu'il n'a pas payé l'accès 500 F), choisir sa ville, se géolocaliser, lancer "Détecter un livreur". |
+| **Client** | S'inscrire (téléphone + code secret), voir les profils de livreurs, payer 500 F pour débloquer un numéro, **discuter par chat**, appeler, laisser un avis (étoiles), signaler un problème, passer **Premium** (5000 F/mois = accès illimité). |
 | **Livreur** | S'inscrire avec photos (CNI recto/verso + selfie), attendre la validation de l'admin, gérer son tableau de bord (statut en ligne, position GPS, compteur de contacts, avis reçus), **répondre aux clients par chat**, payer son abonnement (500 F/semaine après 4 contacts gratuits). |
 | **Administrateur** | Tout superviser : valider/suspendre/supprimer les livreurs, décerner le badge "Vérifié", gérer les clients et leur Premium, lire toutes les discussions, voir les statistiques et revenus, gérer les litiges, publier des annonces, envoyer des notifications push à tous, voir les reçus de paiement. |
 
@@ -22,9 +22,9 @@ Ce n'est PAS une app de commande de repas : c'est un **annuaire géolocalisé de
 ## 3. Le parcours complet de A à Z
 
 1. **Arrivée** : le visiteur ouvre l'app → écran d'accueil avec une loupe géante → choisit sa ville (ou géoloc auto).
-2. **Carte floutée** : la carte des livreurs est floutée. Pour la voir, le visiteur doit "Utiliser les services — 200 FCFA" :
+2. **Carte floutée** : la carte des livreurs est floutée. Pour la voir, le visiteur doit "Utiliser les services — 500 FCFA" :
    il compose le code Orange Money, fait une **capture d'écran du SMS de confirmation**, et l'envoie. Une **IA (Google Gemini)**
-   lit la capture et vérifie que le paiement de 200 F a bien été fait au bon numéro. Si oui, la carte se débloque (3 livreurs consultables).
+   lit la capture et vérifie que le paiement de 500 F a bien été fait au bon numéro. Si oui, la carte se débloque (3 livreurs consultables).
 3. **Choisir un livreur** : le visiteur/client clique sur un repère → fiche du livreur (photo, véhicule, note, distance, téléphone).
 4. **Contact** : bouton "Appeler" ou "Discuter (Chat)". Le chat exige d'être connecté.
 5. **Inscription client** : téléphone + nom + code secret (PIN). Pas d'email, pas de SMS de vérification.
@@ -33,7 +33,7 @@ Ce n'est PAS une app de commande de repas : c'est un **annuaire géolocalisé de
 7. **Avis** : après contact, le client peut noter le livreur (1 à 5 étoiles + commentaire).
 8. **Côté livreur** : il s'inscrit avec ses pièces → statut "en attente" → l'admin vérifie ses documents → l'admin valide → il passe "actif"
    et apparaît sur la carte. Il reçoit les messages des clients dans son tableau de bord.
-9. **Modèle économique** : client paie 200 F par accès (ou 5000 F/mois Premium) ; livreur a 4 contacts gratuits puis 500 F/semaine.
+9. **Modèle économique** : client paie 500 F par accès (ou 5000 F/mois Premium) ; livreur a 4 contacts gratuits puis 500 F/semaine.
    ⚠️ **Période de lancement gratuite jusqu'au 1er juillet 2026** : actuellement tout est débloqué pour tout le monde.
 
 ## 4. Liste exhaustive des fonctionnalités (navigation + code + base de données)
@@ -79,7 +79,7 @@ C'est voulu pour le lancement, mais à garder en tête : après le 1er juillet, 
 🟡 **4. 300 abonnements push pour 39 comptes.** Beaucoup d'abonnements périmés s'accumulent. Sans nettoyage, les envois
 de notifications deviendront lents et partiellement inutiles.
 
-🟡 **5. Champs "Tarifs" dans l'admin non connectés.** Les champs de configuration des prix (200 F, 5000 F, 500 F) affichent
+🟡 **5. Champs "Tarifs" dans l'admin non connectés.** Les champs de configuration des prix (500 F, 5000 F, 500 F) affichent
 "Paramètres sauvegardés !" mais ne sauvegardent rien (valeurs codées en dur).
 
 🟡 **6. Bouton "Régler mon abonnement (500 FCFA)" du livreur** : présent mais sans action derrière (non finalisé).
@@ -87,7 +87,7 @@ de notifications deviendront lents et partiellement inutiles.
 🟡 **7. Onglet "Litiges" de l'admin** : la fonction `resolveTicket` existe mais l'interface de cet onglet n'est pas affichée
 dans le code lu (à vérifier en test).
 
-ℹ️ **Bizarrerie d'architecture** : il y a deux systèmes de paiement séparés (l'écran 200 F de la carte ET un "PaymentSimulator"
+ℹ️ **Bizarrerie d'architecture** : il y a deux systèmes de paiement séparés (l'écran 500 F de la carte ET un "PaymentSimulator"
 réutilisable pour le Premium/abonnements). Les deux passent par l'IA Gemini.
 
 ## 6. État de la base de données (constaté en lecture seule)
@@ -115,7 +115,7 @@ Liens entre tables (client↔livreur↔déblocage↔chat) cohérents.
 ### A. Visiteur / paiement d'accès
 - [ ] Chargement de la carte, switch Ouaga/Bobo, géolocalisation, compteur de livreurs
 - [ ] Bouton "Détecter un livreur" sans livreur / avec livreurs
-- [ ] Écran de paiement 200 F : reçu valide / reçu invalide / reçu déjà utilisé / 5 tentatives → support
+- [ ] Écran de paiement 500 F : reçu valide / reçu invalide / reçu déjà utilisé / 5 tentatives → support
 - [ ] Vérifier en base qu'un paiement valide crée bien une ligne `paiements`
 
 ### B. Client

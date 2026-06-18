@@ -53,7 +53,7 @@ Le design de l'application a été conçu pour impressionner l'utilisateur dès 
 * **Balise de Géo-localisation** : Un phare bleu pulsant représente la position du visiteur s'il accepte le partage de sa position.
 * **Filtrage Intelligent** : Les livreurs hors ligne ou suspendus n'apparaissent pas. Si l'utilisateur est géo-localisé, seuls les livreurs dans un rayon de 5 km s'affichent.
 * **Masquage Sécurisé du Téléphone** : Par défaut, le numéro de téléphone des livreurs est masqué sous la forme `+226 76 •• •• ••` côté serveur PostgreSQL.
-* **Simulation de Déverrouillage (Orange & Moov)** : Simulation interactive d'un écran Mobile Money complet. Le client saisit son numéro, valide un écran USSD push simulé avec code PIN à 4 chiffres et débloque le numéro pour 200 FCFA.
+* **Simulation de Déverrouillage (Orange & Moov)** : Simulation interactive d'un écran Mobile Money complet. Le client saisit son numéro, valide un écran USSD push simulé avec code PIN à 4 chiffres et débloque le numéro pour 500 FCFA.
 * **Passage au Premium** : Option d'abonnement mensuel de 5 000 FCFA pour débloquer tous les livreurs en illimité sans payer par profil.
 * **Avis & Notes** : Système d'avis avec attribution d'étoiles. Pour éviter le spam, **seul un client ayant débloqué un livreur** peut lui soumettre une revue (contrôlé par contrainte unique RLS).
 * **Messagerie Directe (Chat)** : Discussion en temps réel intégrée directement avec le livreur débloqué.

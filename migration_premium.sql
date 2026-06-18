@@ -10,7 +10,7 @@ FROM public.livreurs l;
 
 -- 2. Mise à jour de la politique des Avis (Reviews)
 -- Avant, il fallait avoir un "déblocage" individuel pour noter un livreur.
--- Maintenant, comme le client doit payer le pass 200F ou 5000F pour voir la carte, tout client authentifié peut laisser un avis.
+-- Maintenant, comme le client doit payer le pass 500F ou 5000F pour voir la carte, tout client authentifié peut laisser un avis.
 DROP POLICY IF EXISTS "Unlocked clients can post reviews" ON public.avis;
 CREATE POLICY "Clients can post reviews" ON public.avis
     FOR INSERT TO authenticated WITH CHECK (

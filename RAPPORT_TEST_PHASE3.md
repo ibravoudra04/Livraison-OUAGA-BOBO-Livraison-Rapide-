@@ -16,7 +16,7 @@ L'application **fonctionne bien dans son cœur** : la carte, l'inscription des l
 |---|---|---|---|
 | Page d'accueil + carte | Visiteur | ✅ | Charge bien, 31 livreurs affichés |
 | Choix ville / portail localisation | Visiteur | ✅ | Ouaga/Bobo OK |
-| Paywall 200 FCFA | Visiteur | ✅ | Bloque bien la carte (même en période gratuite) |
+| Paywall 500 FCFA | Visiteur | ✅ | Bloque bien la carte (même en période gratuite) |
 | Switch ville, "Détecter un livreur" | Visiteur | ✅ | Ouvre la fiche du plus proche |
 | Fiche livreur (appeler/discuter) | Visiteur | ✅ | Téléphone visible (période gratuite) |
 | Chat sans être connecté | Visiteur | ✅ | Invite à se connecter (correct) |
@@ -50,7 +50,7 @@ L'application **fonctionne bien dans son cœur** : la carte, l'inscription des l
 **B1 — N'importe qui peut devenir administrateur et tout voler.**
 En s'inscrivant, un utilisateur choisit lui-même son "rôle". En mettant `role = admin`, il obtient **tous les pouvoirs admin** sur la vraie base :
 - lire **tous les clients** (noms + téléphones),
-- lire **tous les livreurs avec leur numéro en clair** → le paiement de 200 F ne sert plus à rien (modèle économique contourné),
+- lire **tous les livreurs avec leur numéro en clair** → le paiement de 500 F ne sert plus à rien (modèle économique contourné),
 - lire **toutes les conversations privées** et les tickets,
 - lire les **313 abonnements de notification**,
 - **modifier ou supprimer n'importe quel livreur** (testé : j'ai pu suspendre un livreur de test).

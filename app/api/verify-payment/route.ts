@@ -38,8 +38,8 @@ export async function POST(req: Request) {
             },
             {
               text: "Tu es un agent de vérification de reçus de paiement Orange Money pour le Burkina Faso.\n" +
-                    "Analyse cette capture d'écran (qui peut être un SMS, un pop-up USSD sur l'écran d'appel, ou une confirmation d'application).\n" +
-                    "Le destinataire de l'argent doit impérativement être 'OUEDRAOGO IBRAHIM' (ou 'IBRAHIM', ou 'IBRAHIM OUEDRAOGO', ou le numéro de téléphone '67370909' / '67 37 09 09').\n\n" +
+                    "Le destinataire de l'argent doit impérativement être 'OUEDRAOGO IBRAHIM' (ou 'IBRAHIM', ou 'IBRAHIM OUEDRAOGO', ou le numéro de téléphone '67370909' / '67 37 09 09').\n" +
+                    "Le tarif du service est désormais fixé à 500 FCFA. Tu dois extraire le montant transféré exact.\n\n" +
                     "ATTENTION IMPORTANTE :\n" +
                     "1. Les pop-ups USSD de confirmation de transfert s'affichent souvent par-dessus un clavier de numérotation téléphonique (clavier de numérotation en arrière-plan). Ces images sont TOUT À FAIT VALIDES. Ne les rejette pas sous prétexte qu'il y a un clavier visible en arrière-plan. Si le pop-up indique que le transfert a réussi (ex: 'Cher client, vous avez transfere...') et contient un ID de transaction (ex: 'ID Trans : PP...'), tu dois la valider (is_orange_money = true).\n" +
                     "2. En revanche, un écran de SAISIE DE CODE PIN (où l'utilisateur doit taper son code secret, par exemple avec un message 'Veuillez entrer votre code secret pour confirmer le transfert' ou 'Enter PIN:') est INVALIDE (is_orange_money = false) car le paiement n'est pas encore effectué et aucun ID de transaction n'est généré.\n" +
