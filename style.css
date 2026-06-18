@@ -1251,21 +1251,19 @@ footer {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-attachment: fixed;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 20px;
-    padding: 60px 20px 80px 20px;
+    padding: 10vh 20px 40px 20px; /* Padding-top pushes content down slightly, reduced bottom padding */
     z-index: 1000;
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden; /* Prevent scrolling, make it a single block */
     transition: var(--transition-smooth);
 }
 
