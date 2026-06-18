@@ -13,6 +13,7 @@ export default function WelcomePortal({ onStartSearch, onRegisterClick }: Welcom
         <div className="portal-hero">
           {/* Utilisation de balise img standard ou next/image, ici next/image pour l'opti */}
           <img src="/burkina_map.png" alt="Carte du Burkina Faso" className="burkina-map-badge" />
+          <h2>Livraison Rapide</h2>
           <p>
             Visualisez les livreurs actifs autour de vous sur la carte en temps réel et contactez-les en un clic.
           </p>

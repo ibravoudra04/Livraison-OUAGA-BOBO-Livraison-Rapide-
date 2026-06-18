@@ -1243,28 +1243,28 @@ footer {
     color: var(--color-primary-red);
 }
 
-/* Welcome Portal View */
+/* Welcome Portal View - AI Generated Vibrant African Aesthetic */
 .welcome-portal {
     width: 100%;
     height: 100%;
-    /* Rich radial gradient of African terracotta clay & deep soil browns with spotlight effect + Delivery Doodle watermarks */
-    background-image: 
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 120 120'%3E%3Cg stroke='%23FAF5F0' stroke-width='1.2' stroke-opacity='0.05' fill='none'%3E%3Ccircle cx='20' cy='35' r='4'/%3E%3Ccircle cx='40' cy='35' r='4'/%3E%3Cpath d='M 20 35 L 30 35 L 32 25 L 40 35 M 32 25 L 26 22 L 26 18 M 32 25 L 35 15 L 38 15 M 22 28 L 22 24 H 14 V 28 H 22'/%3E%3Crect x='75' y='15' width='16' height='14' rx='1'/%3E%3Cline x1='83' y1='15' x2='83' y2='29'/%3E%3Cline x1='75' y1='22' x2='91' y2='22'/%3E%3Cpath d='M 80 12 L 83 15 L 86 12'/%3E%3Cpath d='M 25 70 C 20 70, 17 74, 17 78 C 17 84, 25 90, 25 90 C 25 90, 33 84, 33 78 C 33 74, 30 70, 25 70 Z'/%3E%3Ccircle cx='25' cy='77' r='2.5'/%3E%3Ccircle cx='75' cy='85' r='3.5'/%3E%3Ccircle cx='91' cy='85' r='3.5'/%3E%3Cpath d='M 75 85 L 83 85 L 87 75 L 91 85 M 83 85 L 80 75 H 72 V 68 M 80 72 L 86 65 H 90'/%3E%3Ccircle cx='86' cy='62' r='2'/%3E%3C/g%3E%3Cg fill='%23FAF5F0' fill-opacity='0.05'%3E%3Ccircle cx='55' cy='50' r='1.5'/%3E%3Ccircle cx='105' cy='100' r='1.5'/%3E%3Ccircle cx='15' cy='110' r='1'/%3E%3Ccircle cx='110' cy='40' r='1'/%3E%3Ccircle cx='50' cy='105' r='1'/%3E%3C/g%3E%3C/svg%3E"), 
-        radial-gradient(circle at center, #8D5537 0%, var(--color-primary-brown-dark) 65%, #3D2619 100%);
-    background-repeat: repeat, no-repeat;
+    background-image: url('/african_bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Allows natural scrolling if content is too tall */
+    justify-content: center;
     gap: 20px;
-    padding: 100px 20px 100px 20px;
+    padding: 60px 20px 80px 20px;
     z-index: 1000;
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    overflow-y: auto; /* Fixes cut-off content on small mobile screens */
+    overflow-y: auto;
     overflow-x: hidden;
     transition: var(--transition-smooth);
 }
@@ -1272,34 +1272,35 @@ footer {
 .welcome-portal.hidden {
     opacity: 0;
     pointer-events: none;
-    transform: scale(1.05); /* Modern scale-out transition */
+    transform: scale(1.05);
 }
 
 .portal-card-container {
     width: 100%;
     max-width: 480px;
-    margin: auto;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px; /* Reduced gap to pull elements and search button higher */
-    padding: 28px 24px; /* Slightly more compact padding */
-    background: rgba(255, 255, 255, 0.85); /* Slightly higher opacity fallback */
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    border-radius: 28px;
+    gap: 16px;
+    padding: 36px 24px;
+    /* Savannah Premium Glassmorphism */
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 32px;
     box-shadow: 
-        0 20px 40px rgba(54, 42, 33, 0.12),
-        0 4px 12px rgba(54, 42, 33, 0.04),
-        inset 0 1px 2px rgba(255, 255, 255, 0.9); /* Inset white glow for premium rim highlight */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    transform: translateZ(0); /* Fixes Opera Mobile clip path / backdrop-filter bug */
-    animation: portalFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        0 24px 70px rgba(54, 42, 33, 0.15),
+        inset 0 1px 2px rgba(255, 255, 255, 1);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    transform: translateZ(0);
+    animation: portalFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     text-align: center;
+    color: var(--color-charcoal);
 }
 
 @keyframes portalFadeIn {
-    from { opacity: 0; transform: translateY(15px) scale(0.97); }
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
