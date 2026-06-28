@@ -3,6 +3,18 @@ import { useEffect, useRef, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
+// Construit une miniature légère du selfie pour les marqueurs de la carte.
+// On passe par le proxy d'images wsrv.nl (déjà utilisé ailleurs dans le projet)
+// qui redimensionne et recompresse côté CDN : ~2–5 Ko par pastille au lieu de
+// la photo d'origine (souvent plusieurs centaines de Ko à plusieurs Mo).
+// 72px = 2× la taille d'affichage (36px) pour rester net sur écrans Retina.
+const markerThumb = (selfieUrl: string): string => {
+  if (!selfieUrl) return selfieUrl;
+  // wsrv attend l'URL sans le schéma http(s).
+  const clean = selfieUrl.replace(/^https?:\/\//, '');
+  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=72&h=72&fit=cover&a=top&output=webp&q=55`;
+};
+
 export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.3714, lng: -1.5197 }, onMarkerClick }: any) {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,8 +78,13 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
         // Affichage de la photo de profil (selfie)
         let iconHtml;
         if (livreur.selfie) {
+          // Miniature légère (72px, WebP, qualité réduite) au lieu de la photo
+          // pleine résolution : indispensable pour la fluidité de la carte. Sans
+          // ça, le navigateur téléchargeait des Mo de photos pour des pastilles
+          // de 36px. Le proxy d'images wsrv.nl fait le redimensionnement côté CDN.
+          const thumb = markerThumb(livreur.selfie);
           // Utilisation de background-image pour une bien meilleure fluidité que les balises <img>
-          iconHtml = `<div class="driver-avatar-marker" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--color-primary-green); background-image: url('${livreur.selfie}'); background-size: cover; background-position: top; background-color: white; will-change: transform;"></div>`;
+          iconHtml = `<div class="driver-avatar-marker" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--color-primary-green); background-image: url('${thumb}'); background-size: cover; background-position: top; background-color: white; will-change: transform;"></div>`;
         } else {
           const initial = (livreur.first_name || livreur.name || 'L').charAt(0).toUpperCase();
           iconHtml = `<div class="driver-avatar-marker" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--color-primary-green); background-color: var(--color-primary-brown); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; will-change: transform;">${initial}</div>`;
