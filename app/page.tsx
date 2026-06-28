@@ -20,6 +20,7 @@ import AuthDrawer from '@/components/AuthDrawer/AuthDrawer';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useLivreursRealtime } from '@/hooks/useLivreursRealtime';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { getUserPosition } from '@/utils/geolocation';
 
 const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371; // Radius of the earth in km
@@ -238,46 +239,21 @@ export default function Home() {
 
   const handleLocateUser = () => {
     setIsLocating(true);
-    
-    const requestLocation = (highAccuracy: boolean) => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            setUserLocation({ lat, lng });
-            setMapCenter({ lat, lng });
-            const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
-            const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
-            if (dBobo < dOuaga) {
-              setSelectedCity('Bobo-Dioulasso');
-            } else {
-              setSelectedCity('Ouagadougou');
-            }
-            setToast({ message: "Position trouvée !", type: "success" });
-            setIsLocating(false);
-          },
-          (error) => {
-            if (error.code === 3 && highAccuracy) {
-              requestLocation(false);
-              return;
-            }
-            let errorMessage = "Localisation refusée ou introuvable";
-            if (error.code === 1) errorMessage = "Permission refusée. Activez le GPS et autorisez le navigateur.";
-            if (error.code === 2) errorMessage = "Position introuvable (signal faible).";
-            if (error.code === 3) errorMessage = "Délai d'attente dépassé.";
-            setToast({ message: errorMessage, type: "error" });
-            setIsLocating(false);
-          },
-          { enableHighAccuracy: highAccuracy, timeout: 15000, maximumAge: 60000 }
-        );
+    // getUserPosition() lance getCurrentPosition immédiatement (synchrone) :
+    // l'appel reste donc dans le "geste utilisateur" exigé par iOS.
+    getUserPosition().then((r) => {
+      if (r.ok && r.lat != null && r.lng != null) {
+        setUserLocation({ lat: r.lat, lng: r.lng });
+        setMapCenter({ lat: r.lat, lng: r.lng });
+        const dOuaga = getDistance(r.lat, r.lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
+        const dBobo = getDistance(r.lat, r.lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
+        setSelectedCity(dBobo < dOuaga ? 'Bobo-Dioulasso' : 'Ouagadougou');
+        setToast({ message: "Position trouvée !", type: "success" });
       } else {
-        setToast({ message: "Géo-localisation non supportée", type: "error" });
-        setIsLocating(false);
+        setToast({ message: r.message || "Localisation impossible.", type: "error" });
       }
-    };
-    
-    requestLocation(true);
+      setIsLocating(false);
+    });
   };
 
   const handleDetectDriver = () => {
@@ -449,49 +425,23 @@ export default function Home() {
             setShowWelcome(true);
           }} 
           onCitySelect={handleCitySelect}
-          onAutoDetect={() => {
-            return new Promise<void>((resolve) => {
-              const requestLocation = (highAccuracy: boolean) => {
-                if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                      const lat = position.coords.latitude;
-                      const lng = position.coords.longitude;
-                      setUserLocation({ lat, lng });
-                      const dOuaga = getDistance(lat, lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
-                      const dBobo = getDistance(lat, lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
-                      if (dBobo < dOuaga) {
-                        setSelectedCity('Bobo-Dioulasso');
-                      } else {
-                        setSelectedCity('Ouagadougou');
-                      }
-                      setToast({ message: "Position trouvée !", type: "success" });
-                      setShowLocationPortal(false);
-                      setShowWelcome(false);
-                      resolve();
-                    },
-                    (error) => {
-                      if (error.code === 3 && highAccuracy) {
-                        requestLocation(false);
-                        return;
-                      }
-                      let errorMessage = "Localisation refusée ou introuvable";
-                      if (error.code === 1) errorMessage = "Permission refusée. Activez le GPS et autorisez le navigateur.";
-                      if (error.code === 2) errorMessage = "Position introuvable (signal faible).";
-                      if (error.code === 3) errorMessage = "Délai d'attente dépassé.";
-                      setToast({ message: errorMessage, type: "error" });
-                      resolve();
-                    },
-                    { enableHighAccuracy: highAccuracy, timeout: 15000, maximumAge: 60000 }
-                  );
-                } else {
-                  setToast({ message: "Géo-localisation non supportée", type: "error" });
-                  resolve();
-                }
-              };
-              requestLocation(true);
-            });
-          }}
+          onAutoDetect={() =>
+            // getUserPosition() est invoqué immédiatement (l'appel getCurrentPosition
+            // part de façon synchrone) → reste dans le geste utilisateur exigé par iOS.
+            getUserPosition().then((r) => {
+              if (r.ok && r.lat != null && r.lng != null) {
+                setUserLocation({ lat: r.lat, lng: r.lng });
+                const dOuaga = getDistance(r.lat, r.lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
+                const dBobo = getDistance(r.lat, r.lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
+                setSelectedCity(dBobo < dOuaga ? 'Bobo-Dioulasso' : 'Ouagadougou');
+                setToast({ message: "Position trouvée !", type: "success" });
+                setShowLocationPortal(false);
+                setShowWelcome(false);
+              } else {
+                setToast({ message: r.message || "Localisation impossible.", type: "error" });
+              }
+            })
+          }
         />
       )}
 
