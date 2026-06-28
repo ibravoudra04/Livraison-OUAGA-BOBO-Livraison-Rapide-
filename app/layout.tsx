@@ -48,7 +48,8 @@ export default function RootLayout({
         `}} />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#8D5537" />
-        <link rel="apple-touch-icon" href="/delivery_logo_premium.jpg" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body>
         <SwUpdateHandler />

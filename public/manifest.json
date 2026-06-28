@@ -1,23 +1,43 @@
 {
-  "short_name": "Livraison Rapide",
+  "id": "/",
   "name": "Livraison Rapide — Ouaga & Bobo",
+  "short_name": "Livraison Rapide",
   "description": "Mettez-vous en contact instantanément avec des livreurs indépendants à Ouagadougou et Bobo-Dioulasso.",
-  "icons": [
-    {
-      "src": "delivery_logo_premium.jpg",
-      "type": "image/jpeg",
-      "sizes": "192x192"
-    },
-    {
-      "src": "delivery_logo_premium.jpg",
-      "type": "image/jpeg",
-      "sizes": "512x512",
-      "purpose": "any maskable"
-    }
-  ],
+  "lang": "fr",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "orientation": "portrait",
   "background_color": "#FAF6F2",
   "theme_color": "#8D5537",
-  "display": "standalone",
-  "orientation": "portrait"
+  "categories": ["business", "navigation", "shopping"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ]
 }
