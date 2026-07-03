@@ -40,6 +40,10 @@ export default function Home() {
   const { livreurs, loading: livreursLoading } = useLivreursRealtime(selectedCity);
   usePushNotifications();
 
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
   const [selectedLivreur, setSelectedLivreur] = useState<any | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
