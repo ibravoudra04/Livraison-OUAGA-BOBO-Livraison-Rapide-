@@ -5,8 +5,6 @@ import { createClient } from '@/utils/supabase/client';
 interface DriverDashboardProps {
   driverData: any;
   onLogout: () => void;
-  onSimulatePayment: () => void;
-  onPaySubscription: () => void;
   onChatClient: (clientId: string, clientName: string) => void;
 }
 
@@ -18,7 +16,7 @@ interface ChatConversation {
   unread: boolean;
 }
 
-export default function DriverDashboard({ driverData, onLogout, onSimulatePayment, onPaySubscription, onChatClient }: DriverDashboardProps) {
+export default function DriverDashboard({ driverData, onLogout, onChatClient }: DriverDashboardProps) {
   const { logout } = useSupabaseAuth();
   const supabase = createClient();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
@@ -128,41 +126,29 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
   }
 
   const contacts = safeDriverData.contacts_count || 0;
-  const isPremium = safeDriverData.subscription_paid;
   const status = safeDriverData.status || 'en attente';
   const views = safeDriverData.views_count || 0;
   
-  // Reste de l'abonnement
-  const createdAt = new Date(safeDriverData.created_at);
   let statusBadgeText = "";
   let visibilityText = "";
   let visibilityColor = "";
   let subTextHTML = "";
-  let showPayBtn = false;
-  let remainingDays = "6 jours";
 
   if (status === 'en attente') {
     statusBadgeText = "En attente";
     visibilityText = "🔴 Hors ligne";
     visibilityColor = "var(--color-primary-red)";
     subTextHTML = "Votre compte est en cours de validation par notre équipe d'administration.";
-  } else if (contacts < 5) {
-    statusBadgeText = "Disponible";
-    visibilityText = "🟢 En ligne";
-    visibilityColor = "var(--color-green-soft)";
-    subTextHTML = `Vous bénéficiez de 4 mises en relation offertes. (Vous êtes à ${contacts}/4).`;
-  } else if (isPremium) {
-    statusBadgeText = "Disponible";
-    visibilityText = "🟢 En ligne";
-    visibilityColor = "var(--color-green-soft)";
-    subTextHTML = "Votre abonnement hebdomadaire de 500 FCFA est actif. Vous êtes visible par tous les clients.";
-  } else {
+  } else if (status === 'suspendu') {
     statusBadgeText = "Suspendu";
     visibilityText = "🔴 Hors ligne";
     visibilityColor = "var(--color-primary-red)";
-    subTextHTML = `Vous avez atteint 4 contacts (${contacts}). Veuillez payer votre abonnement de 500 FCFA pour la semaine afin de rester visible.`;
-    showPayBtn = true;
-    remainingDays = "Expiré";
+    subTextHTML = "Votre compte a été suspendu par un administrateur.";
+  } else {
+    statusBadgeText = "Disponible";
+    visibilityText = "🟢 En ligne";
+    visibilityColor = "var(--color-green-soft)";
+    subTextHTML = "Votre profil est visible gratuitement par tous les clients.";
   }
 
   const handleLogout = async () => {
@@ -235,18 +221,13 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
       <div className="driver-dashboard-stats">
         <div className="driver-stat-box">
           <div className="info-label">Mises en Relation</div>
-          <div className="driver-stat-val" id="driver-dash-contacts">{contacts} / 4</div>
-          <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', marginTop: '2px' }}>offertes</div>
+          <div className="driver-stat-val" id="driver-dash-contacts">{contacts}</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', marginTop: '2px' }}>total</div>
         </div>
         <div className="driver-stat-box">
           <div className="info-label">Clics Profil</div>
           <div className="driver-stat-val" id="driver-dash-views">{views}</div>
           <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', marginTop: '2px' }}>visites</div>
-        </div>
-        <div className="driver-stat-box">
-          <div className="info-label">Temps restant</div>
-          <div className="driver-stat-val" id="driver-dash-days">{remainingDays}</div>
-          <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', marginTop: '2px' }}>avant facturation</div>
         </div>
       </div>
       
@@ -355,18 +336,10 @@ export default function DriverDashboard({ driverData, onLogout, onSimulatePaymen
       
       {/* Option de paiement d'abonnement */}
       <div className="driver-terms-info" id="driver-dash-sub-box" style={{ marginTop: '15px' }}>
-        <h4>ℹ️ Suivi de votre abonnement</h4>
+        <h4>ℹ️ Suivi de votre profil</h4>
         <p id="driver-dash-sub-text" style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-light)', lineHeight: 1.4, marginBottom: 0 }}>
           {subTextHTML}
         </p>
-        {showPayBtn && (
-          <button className="btn-unlock" id="btn-driver-pay-sub" onClick={onPaySubscription} style={{ width: '100%', marginTop: '12px', padding: '10px', fontSize: '0.9rem' }}>
-            Régler mon abonnement (500 FCFA)
-          </button>
-        )}
-        <button className="btn btn-secondary" id="btn-driver-simulate-contact" onClick={onSimulatePayment} style={{ width: '100%', marginTop: '10px', fontSize: '0.75rem', padding: '6px 12px', borderRadius: '8px' }}>
-          ⚡ Simuler 2 nouveaux contacts clients
-        </button>
       </div>
 
       <button className="btn btn-secondary" id="btn-driver-logout" onClick={handleLogout} style={{ width: '100%', padding: '12px', borderRadius: '16px', marginTop: '15px' }}>

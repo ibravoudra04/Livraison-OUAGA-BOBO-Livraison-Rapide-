@@ -8,7 +8,12 @@
       "Bash(node -e \"const p = require\\(require\\('path'\\).join\\(process.env.APPDATA || '', '../Local/npm/node_modules/playwright/index.js'\\)\\); console.log\\('found'\\)\")",
       "Bash(ls \"/c/Program Files/nodejs/node_modules/\" 2>/dev/null | head -10 && find \"/c/Program Files/nodejs\" -name \"playwright\" -maxdepth 4 2>/dev/null | head -5)",
       "Read(//c/Program Files/nodejs/node_modules//**)",
-      "Read(//c/Program Files/nodejs/**)"
+      "Read(//c/Program Files/nodejs/**)",
+      "Bash(cd \"c:/Users/HP/Livraison Rapide OUAGA et BOBO\" && npm run build > /tmp/build_ios.log 2>&1; echo \"BUILD_EXIT=$?\"; grep -E \"Failed to compile|Type error|Error:|✓ Compiled|✓ Generating static\" /tmp/build_ios.log | head)",
+      "Read(//tmp/**)",
+      "Bash(cd \"c:/Users/HP/Livraison Rapide OUAGA et BOBO\" && npm run build > /tmp/build_map.log 2>&1; echo \"BUILD_EXIT=$?\"; grep -E \"Failed to compile|Type error|Error:|✓ Compiled|✓ Generating static\" /tmp/build_map.log | head)",
+      "Bash(curl -sL -D - -o /dev/null -A \"Mozilla/5.0\" \"https://www.livraisonrapide.app/\")",
+      "Bash(cd \"c:/Users/HP/Livraison Rapide OUAGA et BOBO\" && npm run build > /tmp/build_free.log 2>&1; echo \"BUILD_EXIT=$?\"; grep -E \"Failed to compile|Type error|Error:|Cannot find|is not defined|PaymentSimulator|✓ Compiled|✓ Generating static\" /tmp/build_free.log | head -20)"
     ]
   }
 }

@@ -5,12 +5,11 @@ import { createClient } from '@/utils/supabase/client';
 interface ClientDashboardProps {
   clientData: any;
   onLogout: () => void;
-  onSimulatePremium: () => void;
   onSearch: () => void;
   onChatRider: (riderId: string, riderName: string) => void;
 }
 
-export default function ClientDashboard({ clientData, onLogout, onSimulatePremium, onSearch, onChatRider }: ClientDashboardProps) {
+export default function ClientDashboard({ clientData, onLogout, onSearch, onChatRider }: ClientDashboardProps) {
   const { logout, user } = useSupabaseAuth();
   const supabase = createClient();
   
@@ -19,7 +18,6 @@ export default function ClientDashboard({ clientData, onLogout, onSimulatePremiu
   
   // Safe fallback if clientData is somehow missing
   const safeClientData = clientData || {};
-  const isPremium = safeClientData.subscription_paid;
 
   const handleLogout = async () => {
     await logout();
@@ -76,33 +74,17 @@ export default function ClientDashboard({ clientData, onLogout, onSimulatePremiu
     <div id="client-dashboard-panel">
       <div className="driver-dashboard-welcome" style={{ marginBottom: '20px' }}>
         <h3 id="client-dash-phone" style={{ fontWeight: 800, fontSize: '1.15rem' }}>Mon Compte Client</h3>
-        <span className={`badge-status ${isPremium ? 'premium' : 'active'}`} id="client-dash-badge" style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '6px', backgroundColor: isPremium ? 'var(--color-primary-yellow)' : 'var(--color-green-light)', color: isPremium ? 'var(--color-primary-brown)' : 'var(--color-green-soft)' }}>
-          {isPremium ? 'Client Premium ⭐' : 'Compte Gratuit'}
+        <span className={`badge-status active`} id="client-dash-badge" style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '6px', backgroundColor: 'var(--color-primary-yellow)', color: 'var(--color-primary-brown)' }}>
+          Compte Gratuit
         </span>
       </div>
 
-      {isPremium && (
-        <div id="client-premium-search-box" style={{ marginBottom: '15px' }}>
-          <button type="button" onClick={onSearch} className="btn-unlock" id="btn-client-premium-search" style={{ width: '100%', padding: '12px', fontSize: '0.85rem', borderRadius: '12px', fontWeight: 700, background: 'linear-gradient(135deg, var(--color-primary-green), var(--color-primary-green-hover))', boxShadow: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'white' }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-            Lancer la recherche automatique
-          </button>
-        </div>
-      )}
-
-      {!isPremium && (
-        <div id="client-premium-upgrade-box" style={{ marginBottom: '15px', background: 'rgba(246, 205, 86, 0.15)', borderRadius: '12px', padding: '15px', border: '1px solid rgba(246, 205, 86, 0.4)' }}>
-          <h4 style={{ margin: '0 0 5px 0', fontSize: '0.95rem', fontWeight: 800, color: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            👑 Devenir Premium
-          </h4>
-          <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.4 }}>
-            Naviguez sur la carte en accès illimité. Plus besoin de payer 500F à chaque recherche !
-          </p>
-          <button type="button" onClick={onSimulatePremium} style={{ width: '100%', padding: '10px', fontSize: '0.9rem', borderRadius: '10px', fontWeight: 700, background: 'var(--color-primary-yellow)', color: 'var(--color-primary-brown)', border: 'none', boxShadow: '0 4px 10px rgba(246, 205, 86, 0.4)', cursor: 'pointer' }}>
-            Passer Premium (5000 FCFA / mois)
-          </button>
-        </div>
-      )}
+      <div id="client-premium-search-box" style={{ marginBottom: '15px' }}>
+        <button type="button" onClick={onSearch} className="btn-unlock" id="btn-client-premium-search" style={{ width: '100%', padding: '12px', fontSize: '0.85rem', borderRadius: '12px', fontWeight: 700, background: 'linear-gradient(135deg, var(--color-primary-green), var(--color-primary-green-hover))', boxShadow: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'white' }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          Lancer la recherche automatique
+        </button>
+      </div>
 
       {/* Historique de Consultation */}
       <div className="driver-terms-info" style={{ marginTop: '15px', background: 'rgba(255,255,255,0.9)', borderRadius: '12px', padding: '12px' }}>

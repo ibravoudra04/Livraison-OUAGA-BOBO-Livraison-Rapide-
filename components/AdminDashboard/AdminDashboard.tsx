@@ -9,7 +9,7 @@ interface AdminDashboardProps {
   isAdmin: boolean;
 }
 
-type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'subscriptions' | 'stats' | 'settings' | 'litiges' | 'paiements' | 'analytics';
+type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'stats' | 'settings' | 'litiges' | 'analytics';
 
 export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashboardProps) {
   const { stats, loading, approveDriver, suspendDriver, deleteDriver, verifyDriver, toggleClientPremium, deleteClient, createAnnonce, deactivateAnnonce, resolveTicket } = useAdminStats(isAdmin);
@@ -118,12 +118,10 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       { tab: 'drivers', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>, color: '#2c3e50', label: 'Gestion des Livreurs', sub: `${stats.totalDrivers || 0} inscrit(s)` },
                       { tab: 'clients', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>, color: '#8e44ad', label: 'Gestion des Clients', sub: `${stats.totalClients || 0} client(s)` },
                       { tab: 'pending', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>, color: '#2980b9', label: 'Candidatures en Attente', sub: `${stats.pendingDrivers?.length || 0} à vérifier`, alert: (stats.pendingDrivers?.length || 0) > 0 },
-                      { tab: 'subscriptions', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>, color: '#16a085', label: 'Suivi des Abonnements', sub: `${stats.totalPremium || 0} actif(s)` },
                       { tab: 'analytics', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>, color: '#e67e22', label: 'Analytiques Journalières', sub: 'Activité 14 derniers jours' },
-                      { tab: 'stats', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>, color: '#f39c12', label: 'Statistiques Plateforme', sub: 'Revenus, clics et visites' },
+                      { tab: 'stats', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>, color: '#f39c12', label: 'Statistiques Plateforme', sub: 'Clics et visites' },
                       { tab: 'litiges', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>, color: '#e74c3c', label: 'Litiges & Support', sub: `${stats.tickets?.filter(t => t.statut === 'ouvert')?.length || 0} ouvert(s)`, alert: (stats.tickets?.filter(t => t.statut === 'ouvert')?.length || 0) > 0 },
-                      { tab: 'paiements', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>, color: '#27ae60', label: 'Reçus de Paiement', sub: `${stats.paiements?.length || 0} reçu(s) vérifié(s)` },
-                      { tab: 'settings', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>, color: '#7f8c8d', label: 'Configuration & Tarifs', sub: 'Frais, annonces, push' },
+                      { tab: 'settings', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>, color: '#7f8c8d', label: 'Configuration & Messages', sub: 'Annonces, push' },
                     ].map(({ tab, icon, color, label, sub, alert }) => (
                       <div key={tab} className={styles.gridCard} onClick={() => setActiveTab(tab as TabType)}>
                         <div className={styles.gridIcon} style={{ color, background: `${color}1A` }}>{icon}</div>
@@ -276,11 +274,11 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                   </div>
                 )}
 
-                {/* CLIENTS & SUBSCRIPTIONS */}
-                {(activeTab === 'clients' || activeTab === 'subscriptions') && (
+                {/* CLIENTS */}
+                {(activeTab === 'clients') && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                      <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>{activeTab === 'clients' ? 'Gestion des Clients' : 'Abonnements Premium'}</h3>
+                      <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Gestion des Clients</h3>
                       <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                         <input
                           type="text"
@@ -298,29 +296,17 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                           <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
                             <th style={{ padding: '12px 15px' }}>Nom</th>
                             <th style={{ padding: '12px 15px' }}>Téléphone</th>
-                            <th style={{ padding: '12px 15px' }}>Abonnement Premium</th>
                             <th style={{ padding: '12px 15px' }}>Date d'inscription</th>
                             <th style={{ padding: '12px 15px', textAlign: 'right' }}>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {(activeTab === 'clients' ? filteredClients : filteredClients.filter(c => c.subscription_paid))?.map(client => (
+                          {(filteredClients)?.map(client => (
                             <tr key={client.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                               <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>{client.name}</td>
                               <td style={{ padding: '12px 15px' }}>{client.phone}</td>
-                              <td style={{ padding: '12px 15px' }}>
-                                <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', background: client.subscription_paid ? '#e6f4ea' : '#fdf6e3', color: client.subscription_paid ? '#1e8e3e' : '#b58900' }}>
-                                  {client.subscription_paid ? 'Actif' : 'Inactif'}
-                                </span>
-                              </td>
                               <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)' }}>{new Date(client.created_at).toLocaleDateString('fr-FR')}</td>
                               <td style={{ padding: '12px 15px', textAlign: 'right', display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                                <button
-                                  onClick={() => toggleClientPremium(client.id, !client.subscription_paid)}
-                                  style={{ background: client.subscription_paid ? '#f39c12' : '#27ae60', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}
-                                >
-                                  {client.subscription_paid ? 'Désactiver Premium' : 'Activer Premium'}
-                                </button>
                                 <button
                                   onClick={() => { if (window.confirm(`Supprimer le client ${client.name} ?`)) deleteClient(client.id); }}
                                   style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}
@@ -341,13 +327,12 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
 
                 {/* ANALYTIQUES JOURNALIÈRES */}
                 {activeTab === 'analytics' && (() => {
-                  const allVals = stats.dailyStats.flatMap(d => [d.newDrivers, d.newClients, d.messages, d.payments]);
+                  const allVals = stats.dailyStats.flatMap(d => [d.newDrivers, d.newClients, d.messages]);
                   const maxVal = Math.max(...allVals, 1);
                   const metrics = [
                     { key: 'newDrivers' as const, label: 'Livreurs', color: '#2c3e50' },
                     { key: 'newClients' as const, label: 'Clients', color: '#8e44ad' },
                     { key: 'messages' as const, label: 'Messages', color: '#27ae60' },
-                    { key: 'payments' as const, label: 'Paiements', color: '#f39c12' },
                   ];
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -443,18 +428,13 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
 
                   const filteredDrivers  = stats.allDrivers.filter(d => inPeriod(d.created_at));
                   const filteredClients  = stats.allClients.filter(c => inPeriod(c.created_at));
-                  const filteredDeblocages = stats.allDeblocages.filter(d => inPeriod(d.created_at));
-                  const filteredPaiements  = stats.paiements.filter(p => inPeriod(p.created_at));
                   const filteredChats    = stats.allChats.filter(c => inPeriod(c.created_at));
                   const filteredVisits   = (stats.allVisits || []).filter(v => inPeriod(v.created_at));
 
-                  const revenuPaye  = filteredPaiements.filter(p => p.statut === 'VALIDE').reduce((a, p) => a + (Number(p.montant) || 0), 0);
-                  const revenuTheo  = filteredDeblocages.length * 500;
                   const totalProfileViews   = statsPeriod === 'all' ? stats.allDrivers.reduce((a, d) => a + (d.views_count || 0), 0) : '—';
                   const totalContactClicks  = statsPeriod === 'all' ? stats.allDrivers.reduce((a, d) => a + (d.contacts_count || 0), 0) : '—';
                   const incompleteRiders    = stats.allDrivers.filter(d => d.status === 'en attente' && (!d.selfie || !d.cni_recto || !d.cni_verso)).length;
                   const readyRiders         = stats.allDrivers.filter(d => d.status === 'en attente' && d.selfie && d.cni_recto && d.cni_verso).length;
-                  const premiumClients      = statsPeriod === 'all' ? stats.allClients.filter(c => c.subscription_paid).length : filteredClients.filter(c => c.subscription_paid).length;
 
                   const periodLabels = { today: "Aujourd'hui", '7days': '7 derniers jours', all: 'Tout' };
 
@@ -490,15 +470,10 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       {/* Cartes métriques */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
                         {[
-                          { label: 'Revenus Confirmés (IA)', val: `${revenuPaye.toLocaleString('fr-FR')} FCFA`, sub: 'Paiements validés par l\'IA', color: 'var(--color-primary-green)' },
-                          { label: 'Revenus Théoriques', val: `${revenuTheo.toLocaleString('fr-FR')} FCFA`, sub: `${filteredDeblocages.length} déblocage(s) × 500 FCFA`, color: 'var(--color-primary-brown)' },
                           { label: 'Nouveaux Livreurs', val: filteredDrivers.length.toString(), sub: 'Inscriptions sur la période', color: '#2c3e50' },
                           { label: 'Nouveaux Clients', val: filteredClients.length.toString(), sub: 'Inscriptions sur la période', color: '#8e44ad' },
                           { label: 'Messages Échangés', val: filteredChats.length.toString(), sub: 'Dans les messageries instantanées', color: '#7f8c8d' },
                           { label: 'Visites Plateforme', val: statsPeriod === 'all' ? (stats.allVisits?.length || 0).toString() : filteredVisits.length.toString(), sub: 'Visites uniques de l\'application', color: '#1abc9c' },
-                          { label: 'Déblocages de Numéro', val: filteredDeblocages.length.toString(), sub: 'Contacts débloqués sur la période', color: '#e67e22' },
-                          { label: 'Paiements Reçus', val: filteredPaiements.filter(p => p.statut === 'VALIDE').length.toString(), sub: 'Reçus validés sur la période', color: '#27ae60' },
-                          { label: 'Clients Premium Actifs', val: premiumClients.toString(), sub: statsPeriod === 'all' ? 'Total abonnés premium' : 'Nouveaux premium sur la période', color: '#f39c12' },
                           { label: 'Clics sur Profils', val: totalProfileViews.toString(), sub: 'Vues des fiches livreurs (total)', color: '#9b59b6' },
                           { label: 'Demandes de Contact', val: totalContactClicks.toString(), sub: 'Clics téléphone (total)', color: '#3498db' },
                           { label: 'Dossiers Incomplets', val: incompleteRiders.toString(), sub: 'Livreurs sans documents complets', color: '#e74c3c' },
@@ -520,25 +495,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Configuration & Communication</h3>
 
-                    {/* Tarifs */}
-                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', padding: '25px' }}>
-                      <h4 style={{ margin: '0 0 6px 0', color: 'var(--color-primary-brown)' }}>💰 Tarifs de la Plateforme</h4>
-                      <p style={{ margin: '0 0 16px 0', fontSize: '0.82rem', color: 'var(--color-charcoal-muted)' }}>
-                        Tarifs actuellement appliqués dans l'application. Pour les modifier, contactez votre développeur.
-                      </p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '15px' }}>
-                        {[
-                          { label: 'Coût de déblocage', val: '500 FCFA' },
-                          { label: 'Abonnement Premium Client', val: '5 000 FCFA / mois' },
-                          { label: 'Abonnement Livreur', val: '500 FCFA / semaine' },
-                        ].map(({ label, val }) => (
-                          <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'var(--color-bg-warm)', borderRadius: '10px', padding: '14px' }}>
-                            <span style={{ fontSize: '0.78rem', color: 'var(--color-charcoal-muted)', fontWeight: 600 }}>{label}</span>
-                            <span style={{ fontWeight: 800, color: 'var(--color-charcoal)', fontSize: '1.1rem' }}>{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+
 
                     {/* Annonce In-App */}
                     <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', padding: '25px' }}>
