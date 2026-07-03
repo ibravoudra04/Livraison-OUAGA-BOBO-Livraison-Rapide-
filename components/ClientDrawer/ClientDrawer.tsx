@@ -6,13 +6,12 @@ import ClientDashboard from './ClientDashboard';
 interface ClientDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSimulatePremium: () => void;
   onSearch: () => void;
   onChatRider: (riderId: string, riderName: string) => void;
   initialView?: 'login' | 'register';
 }
 
-export default function ClientDrawer({ isOpen, onClose, onSimulatePremium, onSearch, onChatRider, initialView = 'login' }: ClientDrawerProps) {
+export default function ClientDrawer({ isOpen, onClose, onSearch, onChatRider, initialView = 'login' }: ClientDrawerProps) {
   const { user, role, supabase, formatPhoneForDB } = useSupabaseAuth();
 
   const [view, setView] = useState<'login' | 'register' | 'dashboard'>(initialView);
@@ -206,10 +205,9 @@ export default function ClientDrawer({ isOpen, onClose, onSimulatePremium, onSea
       )}
 
       {view === 'dashboard' && (
-        <ClientDashboard 
-          clientData={clientData} 
-          onLogout={handleLogout} 
-          onSimulatePremium={onSimulatePremium}
+        <ClientDashboard
+          clientData={clientData}
+          onLogout={handleLogout}
           onSearch={onSearch}
           onChatRider={onChatRider}
         />

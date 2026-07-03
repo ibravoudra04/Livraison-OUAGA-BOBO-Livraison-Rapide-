@@ -89,12 +89,6 @@ export default function DriverDrawer({ isOpen, onClose, initialView = 'login', o
         <DriverDashboard
           driverData={driverData}
           onLogout={() => setView('login')}
-          onSimulatePayment={() => alert("Simulation Paiement...")}
-          onPaySubscription={() => {
-            // Paiement réel de l'abonnement livreur (500 FCFA) via Orange Money,
-            // vers le numéro de la plateforme — même mécanisme que le client.
-            window.location.href = "tel:*144*2*1*67370909*500%23";
-          }}
           onChatClient={(clientId, clientName) => {
             onClose();
             onChatClient(clientId, clientName);

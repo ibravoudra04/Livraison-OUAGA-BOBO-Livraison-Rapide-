@@ -602,51 +602,6 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                     </div>
                   </div>
                 )}
-
-                {/* PAIEMENTS */}
-                {activeTab === 'paiements' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Reçus de Paiement Vérifiés (IA)</h3>
-                      <button onClick={() => downloadCSV(stats.paiements, 'paiements_export')} style={{ background: '#27ae60', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold' }}>Exporter CSV</button>
-                    </div>
-                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
-                        <thead>
-                          <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
-                            <th style={{ padding: '12px 15px' }}>Date</th>
-                            <th style={{ padding: '12px 15px' }}>ID Transaction</th>
-                            <th style={{ padding: '12px 15px' }}>Montant</th>
-                            <th style={{ padding: '12px 15px' }}>Image Reçu</th>
-                            <th style={{ padding: '12px 15px' }}>Statut</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {stats.paiements?.map(paiement => (
-                            <tr key={paiement.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                              <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)', fontSize: '0.85rem' }}>{new Date(paiement.created_at).toLocaleString('fr-FR')}</td>
-                              <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>{paiement.transaction_id}</td>
-                              <td style={{ padding: '12px 15px', color: 'var(--color-primary-green)', fontWeight: 'bold' }}>{paiement.montant} FCFA</td>
-                              <td style={{ padding: '12px 15px' }}>
-                                {paiement.image_url ? (
-                                  <button onClick={() => setActiveReceiptUrl(paiement.image_url)} style={{ color: '#3498db', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '0.9rem', fontWeight: 'bold' }}>Voir la capture</button>
-                                ) : <span style={{ color: 'var(--color-charcoal-muted)' }}>Aucune</span>}
-                              </td>
-                              <td style={{ padding: '12px 15px' }}>
-                                <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', background: paiement.statut === 'VALIDE' ? '#e6f4ea' : '#fce8e6', color: paiement.statut === 'VALIDE' ? '#1e8e3e' : '#d93025' }}>
-                                  {paiement.statut}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                          {(!stats.paiements || stats.paiements.length === 0) && (
-                            <tr><td colSpan={5} style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucun paiement enregistré.</td></tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </div>
