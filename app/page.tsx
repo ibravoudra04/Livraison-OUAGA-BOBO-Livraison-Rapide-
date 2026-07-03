@@ -59,8 +59,6 @@ export default function Home() {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
       // Enregistrer la visite unique par session
       const hasVisited = sessionStorage.getItem('hasVisitedPlatform');
       if (!hasVisited && supabase) {
