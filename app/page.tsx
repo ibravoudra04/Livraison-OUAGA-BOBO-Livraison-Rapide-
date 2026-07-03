@@ -313,6 +313,7 @@ export default function Home() {
             getUserPosition().then((r) => {
               if (r.ok && r.lat != null && r.lng != null) {
                 setUserLocation({ lat: r.lat, lng: r.lng });
+                setMapCenter({ lat: r.lat, lng: r.lng });
                 const dOuaga = getDistance(r.lat, r.lng, cityCenters['Ouagadougou'].lat, cityCenters['Ouagadougou'].lng);
                 const dBobo = getDistance(r.lat, r.lng, cityCenters['Bobo-Dioulasso'].lat, cityCenters['Bobo-Dioulasso'].lng);
                 setSelectedCity(dBobo < dOuaga ? 'Bobo-Dioulasso' : 'Ouagadougou');
@@ -352,7 +353,7 @@ export default function Home() {
               style={{ pointerEvents: 'auto', padding: '12px 24px', borderRadius: '30px', boxShadow: '0 8px 25px rgba(232, 92, 74, 0.4)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', background: 'var(--color-primary-red)' }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <span>Détecter un livreur</span>
+              <span>Livreur le plus proche</span>
             </button>
             
           </div>
