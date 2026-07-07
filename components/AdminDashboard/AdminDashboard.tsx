@@ -9,10 +9,10 @@ interface AdminDashboardProps {
   isAdmin: boolean;
 }
 
-type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'stats' | 'settings' | 'litiges' | 'analytics';
+type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'stats' | 'settings' | 'litiges' | 'avis' | 'analytics';
 
 export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashboardProps) {
-  const { stats, loading, approveDriver, suspendDriver, deleteDriver, verifyDriver, toggleClientPremium, deleteClient, createAnnonce, deactivateAnnonce, resolveTicket } = useAdminStats(isAdmin);
+  const { stats, loading, approveDriver, suspendDriver, deleteDriver, verifyDriver, toggleClientPremium, deleteClient, createAnnonce, deactivateAnnonce, resolveTicket, reopenTicket, deleteTicket, deleteAvis } = useAdminStats(isAdmin);
   const { logout } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null);
@@ -23,6 +23,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
   const [statsPeriod, setStatsPeriod] = useState<'today' | '7days' | 'all'>('all');
+  const [ticketFilter, setTicketFilter] = useState<'tous' | 'ouvert' | 'resolu'>('tous');
 
   const downloadCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) return;
@@ -121,6 +122,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       { tab: 'analytics', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>, color: '#e67e22', label: 'Analytiques Journalières', sub: 'Activité 14 derniers jours' },
                       { tab: 'stats', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>, color: '#f39c12', label: 'Statistiques Plateforme', sub: 'Clics et visites' },
                       { tab: 'litiges', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>, color: '#e74c3c', label: 'Litiges & Support', sub: `${stats.tickets?.filter(t => t.statut === 'ouvert')?.length || 0} ouvert(s)`, alert: (stats.tickets?.filter(t => t.statut === 'ouvert')?.length || 0) > 0 },
+                      { tab: 'avis', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>, color: '#d4a017', label: 'Gestion des Avis', sub: `${stats.allAvis?.length || 0} avis publié(s)` },
                       { tab: 'settings', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>, color: '#7f8c8d', label: 'Configuration & Messages', sub: 'Annonces, push' },
                     ].map(({ tab, icon, color, label, sub, alert }) => (
                       <div key={tab} className={styles.gridCard} onClick={() => setActiveTab(tab as TabType)}>
@@ -560,11 +562,27 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                 )}
 
                 {/* LITIGES */}
-                {activeTab === 'litiges' && (
+                {activeTab === 'litiges' && (() => {
+                  const filteredTickets = (stats.tickets || []).filter(t => ticketFilter === 'tous' || t.statut === ticketFilter);
+                  const filterLabels = { tous: `Tous (${stats.tickets?.length || 0})`, ouvert: `Ouverts (${stats.tickets?.filter(t => t.statut === 'ouvert').length || 0})`, resolu: `Résolus (${stats.tickets?.filter(t => t.statut === 'resolu').length || 0})` };
+                  return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Litiges & Support</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                      <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Litiges & Support</h3>
+                      <div style={{ display: 'flex', background: 'white', borderRadius: '12px', padding: '4px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', gap: '2px' }}>
+                        {(['tous', 'ouvert', 'resolu'] as const).map(f => (
+                          <button
+                            key={f}
+                            onClick={() => setTicketFilter(f)}
+                            style={{ padding: '8px 16px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontWeight: ticketFilter === f ? '700' : '500', fontSize: '0.85rem', background: ticketFilter === f ? 'var(--color-primary-brown)' : 'transparent', color: ticketFilter === f ? 'white' : 'var(--color-charcoal-muted)', transition: 'all 0.2s ease', whiteSpace: 'nowrap' }}
+                          >
+                            {filterLabels[f]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '750px' }}>
                         <thead>
                           <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
                             <th style={{ padding: '12px 15px' }}>Date</th>
@@ -576,11 +594,11 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                           </tr>
                         </thead>
                         <tbody>
-                          {stats.tickets?.map(ticket => (
+                          {filteredTickets.map(ticket => (
                             <tr key={ticket.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                               <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)', fontSize: '0.85rem' }}>{new Date(ticket.created_at).toLocaleString('fr-FR')}</td>
-                              <td style={{ padding: '12px 15px' }}><strong>{ticket.clients_livraison?.name}</strong><br /><span style={{ fontSize: '0.8rem' }}>{ticket.clients_livraison?.phone}</span></td>
-                              <td style={{ padding: '12px 15px' }}><strong>{ticket.livreurs?.name}</strong><br /><span style={{ fontSize: '0.8rem' }}>{ticket.livreurs?.phone}</span></td>
+                              <td style={{ padding: '12px 15px' }}><strong>{ticket.clients_livraison?.name || '—'}</strong><br />{ticket.clients_livraison?.phone && <a href={`tel:${ticket.clients_livraison.phone}`} style={{ fontSize: '0.8rem', color: 'var(--color-primary-brown)' }}>{ticket.clients_livraison.phone}</a>}</td>
+                              <td style={{ padding: '12px 15px' }}><strong>{ticket.livreurs?.name || '—'}</strong><br />{ticket.livreurs?.phone && <a href={`tel:${ticket.livreurs.phone}`} style={{ fontSize: '0.8rem', color: 'var(--color-primary-brown)' }}>{ticket.livreurs.phone}</a>}</td>
                               <td style={{ padding: '12px 15px', maxWidth: '300px', whiteSpace: 'pre-wrap' }}>{ticket.description}</td>
                               <td style={{ padding: '12px 15px' }}>
                                 <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', background: ticket.statut === 'resolu' ? '#e6f4ea' : '#fce8e6', color: ticket.statut === 'resolu' ? '#1e8e3e' : '#d93025' }}>
@@ -588,14 +606,61 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                                 </span>
                               </td>
                               <td style={{ padding: '12px 15px', textAlign: 'right' }}>
-                                {ticket.statut === 'ouvert' && (
-                                  <button onClick={() => { if (window.confirm('Marquer comme résolu ?')) resolveTicket(ticket.id); }} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Résoudre</button>
-                                )}
+                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                  {ticket.statut === 'ouvert' ? (
+                                    <button onClick={() => { if (window.confirm('Marquer comme résolu ?')) resolveTicket(ticket.id); }} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Résoudre</button>
+                                  ) : (
+                                    <button onClick={() => reopenTicket(ticket.id)} style={{ background: '#f39c12', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Rouvrir</button>
+                                  )}
+                                  {ticket.rider_id && (
+                                    <button onClick={() => { if (window.confirm(`Suspendre le livreur ${ticket.livreurs?.name || ''} suite à ce signalement ?`)) suspendDriver(ticket.rider_id); }} style={{ background: '#e67e22', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Suspendre livreur</button>
+                                  )}
+                                  <button onClick={() => { if (window.confirm('Supprimer définitivement ce signalement ?')) deleteTicket(ticket.id); }} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
+                                </div>
                               </td>
                             </tr>
                           ))}
-                          {(!stats.tickets || stats.tickets.length === 0) && (
-                            <tr><td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucun litige signalé.</td></tr>
+                          {filteredTickets.length === 0 && (
+                            <tr><td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>{ticketFilter === 'tous' ? 'Aucun litige signalé.' : `Aucun litige ${ticketFilter === 'ouvert' ? 'ouvert' : 'résolu'}.`}</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  );
+                })()}
+
+                {/* GESTION DES AVIS */}
+                {activeTab === 'avis' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Gestion des Avis Clients</h3>
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
+                            <th style={{ padding: '12px 15px' }}>Date</th>
+                            <th style={{ padding: '12px 15px' }}>Client</th>
+                            <th style={{ padding: '12px 15px' }}>Livreur noté</th>
+                            <th style={{ padding: '12px 15px' }}>Note</th>
+                            <th style={{ padding: '12px 15px' }}>Commentaire</th>
+                            <th style={{ padding: '12px 15px', textAlign: 'right' }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stats.allAvis?.map(avis => (
+                            <tr key={avis.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                              <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)', fontSize: '0.85rem' }}>{new Date(avis.created_at).toLocaleDateString('fr-FR')}</td>
+                              <td style={{ padding: '12px 15px' }}><strong>{avis.clients_livraison?.name || '—'}</strong></td>
+                              <td style={{ padding: '12px 15px' }}><strong>{avis.livreurs?.name || '—'}</strong></td>
+                              <td style={{ padding: '12px 15px', color: '#d4a017', whiteSpace: 'nowrap' }}>{'★'.repeat(Number(avis.stars) || 0)}{'☆'.repeat(Math.max(0, 5 - (Number(avis.stars) || 0)))}</td>
+                              <td style={{ padding: '12px 15px', maxWidth: '300px', whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>{avis.text || <em style={{ color: 'var(--color-charcoal-muted)' }}>Sans commentaire</em>}</td>
+                              <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                                <button onClick={() => { if (window.confirm('Supprimer cet avis ? Action irréversible.')) deleteAvis(avis.id); }} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
+                              </td>
+                            </tr>
+                          ))}
+                          {(!stats.allAvis || stats.allAvis.length === 0) && (
+                            <tr><td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucun avis publié pour le moment.</td></tr>
                           )}
                         </tbody>
                       </table>

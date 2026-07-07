@@ -27,6 +27,7 @@ export interface AdminStats {
   allDeblocages: any[];
   annonces: any[];
   tickets: any[];
+  allAvis: any[];
   paiements: any[];
   allVisits: any[];
   dailyStats: DailyStat[];
@@ -50,6 +51,7 @@ export function useAdminStats(isAdmin: boolean) {
     allDeblocages: [],
     annonces: [],
     tickets: [],
+    allAvis: [],
     paiements: [],
     allVisits: [],
     dailyStats: [],
@@ -76,7 +78,7 @@ export function useAdminStats(isAdmin: boolean) {
           Promise.resolve(query).catch(() => ({ data: null, count: null, error: null }));
 
         const [
-          r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10
+          r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11
         ] = await Promise.all([
           safe(supabase.from('deblocages').select('created_at').order('created_at', { ascending: false })),
           safe(supabase.from('livreurs').select('*', { count: 'exact', head: true })),
@@ -89,6 +91,7 @@ export function useAdminStats(isAdmin: boolean) {
           safe(supabase.from('annonces').select('*').order('created_at', { ascending: false })),
           safe(supabase.from('paiements').select('*').order('created_at', { ascending: false })),
           safe(supabase.from('plateforme_visites').select('created_at').order('created_at', { ascending: false })),
+          safe(supabase.from('avis').select('*, livreurs(name, phone), clients_livraison(name, phone)').order('created_at', { ascending: false })),
         ]);
 
         const allDeblocagesData = r0.data || [];
@@ -105,6 +108,7 @@ export function useAdminStats(isAdmin: boolean) {
         const annoncesData  = r8.data;
         const paiementsData = r9.data;
         const visitsData    = r10.data || [];
+        const avisData      = r11.data || [];
 
         // Compute daily stats for last 14 days (utilise allChatsData déjà chargé)
         const dailyStatsArr: DailyStat[] = [];
@@ -146,6 +150,7 @@ export function useAdminStats(isAdmin: boolean) {
           allDeblocages: allDeblocagesData,
           annonces: annoncesData || [],
           tickets: ticketsData || [],
+          allAvis: avisData,
           paiements: paiementsData || [],
           allVisits: visitsData,
           dailyStats: dailyStatsArr,
@@ -253,11 +258,41 @@ export function useAdminStats(isAdmin: boolean) {
     return true;
   };
 
+  const reopenTicket = async (ticketId: string) => {
+    const { error } = await supabase.from('tickets_support').update({ statut: 'ouvert' }).eq('id', ticketId);
+    if (error) { setError(error.message); return false; }
+    setStats(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? { ...t, statut: 'ouvert' } : t),
+    }));
+    return true;
+  };
+
+  const deleteTicket = async (ticketId: string) => {
+    const { error } = await supabase.from('tickets_support').delete().eq('id', ticketId);
+    if (error) { setError(error.message); return false; }
+    setStats(prev => ({
+      ...prev,
+      tickets: prev.tickets.filter(t => t.id !== ticketId),
+    }));
+    return true;
+  };
+
+  const deleteAvis = async (avisId: string) => {
+    const { error } = await supabase.from('avis').delete().eq('id', avisId);
+    if (error) { setError(error.message); return false; }
+    setStats(prev => ({
+      ...prev,
+      allAvis: prev.allAvis.filter(a => a.id !== avisId),
+    }));
+    return true;
+  };
+
   return {
     stats, loading, error,
     approveDriver, suspendDriver, deleteDriver, verifyDriver,
     toggleClientPremium, deleteClient,
     createAnnonce, deactivateAnnonce,
-    resolveTicket,
+    resolveTicket, reopenTicket, deleteTicket, deleteAvis,
   };
 }

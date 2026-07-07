@@ -14,6 +14,7 @@ import ClientDrawer from '@/components/ClientDrawer/ClientDrawer';
 import ChatDrawer from '@/components/ChatDrawer/ChatDrawer';
 import PwaInstallPrompt from '@/components/PwaInstallPrompt/PwaInstallPrompt';
 import ReviewsModal from '@/components/ReviewsModal/ReviewsModal';
+import ReportModal from '@/components/ReportModal/ReportModal';
 import dynamic from 'next/dynamic';
 const AdminDashboard = dynamic(() => import('@/components/AdminDashboard/AdminDashboard'), { ssr: false });
 import AuthDrawer from '@/components/AuthDrawer/AuthDrawer';
@@ -57,6 +58,7 @@ export default function Home() {
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [chatPartner, setChatPartner] = useState<{ id: string; name: string; role: 'client' | 'rider' } | null>(null);
   const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   
 
@@ -194,26 +196,13 @@ export default function Home() {
     fetchAnnonce();
   }, [supabase]);
 
-  const handleReportProblem = async () => {
+  const handleReportProblem = () => {
     if (!user) {
       setToast({ message: "Veuillez vous connecter pour signaler un problème.", type: "warning" });
       setIsAuthDrawerOpen(true);
       return;
     }
-    const reason = window.prompt("Veuillez décrire le problème rencontré avec ce livreur :");
-    if (reason && reason.trim() !== '') {
-      try {
-        const { error } = await supabase.from('tickets_support').insert([{
-          client_id: user.id,
-          rider_id: selectedLivreur?.id,
-          description: reason
-        }]);
-        if (error) throw error;
-        setToast({ message: "Signalement envoyé. L'administrateur a été notifié.", type: "success" });
-      } catch (err: any) {
-        setToast({ message: "Erreur lors de l'envoi du signalement.", type: "error" });
-      }
-    }
+    setIsReportModalOpen(true);
   };
 
 
@@ -454,12 +443,16 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Link to report problem */}
-            <div style={{ textAlign: 'center', marginTop: '10px' }}>
-              <button onClick={handleReportProblem} style={{ background: 'none', border: 'none', color: 'var(--color-charcoal-muted)', fontSize: '0.8rem', textDecoration: 'underline', cursor: 'pointer' }}>
-                Signaler un problème avec ce livreur
-              </button>
-            </div>
+            {/* Donner un avis (pilule dorée) */}
+            <button
+              onClick={() => setIsReviewsModalOpen(true)}
+              style={{ width: '100%', marginTop: '10px', padding: '13px', borderRadius: '50px', background: 'linear-gradient(135deg, var(--color-primary-yellow), var(--color-primary-yellow-hover))', color: 'var(--color-primary-brown)', border: '1px solid rgba(255, 255, 255, 0.35)', fontWeight: 800, fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 14px rgba(246, 205, 86, 0.45)', cursor: 'pointer', transition: 'all 0.2s ease-in-out' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary-brown)" stroke="var(--color-primary-brown)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              Donner un avis sur ce livreur
+            </button>
+
+
           </div>
         )}
       </BottomSheet>
@@ -543,12 +536,22 @@ export default function Home() {
       })()}
 
       {selectedLivreur && (
-        <ReviewsModal 
+        <ReviewsModal
           isOpen={isReviewsModalOpen}
           onClose={() => setIsReviewsModalOpen(false)}
           riderId={selectedLivreur.id}
           riderRating={selectedLivreur.average_rating || 5.0}
           riderReviewsCount={selectedLivreur.reviews_count || 0}
+          user={user}
+        />
+      )}
+
+      {selectedLivreur && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          riderId={selectedLivreur.id}
+          riderName={selectedLivreur.first_name || selectedLivreur.name}
           user={user}
         />
       )}
