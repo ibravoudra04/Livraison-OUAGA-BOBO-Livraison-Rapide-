@@ -443,6 +443,20 @@ export default function Home() {
               </button>
             </div>
 
+            {/* Signaler un problème — petit bouton discret et ergonomique */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
+              <button
+                onClick={handleReportProblem}
+                aria-label="Signaler un problème avec ce livreur"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'transparent', border: 'none', color: 'var(--color-charcoal-muted)', fontSize: '0.78rem', fontWeight: 600, padding: '8px 14px', borderRadius: '50px', cursor: 'pointer', transition: 'color 0.2s, background 0.2s' }}
+                onMouseOver={(e) => { e.currentTarget.style.color = 'var(--color-primary-red)'; e.currentTarget.style.background = 'rgba(232, 92, 74, 0.08)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.color = 'var(--color-charcoal-muted)'; e.currentTarget.style.background = 'transparent'; }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Signaler un problème
+              </button>
+            </div>
+
           </div>
         )}
       </BottomSheet>
