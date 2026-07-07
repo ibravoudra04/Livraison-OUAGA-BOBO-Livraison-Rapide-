@@ -443,16 +443,6 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Donner un avis (pilule dorée) */}
-            <button
-              onClick={() => setIsReviewsModalOpen(true)}
-              style={{ width: '100%', marginTop: '10px', padding: '13px', borderRadius: '50px', background: 'linear-gradient(135deg, var(--color-primary-yellow), var(--color-primary-yellow-hover))', color: 'var(--color-primary-brown)', border: '1px solid rgba(255, 255, 255, 0.35)', fontWeight: 800, fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 14px rgba(246, 205, 86, 0.45)', cursor: 'pointer', transition: 'all 0.2s ease-in-out' }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary-brown)" stroke="var(--color-primary-brown)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-              Donner un avis sur ce livreur
-            </button>
-
-
           </div>
         )}
       </BottomSheet>
