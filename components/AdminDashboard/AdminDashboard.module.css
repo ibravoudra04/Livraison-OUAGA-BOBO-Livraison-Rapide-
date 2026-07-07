@@ -70,6 +70,20 @@
     grid-template-columns: 1fr;
   }
   .mainContent {
-    padding: 15px;
+    padding: 12px;
+  }
+  /* Les tableaux restent scrollables horizontalement mais avec des cellules
+     plus compactes pour rester lisibles sur téléphone. */
+  .mainContent table {
+    min-width: 0 !important;
+    width: 100%;
+    font-size: 0.8rem;
+  }
+  .mainContent table th,
+  .mainContent table td {
+    padding: 8px 8px !important;
+  }
+  .mainContent h3 {
+    font-size: 1.15rem !important;
   }
 }

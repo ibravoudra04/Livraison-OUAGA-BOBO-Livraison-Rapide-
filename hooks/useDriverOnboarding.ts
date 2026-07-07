@@ -177,6 +177,13 @@ export function useDriverOnboarding() {
         if (updateError) console.error("Could not link documents:", updateError);
       }
 
+      // Alerter les admins (push) — sans bloquer l'inscription si ça échoue
+      fetch('/api/notify-admins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'new_driver', detail: `${formData.name} (${phoneNormalized}) attend validation.` }),
+      }).catch(() => {});
+
       return { success: true };
     } catch (err: any) {
       console.error("Registration error:", err);

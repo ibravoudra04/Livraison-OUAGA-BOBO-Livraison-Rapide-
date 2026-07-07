@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import { useAppSettings } from '@/hooks/useAppSettings';
 
 interface WelcomePortalProps {
   onStartSearch: () => void;
@@ -7,6 +8,7 @@ interface WelcomePortalProps {
 }
 
 export default function WelcomePortal({ onStartSearch, onRegisterClick }: WelcomePortalProps) {
+  const { welcome_text } = useAppSettings();
   return (
     <div className="welcome-portal" id="welcome-portal">
       <Image 
@@ -21,17 +23,15 @@ export default function WelcomePortal({ onStartSearch, onRegisterClick }: Welcom
       <div className="portal-card-container">
         <div className="portal-hero">
           <Image 
-            src="/burkina_map.png" 
-            alt="Carte du Burkina Faso" 
+            src="/monument_martyrs.png" 
+            alt="Monument des Héros Nationaux" 
             className="burkina-map-badge"
-            width={120}
-            height={120}
+            width={160}
+            height={160}
             priority
           />
           <h2>Livraison Rapide</h2>
-          <p>
-            Visualisez les livreurs actifs autour de vous sur la carte en temps réel et contactez-les en un clic.
-          </p>
+          <p>{welcome_text}</p>
         </div>
         
         <div className="portal-options-single">

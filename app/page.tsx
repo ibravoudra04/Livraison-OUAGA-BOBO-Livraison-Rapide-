@@ -21,6 +21,7 @@ import AuthDrawer from '@/components/AuthDrawer/AuthDrawer';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useLivreursRealtime } from '@/hooks/useLivreursRealtime';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { getUserPosition } from '@/utils/geolocation';
 
 const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -40,6 +41,7 @@ export default function Home() {
   const [selectedCity, setSelectedCity] = useState<string>('Ouagadougou');
   const { livreurs, loading: livreursLoading } = useLivreursRealtime(selectedCity);
   usePushNotifications();
+  const appSettings = useAppSettings();
 
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -490,11 +492,11 @@ export default function Home() {
       {showWelcome && (
         <footer style={{ flexShrink: 0, width: '100%', display: 'flex', justifyContent: 'center', zIndex: 1000, background: 'rgba(255,255,255,0.95)', borderTop: '1px solid rgba(0,0,0,0.05)', padding: '12px 0' }}>
           <div style={{ display: 'flex', gap: '20px' }}>
-            <a href="https://wa.me/22667370909" target="_blank" rel="noopener" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#66554D', textDecoration: 'none', fontWeight: '600', fontSize: '0.85rem' }}>
+            <a href={`https://wa.me/${appSettings.support_whatsapp}`} target="_blank" rel="noopener" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#66554D', textDecoration: 'none', fontWeight: '600', fontSize: '0.85rem' }}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
               WhatsApp Support
             </a>
-            <a href="tel:+22667370909" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#66554D', textDecoration: 'none', fontWeight: '600', fontSize: '0.85rem' }}>
+            <a href={`tel:${appSettings.support_phone}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#66554D', textDecoration: 'none', fontWeight: '600', fontSize: '0.85rem' }}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
               Support Téléphonique
             </a>

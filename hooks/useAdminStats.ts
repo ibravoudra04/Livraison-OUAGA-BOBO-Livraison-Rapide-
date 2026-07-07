@@ -278,6 +278,28 @@ export function useAdminStats(isAdmin: boolean) {
     return true;
   };
 
+  // Synchronise l'état local après une modification faite via une route API
+  // serveur (edition de fiche, création de livreur par l'admin).
+  const applyDriverPatch = (driverId: string, patch: Record<string, any>) => {
+    setStats(prev => ({
+      ...prev,
+      allDrivers: prev.allDrivers.map(d => d.id === driverId ? { ...d, ...patch } : d),
+      pendingDrivers: prev.pendingDrivers.map(d => d.id === driverId ? { ...d, ...patch } : d),
+    }));
+  };
+
+  const addDriverLocal = (driver: any) => {
+    if (!driver?.id) return;
+    setStats(prev => ({
+      ...prev,
+      allDrivers: [driver, ...prev.allDrivers.filter(d => d.id !== driver.id)],
+      pendingDrivers: driver.status === 'en attente'
+        ? [driver, ...prev.pendingDrivers.filter(d => d.id !== driver.id)]
+        : prev.pendingDrivers.filter(d => d.id !== driver.id),
+      totalDrivers: prev.allDrivers.some(d => d.id === driver.id) ? prev.totalDrivers : prev.totalDrivers + 1,
+    }));
+  };
+
   const deleteAvis = async (avisId: string) => {
     const { error } = await supabase.from('avis').delete().eq('id', avisId);
     if (error) { setError(error.message); return false; }
@@ -294,5 +316,6 @@ export function useAdminStats(isAdmin: boolean) {
     toggleClientPremium, deleteClient,
     createAnnonce, deactivateAnnonce,
     resolveTicket, reopenTicket, deleteTicket, deleteAvis,
+    applyDriverPatch, addDriverLocal,
   };
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import styles from './AdminDashboard.module.css';
@@ -9,11 +9,22 @@ interface AdminDashboardProps {
   isAdmin: boolean;
 }
 
-type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'stats' | 'settings' | 'litiges' | 'avis' | 'analytics';
+type TabType = 'overview' | 'drivers' | 'clients' | 'chats' | 'pending' | 'stats' | 'settings' | 'litiges' | 'avis' | 'analytics' | 'sante' | 'creer';
+
+// Formatte une date de dernière connexion en texte court et lisible.
+const formatLastSeen = (iso: string | null | undefined): string => {
+  if (!iso) return 'Jamais connecté';
+  const d = new Date(iso);
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days === 0) return "Aujourd'hui";
+  if (days === 1) return 'Hier';
+  if (days < 30) return `Il y a ${days} jours`;
+  return d.toLocaleDateString('fr-FR');
+};
 
 export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashboardProps) {
-  const { stats, loading, approveDriver, suspendDriver, deleteDriver, verifyDriver, toggleClientPremium, deleteClient, createAnnonce, deactivateAnnonce, resolveTicket, reopenTicket, deleteTicket, deleteAvis } = useAdminStats(isAdmin);
-  const { logout } = useSupabaseAuth();
+  const { stats, loading, approveDriver, suspendDriver, deleteDriver, verifyDriver, toggleClientPremium, deleteClient, createAnnonce, deactivateAnnonce, resolveTicket, reopenTicket, deleteTicket, deleteAvis, applyDriverPatch, addDriverLocal } = useAdminStats(isAdmin);
+  const { logout, supabase } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null);
   const [activeReceiptUrl, setActiveReceiptUrl] = useState<string | null>(null);
@@ -24,6 +35,146 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
   const [statsPeriod, setStatsPeriod] = useState<'today' | '7days' | 'all'>('all');
   const [ticketFilter, setTicketFilter] = useState<'tous' | 'ouvert' | 'resolu'>('tous');
+
+  // Nouveaux états : édition de fiche, création de livreur, santé de la base, réglages
+  const [busy, setBusy] = useState(false);
+  const [editForm, setEditForm] = useState<{ name: string; phone: string; vehicle: string; city: string } | null>(null);
+  const [createForm, setCreateForm] = useState({ name: '', phone: '', pin: '', vehicle: 'Moto', city: 'ouaga', activate: true });
+  const [createFiles, setCreateFiles] = useState<{ selfie?: File; cniRecto?: File; cniVerso?: File }>({});
+  const [health, setHealth] = useState<{ ghosts: any[]; orphanPayments: any[]; lastSignIn: Record<string, string | null> }>({ ghosts: [], orphanPayments: [], lastSignIn: {} });
+  const [loadingHealth, setLoadingHealth] = useState(false);
+  const [settingsForm, setSettingsForm] = useState<{ support_whatsapp: string; support_phone: string; welcome_text: string } | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  // Charge le bilan de santé (comptes fantômes, paiements orphelins, dernières connexions)
+  const loadHealth = React.useCallback(async () => {
+    setLoadingHealth(true);
+    try {
+      const res = await fetch('/api/admin/health');
+      const data = await res.json();
+      if (data.success) setHealth({ ghosts: data.ghosts || [], orphanPayments: data.orphanPayments || [], lastSignIn: data.lastSignIn || {} });
+    } catch { /* ignore */ }
+    setLoadingHealth(false);
+  }, []);
+
+  // Charge la santé une fois à l'ouverture (pour disposer des dernières connexions)
+  useEffect(() => {
+    if (isOpen && isAdmin) loadHealth();
+  }, [isOpen, isAdmin, loadHealth]);
+
+  // Charge les réglages actuels quand on ouvre l'onglet Configuration
+  useEffect(() => {
+    if (activeTab === 'settings' && settingsForm === null) {
+      (async () => {
+        const defaults = { support_whatsapp: '22667370909', support_phone: '+22667370909', welcome_text: 'Visualisez les livreurs actifs autour de vous sur la carte en temps réel et contactez-les en un clic.' };
+        try {
+          const { data } = await supabase.from('parametres_app').select('key, value');
+          const merged = { ...defaults };
+          for (const row of data || []) if (row.key in merged && row.value) (merged as any)[row.key] = row.value;
+          setSettingsForm(merged);
+        } catch {
+          setSettingsForm(defaults);
+        }
+      })();
+    }
+  }, [activeTab, settingsForm, supabase]);
+
+  // ===== Actions serveur (routes /api/admin/*) =====
+  const resetPin = async (userId: string, label: string) => {
+    if (!window.confirm(`Réinitialiser le code PIN de ${label} ?\nUn nouveau code à 4 chiffres sera généré à lui communiquer.`)) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/reset-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
+      const data = await res.json();
+      if (data.success) alert(`✅ Nouveau code PIN de ${label} :\n\n        ${data.pin}\n\nCommuniquez-le à la personne. Elle pourra le changer plus tard.`);
+      else alert('❌ ' + (data.error || 'Échec'));
+    } catch { alert('❌ Erreur de connexion.'); }
+    setBusy(false);
+  };
+
+  const notifyUser = async (userId: string, label: string) => {
+    const message = window.prompt(`Message de notification à envoyer à ${label} :`);
+    if (!message || !message.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recipientId: userId, title: 'Message de l\'administration', message: message.trim() }) });
+      const data = await res.json();
+      if (data.success) alert(data.sent > 0 ? `✅ Notification envoyée (${data.sent} appareil).` : "⚠️ Cette personne n'a pas activé les notifications sur son téléphone.");
+      else alert('❌ ' + (data.error || 'Échec'));
+    } catch { alert('❌ Erreur de connexion.'); }
+    setBusy(false);
+  };
+
+  const saveDriverEdit = async () => {
+    if (!editForm || !selectedDriver) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/update-driver', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: selectedDriver.id, ...editForm }) });
+      const data = await res.json();
+      if (data.success) {
+        applyDriverPatch(selectedDriver.id, data.driver);
+        setSelectedDriver({ ...selectedDriver, ...data.driver });
+        setEditForm(null);
+        alert('✅ Fiche mise à jour.');
+      } else alert('❌ ' + (data.error || 'Échec'));
+    } catch { alert('❌ Erreur de connexion.'); }
+    setBusy(false);
+  };
+
+  const submitCreateDriver = async () => {
+    if (!createForm.name.trim() || createForm.phone.replace(/\D/g, '').length < 8 || createForm.pin.length < 4) {
+      alert('Veuillez renseigner le nom, un numéro à 8 chiffres et un PIN d\'au moins 4 chiffres.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('name', createForm.name);
+      fd.append('phone', createForm.phone);
+      fd.append('pin', createForm.pin);
+      fd.append('vehicle', createForm.vehicle);
+      fd.append('city', createForm.city);
+      fd.append('activate', createForm.activate ? '1' : '0');
+      if (createFiles.selfie) fd.append('selfie', createFiles.selfie);
+      if (createFiles.cniRecto) fd.append('cniRecto', createFiles.cniRecto);
+      if (createFiles.cniVerso) fd.append('cniVerso', createFiles.cniVerso);
+      const res = await fetch('/api/admin/create-driver', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        addDriverLocal(data.driver);
+        alert(`✅ Livreur "${createForm.name}" créé.\nCode PIN : ${createForm.pin}`);
+        setCreateForm({ name: '', phone: '', pin: '', vehicle: 'Moto', city: 'ouaga', activate: true });
+        setCreateFiles({});
+        setActiveTab('drivers');
+      } else alert('❌ ' + (data.error || 'Échec'));
+    } catch { alert('❌ Erreur de connexion.'); }
+    setBusy(false);
+  };
+
+  const cleanupItem = async (type: 'ghost' | 'orphan_payment', id: string, label: string) => {
+    if (!window.confirm(`Supprimer définitivement ${label} ?`)) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, id }) });
+      const data = await res.json();
+      if (data.success) {
+        setHealth(prev => ({ ...prev, ghosts: prev.ghosts.filter(g => g.id !== id), orphanPayments: prev.orphanPayments.filter(p => p.id !== id) }));
+      } else alert('❌ ' + (data.error || 'Échec'));
+    } catch { alert('❌ Erreur de connexion.'); }
+    setBusy(false);
+  };
+
+  const saveSettings = async () => {
+    if (!settingsForm) return;
+    setSavingSettings(true);
+    try {
+      const rows = Object.entries(settingsForm).map(([key, value]) => ({ key, value, updated_at: new Date().toISOString() }));
+      const { error } = await supabase.from('parametres_app').upsert(rows, { onConflict: 'key' });
+      if (error) alert('❌ ' + (error.message.includes('does not exist') || error.code === '42P01' ? 'La table des réglages n\'existe pas encore. Exécutez le script AJOUT_PARAMETRES_APP.sql dans Supabase.' : error.message));
+      else alert('✅ Réglages enregistrés. Ils s\'appliquent au prochain chargement de l\'app.');
+    } catch { alert('❌ Erreur de connexion.'); }
+    setSavingSettings(false);
+  };
 
   const downloadCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) return;
@@ -123,6 +274,8 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       { tab: 'stats', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>, color: '#f39c12', label: 'Statistiques Plateforme', sub: 'Clics et visites' },
                       { tab: 'litiges', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>, color: '#e74c3c', label: 'Litiges & Support', sub: `${stats.tickets?.filter(t => t.statut === 'ouvert')?.length || 0} ouvert(s)`, alert: (stats.tickets?.filter(t => t.statut === 'ouvert')?.length || 0) > 0 },
                       { tab: 'avis', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>, color: '#d4a017', label: 'Gestion des Avis', sub: `${stats.allAvis?.length || 0} avis publié(s)` },
+                      { tab: 'creer', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>, color: '#16a085', label: 'Inscrire un Livreur', sub: 'Créer un compte à sa place' },
+                      { tab: 'sante', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>, color: '#c0392b', label: 'Santé de la Base', sub: `${health.ghosts.length} fantôme(s) · ${health.orphanPayments.length} paiement(s) orphelin(s)`, alert: (health.ghosts.length + health.orphanPayments.length) > 0 },
                       { tab: 'settings', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>, color: '#7f8c8d', label: 'Configuration & Messages', sub: 'Annonces, push' },
                     ].map(({ tab, icon, color, label, sub, alert }) => (
                       <div key={tab} className={styles.gridCard} onClick={() => setActiveTab(tab as TabType)}>
@@ -231,6 +384,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                               { label: '⭐ NOTE & CLICS', val: `⭐ ${selectedDriver.rating || '5.0'} • ${selectedDriver.contacts_count || 0} clics` },
                               { label: '👁️ VUES PROFIL', val: `${selectedDriver.views_count || 0} visites` },
                               { label: '📅 INSCRIPTION', val: new Date(selectedDriver.created_at).toLocaleDateString('fr-FR') },
+                              { label: '🕐 DERNIÈRE CONNEXION', val: formatLastSeen(health.lastSignIn[selectedDriver.id]) },
                             ].map(({ label, val }) => (
                               <div key={label} style={{ background: 'white', padding: '15px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                                 <div style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>{label}</div>
@@ -253,6 +407,51 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                                   {selectedDriver.cni_verso && <img src={selectedDriver.cni_verso} alt="CNI Verso" style={{ width: '100%', maxWidth: '300px', borderRadius: '8px' }} />}
                                 </div>
                               </>
+                            )}
+                          </div>
+                          {/* Gestion du compte : modifier la fiche, réinitialiser le PIN, notifier */}
+                          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '15px', fontWeight: 'bold' }}>🛠️ GESTION DU COMPTE :</div>
+                            {!editForm ? (
+                              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                <button onClick={() => setEditForm({ name: selectedDriver.name || '', phone: (selectedDriver.phone || '').replace(/\D/g, '').replace(/^226/, ''), vehicle: selectedDriver.vehicle || 'Moto', city: selectedDriver.city || 'ouaga' })} disabled={busy} style={{ flex: 1, minWidth: '150px', background: 'var(--color-primary-brown)', color: 'white', border: 'none', padding: '11px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                  Modifier la fiche
+                                </button>
+                                <button onClick={() => resetPin(selectedDriver.id, selectedDriver.name)} disabled={busy} style={{ flex: 1, minWidth: '150px', background: '#e67e22', color: 'white', border: 'none', padding: '11px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                  Réinitialiser le PIN
+                                </button>
+                                <button onClick={() => notifyUser(selectedDriver.id, selectedDriver.name)} disabled={busy} style={{ flex: 1, minWidth: '150px', background: '#8e44ad', color: 'white', border: 'none', padding: '11px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                                  Envoyer une notification
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Nom complet
+                                    <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '5px', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                                  </label>
+                                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Téléphone (8 chiffres)
+                                    <input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} placeholder="70 00 00 00" style={{ display: 'block', width: '100%', marginTop: '5px', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                                  </label>
+                                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Transport
+                                    <select value={editForm.vehicle} onChange={e => setEditForm({ ...editForm, vehicle: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '5px', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }}>
+                                      <option>Moto</option><option>Tricycle</option><option>Voiture</option>
+                                    </select>
+                                  </label>
+                                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Ville
+                                    <select value={editForm.city} onChange={e => setEditForm({ ...editForm, city: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '5px', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }}>
+                                      <option value="ouaga">Ouagadougou</option><option value="bobo">Bobo-Dioulasso</option>
+                                    </select>
+                                  </label>
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                  <button onClick={() => setEditForm(null)} disabled={busy} style={{ flex: 1, background: 'transparent', border: '1px solid var(--color-charcoal-muted)', color: 'var(--color-charcoal)', padding: '11px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>Annuler</button>
+                                  <button onClick={saveDriverEdit} disabled={busy} style={{ flex: 1, background: 'var(--color-primary-green)', border: 'none', color: 'white', padding: '11px', borderRadius: '10px', cursor: busy ? 'wait' : 'pointer', fontWeight: 'bold' }}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
+                                </div>
+                              </div>
                             )}
                           </div>
                           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
@@ -308,13 +507,33 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                               <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>{client.name}</td>
                               <td style={{ padding: '12px 15px' }}>{client.phone}</td>
                               <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)' }}>{new Date(client.created_at).toLocaleDateString('fr-FR')}</td>
-                              <td style={{ padding: '12px 15px', textAlign: 'right', display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                                <button
-                                  onClick={() => { if (window.confirm(`Supprimer le client ${client.name} ?`)) deleteClient(client.id); }}
-                                  style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}
-                                >
-                                  Supprimer
-                                </button>
+                              <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                  <button
+                                    onClick={() => resetPin(client.id, client.name)}
+                                    disabled={busy}
+                                    title="Réinitialiser le code PIN"
+                                    style={{ background: '#e67e22', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    PIN
+                                  </button>
+                                  <button
+                                    onClick={() => notifyUser(client.id, client.name)}
+                                    disabled={busy}
+                                    title="Envoyer une notification"
+                                    style={{ background: '#8e44ad', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                                    Notifier
+                                  </button>
+                                  <button
+                                    onClick={() => { if (window.confirm(`Supprimer le client ${client.name} ?`)) deleteClient(client.id); }}
+                                    style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}
+                                  >
+                                    Supprimer
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -497,7 +716,31 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Configuration & Communication</h3>
 
-
+                    {/* Paramètres de l'app (coordonnées support, texte d'accueil) */}
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', padding: '25px' }}>
+                      <h4 style={{ margin: '0 0 16px 0', color: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        Paramètres de l'application
+                      </h4>
+                      {settingsForm === null ? (
+                        <p style={{ color: 'var(--color-charcoal-muted)', fontSize: '0.9rem' }}>Chargement...</p>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Numéro WhatsApp support (format international sans +, ex : 22667370909)
+                            <input value={settingsForm.support_whatsapp} onChange={e => setSettingsForm({ ...settingsForm, support_whatsapp: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '5px', padding: '11px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                          </label>
+                          <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Numéro de téléphone support (ex : +22667370909)
+                            <input value={settingsForm.support_phone} onChange={e => setSettingsForm({ ...settingsForm, support_phone: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '5px', padding: '11px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                          </label>
+                          <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Texte d'accueil (page d'ouverture)
+                            <textarea value={settingsForm.welcome_text} onChange={e => setSettingsForm({ ...settingsForm, welcome_text: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '5px', padding: '11px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box', minHeight: '70px', resize: 'vertical' }} />
+                          </label>
+                          <button onClick={saveSettings} disabled={savingSettings} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: savingSettings ? 'wait' : 'pointer', width: 'fit-content' }}>
+                            {savingSettings ? 'Enregistrement...' : 'Enregistrer les paramètres'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Annonce In-App */}
                     <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', padding: '25px' }}>
@@ -664,6 +907,132 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                           )}
                         </tbody>
                       </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* INSCRIRE UN LIVREUR (par l'admin) */}
+                {activeTab === 'creer' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxWidth: '640px' }}>
+                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Inscrire un livreur</h3>
+                    <p style={{ margin: 0, color: 'var(--color-charcoal-muted)', fontSize: '0.9rem' }}>Créez le compte d'un livreur qui n'a pas de smartphone ou n'arrive pas à s'inscrire seul. Vous pourrez ajouter ses documents plus tard.</p>
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', padding: '22px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                        <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Nom complet *
+                          <input value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} placeholder="Ex : Souleymane Barry" style={{ display: 'block', width: '100%', marginTop: '5px', padding: '11px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                        </label>
+                        <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Téléphone * (8 chiffres)
+                          <input value={createForm.phone} onChange={e => setCreateForm({ ...createForm, phone: e.target.value })} placeholder="70 00 00 00" style={{ display: 'block', width: '100%', marginTop: '5px', padding: '11px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                        </label>
+                        <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Code PIN * (4 chiffres min.)
+                          <input value={createForm.pin} onChange={e => setCreateForm({ ...createForm, pin: e.target.value })} placeholder="ex : 1234" style={{ display: 'block', width: '100%', marginTop: '5px', padding: '11px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                        </label>
+                        <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Transport
+                          <select value={createForm.vehicle} onChange={e => setCreateForm({ ...createForm, vehicle: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '5px', padding: '11px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }}>
+                            <option>Moto</option><option>Tricycle</option><option>Voiture</option>
+                          </select>
+                        </label>
+                        <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--color-charcoal-muted)' }}>Ville
+                          <select value={createForm.city} onChange={e => setCreateForm({ ...createForm, city: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '5px', padding: '11px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' }}>
+                            <option value="ouaga">Ouagadougou</option><option value="bobo">Bobo-Dioulasso</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
+                        {([['selfie', 'Selfie'], ['cniRecto', 'CNI recto'], ['cniVerso', 'CNI verso']] as const).map(([field, label]) => (
+                          <label key={field} style={{ fontSize: '0.78rem', color: 'var(--color-charcoal-muted)', border: '1px dashed #ccc', borderRadius: '10px', padding: '10px', textAlign: 'center', cursor: 'pointer' }}>
+                            📎 {createFiles[field] ? (createFiles[field] as File).name.slice(0, 18) : label + ' (option.)'}
+                            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setCreateFiles({ ...createFiles, [field]: e.target.files?.[0] })} />
+                          </label>
+                        ))}
+                      </div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--color-charcoal)' }}>
+                        <input type="checkbox" checked={createForm.activate} onChange={e => setCreateForm({ ...createForm, activate: e.target.checked })} />
+                        Activer immédiatement (visible sur la carte tout de suite)
+                      </label>
+                      <button onClick={submitCreateDriver} disabled={busy} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '13px', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: busy ? 'wait' : 'pointer' }}>
+                        {busy ? 'Création en cours...' : '✓ Créer le compte livreur'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* SANTÉ DE LA BASE */}
+                {activeTab === 'sante' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                      <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Santé de la base</h3>
+                      <button onClick={loadHealth} disabled={loadingHealth} style={{ background: 'var(--color-primary-brown)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '7px' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        {loadingHealth ? 'Analyse...' : 'Rafraîchir'}
+                      </button>
+                    </div>
+
+                    {/* Comptes fantômes */}
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+                      <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c0392b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 9h.01"></path><path d="M15 9h.01"></path><path d="M12 2a7 7 0 0 0-7 7v12l3-2 2 2 2-2 2 2 3-2V9a7 7 0 0 0-7-7z"></path></svg>
+                        <strong style={{ color: 'var(--color-charcoal)' }}>Comptes fantômes</strong>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)' }}>— compte de connexion sans profil (inscription non terminée)</span>
+                      </div>
+                      {loadingHealth ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Analyse en cours...</div>
+                      ) : health.ghosts.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-primary-green)' }}>✓ Aucun compte fantôme. Base propre !</div>
+                      ) : health.ghosts.map(g => (
+                        <div key={g.id} style={{ padding: '12px 18px', borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                          <div>
+                            <strong style={{ fontSize: '0.9rem' }}>{g.name || g.email}</strong>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)' }}>{g.role} · {g.phone || g.email} · créé le {new Date(g.created_at).toLocaleDateString('fr-FR')} · {formatLastSeen(g.last_sign_in_at)}</div>
+                          </div>
+                          <button onClick={() => cleanupItem('ghost', g.id, `le compte fantôme ${g.name || g.email}`)} disabled={busy} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 'bold' }}>Supprimer</button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Livreurs sans documents */}
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+                      <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e67e22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                        <strong style={{ color: 'var(--color-charcoal)' }}>Livreurs actifs sans documents</strong>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)' }}>— visibles sur la carte mais sans CNI/selfie</span>
+                      </div>
+                      {(() => {
+                        const noDocs = stats.allDrivers.filter(d => (d.status === 'actif' || d.status === 'approved') && (!d.selfie || !d.cni_recto || !d.cni_verso));
+                        return noDocs.length === 0 ? (
+                          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-primary-green)' }}>✓ Tous les livreurs actifs ont leurs documents.</div>
+                        ) : noDocs.map(d => (
+                          <div key={d.id} style={{ padding: '12px 18px', borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                            <div>
+                              <strong style={{ fontSize: '0.9rem' }}>{d.name}</strong>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)' }}>{d.phone} · manque : {[!d.selfie && 'selfie', !d.cni_recto && 'CNI recto', !d.cni_verso && 'CNI verso'].filter(Boolean).join(', ')}</div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button onClick={() => notifyUser(d.id, d.name)} disabled={busy} style={{ background: '#8e44ad', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 'bold' }}>Relancer</button>
+                              <button onClick={() => { setActiveTab('drivers'); setSelectedDriver(d); }} style={{ background: 'var(--color-primary-brown)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 'bold' }}>Ouvrir</button>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+
+                    {/* Paiements orphelins */}
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+                      <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7f8c8d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        <strong style={{ color: 'var(--color-charcoal)' }}>Paiements orphelins</strong>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)' }}>— reçus liés à un client supprimé (ère payante)</span>
+                      </div>
+                      {loadingHealth ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Analyse en cours...</div>
+                      ) : health.orphanPayments.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-primary-green)' }}>✓ Aucun paiement orphelin.</div>
+                      ) : health.orphanPayments.map(p => (
+                        <div key={p.id} style={{ padding: '12px 18px', borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                          <div style={{ fontSize: '0.85rem' }}>{p.montant} F · {p.statut} · {new Date(p.created_at).toLocaleDateString('fr-FR')}</div>
+                          <button onClick={() => cleanupItem('orphan_payment', p.id, `ce paiement de ${p.montant} F`)} disabled={busy} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 'bold' }}>Supprimer</button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

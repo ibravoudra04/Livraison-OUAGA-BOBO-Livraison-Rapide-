@@ -53,6 +53,12 @@ export default function ReportModal({ isOpen, onClose, riderId, riderName, user 
       setError("Erreur lors de l'envoi du signalement. Veuillez réessayer.");
     } else {
       setSuccess(true);
+      // Alerter les admins (push) — sans bloquer si ça échoue
+      fetch('/api/notify-admins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'new_report', detail: `Signalement sur ${riderName || 'un livreur'}.` }),
+      }).catch(() => {});
     }
   };
 
