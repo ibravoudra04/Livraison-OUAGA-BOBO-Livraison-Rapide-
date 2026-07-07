@@ -21,6 +21,8 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
   const supabase = createClient();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [loadingChats, setLoadingChats] = useState(true);
+  const [reviews, setReviews] = useState<{ id: string; stars: number; text: string | null; created_at: string }[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
 
   const safeDriverData = driverData || {
     id: 'placeholder',
@@ -117,6 +119,30 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
       supabase.removeChannel(channel);
     };
   }, [driverData?.id, supabase]);
+
+  // Charger les vrais avis reçus par ce livreur (lecture publique autorisée par la RLS)
+  useEffect(() => {
+    if (safeDriverData.id === 'placeholder') return;
+
+    const loadReviews = async () => {
+      setLoadingReviews(true);
+      const { data } = await supabase
+        .from('avis')
+        .select('id, stars, text, created_at')
+        .eq('rider_id', safeDriverData.id)
+        .order('created_at', { ascending: false });
+      setReviews(data || []);
+      setLoadingReviews(false);
+    };
+
+    loadReviews();
+  }, [driverData?.id, supabase]);
+
+  const reviewsCount = reviews.length;
+  const avgRating = reviewsCount > 0
+    ? reviews.reduce((sum, r) => sum + (Number(r.stars) || 0), 0) / reviewsCount
+    : Number(safeDriverData.rating || 5);
+  const avgRounded = Math.round(avgRating);
 
   if (!driverData && safeDriverData.id === 'placeholder') {
     // Only display Chargement if there is no driver data and no safe driver data loaded yet.
@@ -236,15 +262,33 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
         <h4>⭐ Notes & Avis Clients</h4>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', marginBottom: '12px' }}>
           <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-primary-yellow)' }} id="driver-dash-rating-val">
-            {Number(safeDriverData.rating || 5).toFixed(1)}
+            {avgRating.toFixed(1)}
           </span>
           <div>
-            <div style={{ color: 'var(--color-primary-yellow)', fontSize: '0.85rem' }} id="driver-dash-stars">★★★★★</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)' }} id="driver-dash-reviews-count">Basé sur 0 avis</div>
+            <div style={{ color: 'var(--color-primary-yellow)', fontSize: '0.85rem' }} id="driver-dash-stars">{'★'.repeat(avgRounded)}{'☆'.repeat(5 - avgRounded)}</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)' }} id="driver-dash-reviews-count">
+              {reviewsCount === 0 ? 'Aucun avis pour le moment' : `Basé sur ${reviewsCount} avis`}
+            </div>
           </div>
         </div>
         <div id="driver-reviews-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic' }}>Aucun avis reçu pour le moment.</p>
+          {loadingReviews ? (
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic' }}>Chargement des avis...</p>
+          ) : reviewsCount === 0 ? (
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic' }}>Aucun avis reçu pour le moment.</p>
+          ) : (
+            reviews.map((r) => (
+              <div key={r.id} style={{ background: 'rgba(0,0,0,0.03)', borderRadius: '10px', padding: '10px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: r.text ? '4px' : 0 }}>
+                  <span style={{ color: 'var(--color-primary-yellow)', fontSize: '0.8rem' }}>
+                    {'★'.repeat(Number(r.stars) || 0)}{'☆'.repeat(Math.max(0, 5 - (Number(r.stars) || 0)))}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)' }}>{new Date(r.created_at).toLocaleDateString('fr-FR')}</span>
+                </div>
+                {r.text && <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-charcoal)', lineHeight: 1.4 }}>{r.text}</p>}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
