@@ -352,7 +352,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                   <strong style={{ fontSize: '1rem', color: 'var(--color-charcoal)' }}>{driver.first_name || driver.name}</strong>
                                   <span style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)' }}>
-                                    {driver.status === 'approved' || driver.status === 'actif' ? '🟢 Actif' : driver.status === 'suspendu' ? '🟠 Suspendu' : '🔴 En attente'} • {driver.city === 'ouaga' ? 'Ouagadougou' : 'Bobo-Dioulasso'} • {driver.phone} • Inscrit le {new Date(driver.created_at).toLocaleDateString('fr-FR')}
+                                    {driver.status === 'approved' || driver.status === 'actif' ? '🟢 Actif' : driver.status === 'en pause' ? '⏸️ En pause' : driver.status === 'suspendu' ? '🟠 Suspendu' : '🔴 En attente'} • {driver.city === 'ouaga' ? 'Ouagadougou' : 'Bobo-Dioulasso'} • {driver.phone} • Inscrit le {new Date(driver.created_at).toLocaleDateString('fr-FR')}
                                   </span>
                                 </div>
                               </div>
@@ -458,10 +458,10 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                             {(selectedDriver.status === 'en attente' || selectedDriver.status === 'suspendu') && (
                               <button onClick={() => { approveDriver(selectedDriver.id); setSelectedDriver({ ...selectedDriver, status: 'actif' }); }} style={{ flex: 1, background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', minWidth: '160px' }}>{selectedDriver.status === 'suspendu' ? 'Réactiver le compte' : 'Valider la candidature'}</button>
                             )}
-                            {(selectedDriver.status === 'approved' || selectedDriver.status === 'actif') && (
+                            {(selectedDriver.status === 'approved' || selectedDriver.status === 'actif' || selectedDriver.status === 'en pause') && (
                               <button onClick={() => { if (window.confirm('Suspendre ce livreur ?')) { suspendDriver(selectedDriver.id); setSelectedDriver({ ...selectedDriver, status: 'suspendu' }); } }} style={{ flex: 1, background: '#f39c12', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', minWidth: '160px' }}>Suspendre temporairement</button>
                             )}
-                            {(selectedDriver.status === 'approved' || selectedDriver.status === 'actif') && !selectedDriver.is_verified && (
+                            {(selectedDriver.status === 'approved' || selectedDriver.status === 'actif' || selectedDriver.status === 'en pause') && !selectedDriver.is_verified && (
                               <button onClick={() => { verifyDriver(selectedDriver.id, true); setSelectedDriver({ ...selectedDriver, is_verified: true }); }} style={{ flex: 1, background: '#3498db', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', minWidth: '160px' }}>Décerner Badge Vérifié</button>
                             )}
                             {selectedDriver.is_verified && (
