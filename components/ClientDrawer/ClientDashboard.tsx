@@ -53,21 +53,33 @@ export default function ClientDashboard({ clientData, onLogout, onSearch, onChat
     const load = async () => {
       // Conversations : messages du client, groupés par livreur
       setLoadingChats(true);
-      const { data: msgs } = await supabase
-        .from('chats_livraison')
-        .select('rider_id, text, time, created_at, sender')
-        .eq('client_id', user.id)
-        .order('created_at', { ascending: false });
+      const [{ data: msgs }, { data: tk }, { data: av }] = await Promise.all([
+        supabase.from('chats_livraison').select('rider_id, text, time, created_at, sender').eq('client_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('tickets_support').select('id, description, statut, created_at, rider_id').eq('client_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('avis').select('id, stars, text, created_at, rider_id').eq('client_id', user.id).order('created_at', { ascending: false }),
+      ]);
 
+      // Le client ne peut PAS lire la table `livreurs` (RLS) : on récupère les noms
+      // et photos des livreurs concernés via la vue publique `livreurs_view`.
+      const allRiderIds = Array.from(new Set([
+        ...(msgs || []).map(m => m.rider_id),
+        ...(tk || []).map(t => t.rider_id),
+        ...(av || []).map(a => a.rider_id),
+      ].filter(Boolean)));
+      const riderInfo = new Map<string, { name: string; selfie: string | null }>();
+      if (allRiderIds.length > 0) {
+        const { data: riders } = await supabase.from('livreurs_view').select('id, name, selfie').in('id', allRiderIds);
+        for (const r of riders || []) riderInfo.set(r.id, { name: r.name, selfie: r.selfie });
+      }
+      const riderName = (rid: string) => riderInfo.get(rid)?.name || 'Livreur';
+
+      // Conversations
       if (msgs && msgs.length > 0) {
         const riderMap = new Map<string, { text: string; time: string; sender: string }>();
         for (const m of msgs) if (!riderMap.has(m.rider_id)) riderMap.set(m.rider_id, { text: m.text || '📎 Fichier', time: m.time, sender: m.sender });
-        const riderIds = Array.from(riderMap.keys());
-        const { data: riders } = await supabase.from('livreurs_view').select('id, name, selfie').in('id', riderIds);
-        const convos: Conversation[] = riderIds.map(rid => {
+        const convos: Conversation[] = Array.from(riderMap.keys()).map(rid => {
           const last = riderMap.get(rid)!;
-          const r = riders?.find(x => x.id === rid);
-          return { riderId: rid, riderName: r?.name || 'Livreur', selfie: r?.selfie || null, lastMessage: last.text, lastTime: last.time, unread: last.sender === 'rider' };
+          return { riderId: rid, riderName: riderName(rid), selfie: riderInfo.get(rid)?.selfie || null, lastMessage: last.text, lastTime: last.time, unread: last.sender === 'rider' };
         });
         setConversations(convos);
       } else {
@@ -75,21 +87,8 @@ export default function ClientDashboard({ clientData, onLogout, onSearch, onChat
       }
       setLoadingChats(false);
 
-      // Mes signalements
-      const { data: tk } = await supabase
-        .from('tickets_support')
-        .select('id, description, statut, created_at, livreurs(name)')
-        .eq('client_id', user.id)
-        .order('created_at', { ascending: false });
-      setTickets(tk || []);
-
-      // Mes avis
-      const { data: av } = await supabase
-        .from('avis')
-        .select('id, stars, text, created_at, livreurs(name)')
-        .eq('client_id', user.id)
-        .order('created_at', { ascending: false });
-      setMyReviews(av || []);
+      setTickets((tk || []).map(t => ({ ...t, riderName: riderName(t.rider_id) })));
+      setMyReviews((av || []).map(a => ({ ...a, riderName: riderName(a.rider_id) })));
     };
     load();
   }, [user, supabase]);
@@ -164,7 +163,7 @@ export default function ClientDashboard({ clientData, onLogout, onSearch, onChat
             {tickets.map(t => (
               <div key={t.id} style={{ background: 'rgba(0,0,0,0.03)', borderRadius: '10px', padding: '11px 12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', gap: '8px' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-charcoal)' }}>Livreur : {t.livreurs?.name || '—'}</span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-charcoal)' }}>Livreur : {t.riderName || 'Livreur'}</span>
                   <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: t.statut === 'resolu' ? '#e6f4ea' : '#fff4e5', color: t.statut === 'resolu' ? '#1e8e3e' : '#e67e22' }}>
                     {t.statut === 'resolu' ? 'Résolu ✓' : 'En cours'}
                   </span>
@@ -184,7 +183,7 @@ export default function ClientDashboard({ clientData, onLogout, onSearch, onChat
             {myReviews.map(a => (
               <div key={a.id} style={{ background: 'rgba(0,0,0,0.03)', borderRadius: '10px', padding: '10px 12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: a.text ? '4px' : 0 }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-charcoal)' }}>{a.livreurs?.name || 'Livreur'}</span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-charcoal)' }}>{a.riderName || 'Livreur'}</span>
                   <span style={{ color: 'var(--color-primary-yellow)', fontSize: '0.8rem' }}>{'★'.repeat(Number(a.stars) || 0)}{'☆'.repeat(Math.max(0, 5 - (Number(a.stars) || 0)))}</span>
                 </div>
                 {a.text && <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.4 }}>{a.text}</p>}

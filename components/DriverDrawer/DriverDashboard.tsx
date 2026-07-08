@@ -251,16 +251,16 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
           ? { bg: 'linear-gradient(135deg, #fdecea, #f9d9d5)', dot: '#d93025', label: 'COMPTE SUSPENDU', sub: 'Contactez l\'administration' }
           : { bg: 'linear-gradient(135deg, #fdf3e0, #f7e6c4)', dot: '#c9a227', label: 'EN ATTENTE DE VALIDATION', sub: 'Votre dossier est en cours d\'examen' };
         return (
-          <div style={{ background: conf.bg, borderRadius: '18px', padding: '18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ background: conf.bg, borderRadius: '18px', padding: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span className="pulse-dot" style={{ width: '14px', height: '14px', background: conf.dot, flexShrink: 0 }}></span>
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--color-charcoal)', letterSpacing: '0.3px' }}>{conf.label}</div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--color-charcoal-muted)', marginTop: '2px' }}>{conf.sub}</div>
               </div>
             </div>
             {canToggle && (
-              <button onClick={togglePause} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.82rem', padding: '10px 16px', borderRadius: '50px', color: 'white', background: isOnline ? '#e67e22' : 'var(--color-primary-green)', boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}>
+              <button onClick={togglePause} style={{ width: '100%', marginTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.88rem', padding: '12px', borderRadius: '12px', color: 'white', background: isOnline ? '#e67e22' : 'var(--color-primary-green)', boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}>
                 <IconPower />{isOnline ? 'Me mettre en pause' : 'Revenir en ligne'}
               </button>
             )}
