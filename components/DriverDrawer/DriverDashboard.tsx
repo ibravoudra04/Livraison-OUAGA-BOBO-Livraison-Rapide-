@@ -54,6 +54,9 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
   const [showPinForm, setShowPinForm] = useState(false);
   const [newPin, setNewPin] = useState('');
   const [savingPin, setSavingPin] = useState(false);
+  // L1 — pastille de statut épinglée quand la carte héro sort de l'écran
+  const heroRef = React.useRef<HTMLDivElement | null>(null);
+  const [heroVisible, setHeroVisible] = useState(true);
 
   const safeDriverData = driverData || { id: 'placeholder', name: 'Livreur', vehicle: 'Moto', status: 'en attente', contacts_count: 0, views_count: 0, rating: 5, created_at: new Date().toISOString() };
   const id = safeDriverData.id;
@@ -66,6 +69,15 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
 
   // Synchroniser le statut si driverData change
   useEffect(() => { if (driverData?.status) setStatus(driverData.status); }, [driverData?.status]);
+
+  // L1 — observer la visibilité de la carte héro pour afficher la pastille épinglée
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const obs = new IntersectionObserver(([entry]) => setHeroVisible(entry.isIntersecting), { threshold: 0.05 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [driverData?.id]);
 
   // Charger les conversations (temps réel)
   useEffect(() => {
@@ -228,15 +240,35 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
         </div>
       )}
 
-      {/* En-tête : avatar + prénom + véhicule */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '4px 2px 12px' }}>
-        <div style={{ width: '58px', height: '58px', borderRadius: '50%', overflow: 'hidden', border: '2px solid white', boxShadow: '0 2px 10px rgba(0,0,0,0.12)', flexShrink: 0, background: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '1.4rem' }}>
-          {docs.selfie ? <img src={docs.selfie} alt={firstName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initial}
+      {/* L1 — pastille de statut épinglée (visible quand la carte héro est hors écran) */}
+      {!heroVisible && canToggle && (
+        <div style={{ position: 'sticky', top: banner ? '52px' : '0px', zIndex: 6, display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 6px 18px rgba(0,0,0,0.14)', borderRadius: '30px', padding: '7px 8px 7px 15px' }}>
+            <span className="pulse-dot" style={{ width: '10px', height: '10px', background: isOnline ? '#1e8e3e' : '#e67e22', flexShrink: 0 }}></span>
+            <b style={{ fontSize: '0.85rem', color: 'var(--color-charcoal)' }}>{isOnline ? 'En ligne' : 'En pause'}</b>
+            <button onClick={togglePause} style={{ display: 'flex', alignItems: 'center', gap: '5px', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.78rem', padding: '9px 14px', minHeight: '38px', borderRadius: '30px', color: 'white', background: isOnline ? '#e67e22' : 'var(--color-primary-green)' }}>
+              <IconPower />{isOnline ? 'Pause' : 'En ligne'}
+            </button>
+          </div>
         </div>
+      )}
+
+      {/* En-tête : avatar (cliquable pour ajouter/changer le selfie) + prénom + véhicule */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '4px 2px 12px' }}>
+        <label aria-label="Ajouter ou changer ma photo de profil" style={{ position: 'relative', width: '58px', height: '58px', flexShrink: 0, cursor: 'pointer' }}>
+          <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', border: '2px solid white', boxShadow: '0 2px 10px rgba(0,0,0,0.12)', background: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '1.4rem' }}>
+            {uploadingDoc === 'selfie' ? '⏳' : docs.selfie ? <img src={docs.selfie} alt={firstName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initial}
+          </div>
+          {!docs.selfie && uploadingDoc !== 'selfie' && (
+            <span style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '20px', height: '20px', borderRadius: '50%', background: 'var(--color-primary-green)', color: 'white', fontSize: '14px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--color-bg-warm)', lineHeight: 1 }}>+</span>
+          )}
+          <input type="file" accept="image/*" style={{ display: 'none' }} disabled={!!uploadingDoc || isPlaceholder} onChange={e => { const f = e.target.files?.[0]; if (f) uploadDoc('selfie', f); }} />
+        </label>
         <div>
           <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: 'var(--color-primary-brown)' }}>Bonjour, {firstName} !</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--color-charcoal-muted)', marginTop: '2px' }}>
             {vehicleIcon(safeDriverData.vehicle)} {safeDriverData.vehicle || 'Moto'}
+            {!docs.selfie && <span style={{ fontSize: '0.72rem', color: 'var(--color-primary-green)', fontWeight: 700 }}>· Touchez la photo pour l'ajouter</span>}
           </div>
         </div>
       </div>
@@ -251,7 +283,7 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
           ? { bg: 'linear-gradient(135deg, #fdecea, #f9d9d5)', dot: '#d93025', label: 'COMPTE SUSPENDU', sub: 'Contactez l\'administration' }
           : { bg: 'linear-gradient(135deg, #fdf3e0, #f7e6c4)', dot: '#c9a227', label: 'EN ATTENTE DE VALIDATION', sub: 'Votre dossier est en cours d\'examen' };
         return (
-          <div style={{ background: conf.bg, borderRadius: '18px', padding: '16px' }}>
+          <div ref={heroRef} style={{ background: conf.bg, borderRadius: '18px', padding: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span className="pulse-dot" style={{ width: '14px', height: '14px', background: conf.dot, flexShrink: 0 }}></span>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -268,22 +300,34 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
         );
       })()}
 
-      {/* GPS */}
+      {/* L2 — GPS en une ligne, pensé conduite */}
       {(isOnline || isPaused) && (
-        <div style={card}>
-          {sectionTitle(<span style={{ color: 'var(--color-primary-brown)' }}><IconPin /></span>, 'Ma position GPS')}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.4 }}>
-              {gpsUpdatedAt ? `Actualisée à ${gpsUpdatedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'Actualisez pour que les clients vous localisent précisément.'}
-            </p>
-            <button onClick={() => updateGPS(false)} disabled={gpsBusy} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '9px 15px', borderRadius: '10px', fontWeight: 700, fontSize: '0.8rem', cursor: gpsBusy ? 'wait' : 'pointer' }}>
-              <IconPin />{gpsBusy ? '...' : 'Actualiser'}
-            </button>
+        <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '14px 16px' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', gap: '6px' }}><IconPin />Position</div>
+            <div style={{ fontSize: '0.78rem', color: gpsUpdatedAt ? '#1e8e3e' : 'var(--color-charcoal-muted)', marginTop: '2px', fontWeight: 600 }}>
+              {gpsBusy ? 'Recherche GPS…' : gpsUpdatedAt ? `🟢 Actualisée à ${gpsUpdatedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'À actualiser'}
+            </div>
           </div>
+          <button onClick={() => updateGPS(false)} disabled={gpsBusy} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '11px 16px', minHeight: '44px', borderRadius: '12px', fontWeight: 700, fontSize: '0.85rem', cursor: gpsBusy ? 'wait' : 'pointer' }}>
+            <IconPin />{gpsBusy ? '...' : 'Actualiser'}
+          </button>
         </div>
       )}
 
-      {/* Statistiques en cartes */}
+      {/* L3 — Statistiques : à zéro, elles deviennent un plan d'action */}
+      {(safeDriverData.contacts_count || 0) === 0 && (safeDriverData.views_count || 0) === 0 ? (
+        <div style={{ ...card, textAlign: 'center', border: '1.5px dashed #d9b8a0', background: 'var(--color-primary-brown-light)' }}>
+          <div style={{ fontSize: '1.6rem', marginBottom: '4px' }}>🚀</div>
+          <div style={{ fontWeight: 800, color: 'var(--color-primary-brown-dark)', fontSize: '0.95rem' }}>Lancez votre activité !</div>
+          <p style={{ margin: '6px 0 12px', fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.5 }}>
+            Partagez votre profil à vos contacts : vos premiers clients sont déjà dans votre téléphone.
+          </p>
+          <button onClick={shareProfile} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 20px', minHeight: '44px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem', color: 'white', background: 'var(--color-primary-green)' }}>
+            <IconShare />Partager sur WhatsApp
+          </button>
+        </div>
+      ) : (
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '14px' }}>
         <div style={{ background: 'white', borderRadius: '14px', padding: '14px', boxShadow: '0 3px 12px rgba(0,0,0,0.04)', borderLeft: '4px solid #2c3e50' }}>
           <div style={{ color: '#2c3e50', marginBottom: '4px' }}><IconHandshake /></div>
@@ -296,6 +340,7 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
           <div style={{ fontSize: '0.7rem', color: 'var(--color-charcoal-muted)', marginTop: '3px' }}>Clics sur profil</div>
         </div>
       </div>
+      )}
 
       {/* Mes documents */}
       <div style={card}>
@@ -332,7 +377,7 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {loadingReviews ? <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic', margin: 0 }}>Chargement...</p>
+          {loadingReviews ? <><span className="skl" style={{ display: 'block', height: '42px', borderRadius: '10px' }}></span><span className="skl" style={{ display: 'block', height: '42px', borderRadius: '10px' }}></span></>
             : reviewsCount === 0 ? <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic', margin: 0 }}>Vos futurs avis apparaîtront ici.</p>
             : reviews.map(r => (
               <div key={r.id} style={{ background: 'rgba(0,0,0,0.03)', borderRadius: '10px', padding: '10px 12px' }}>
@@ -350,7 +395,7 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
       <div style={card}>
         {sectionTitle(<IconChat />, 'Messages clients', unreadCount > 0 ? <span style={{ fontSize: '0.7rem', background: 'var(--color-primary-green)', color: 'white', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>{unreadCount} nouveau{unreadCount > 1 ? 'x' : ''}</span> : undefined)}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {loadingChats ? <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic', margin: 0 }}>Chargement...</p>
+          {loadingChats ? <><span className="skl" style={{ display: 'block', height: '58px', borderRadius: '12px' }}></span><span className="skl" style={{ display: 'block', height: '58px', borderRadius: '12px' }}></span></>
             : conversations.length === 0 ? <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic', margin: 0 }}>Aucun message reçu pour le moment.</p>
             : conversations.map(convo => (
               <button key={convo.clientId} type="button" onClick={() => onChatClient(convo.clientId, convo.clientName)}

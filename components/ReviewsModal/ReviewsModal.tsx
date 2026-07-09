@@ -191,24 +191,34 @@ export default function ReviewsModal({ isOpen, onClose, riderId, riderRating, ri
             </div>
           )}
 
+          {/* C4 — moyenne et compteur calculés en direct sur la liste chargée :
+              après un nouvel avis, ils se mettent à jour immédiatement. */}
+          {(() => {
+            const liveCount = reviews.length > 0 ? reviews.length : (riderReviewsCount || 0);
+            const liveAvg = reviews.length > 0
+              ? reviews.reduce((s, r) => s + (Number(r.stars) || 0), 0) / reviews.length
+              : Number(riderRating || 5);
+            return (
           <div className="reviews-summary-block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', borderBottom: '1.5px solid var(--color-border)', paddingBottom: '20px', marginBottom: '20px', textAlign: 'center' }}>
             <div>
-              <span style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--color-primary-yellow)', lineHeight: 1 }}>{Number(riderRating || 5).toFixed(1)}</span>
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)', fontWeight: 600, marginTop: '6px' }}>Basé sur {riderReviewsCount} avis</div>
+              <span style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--color-primary-yellow)', lineHeight: 1 }}>{liveAvg.toFixed(1)}</span>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)', fontWeight: 600, marginTop: '6px' }}>{liveCount === 0 ? 'Aucun avis pour le moment' : `Basé sur ${liveCount} avis`}</div>
             </div>
             <div style={{ textAlign: 'left' }}>
               <div style={{ display: 'flex', gap: '2px', justifyContent: 'center' }}>
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <svg key={i} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={i < Math.round(Number(riderRating || 5)) ? "var(--color-primary-yellow)" : "none"} stroke="var(--color-primary-yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  <svg key={i} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={i < Math.round(liveAvg) ? "var(--color-primary-yellow)" : "none"} stroke="var(--color-primary-yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 ))}
               </div>
               <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-light)', margin: '8px 0 0 0', lineHeight: 1.4 }}>Moyenne générale calculée sur les retours d'expériences clients.</p>
             </div>
           </div>
-          
+            );
+          })()}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {loading ? (
-              <p style={{ textAlign: 'center', color: 'var(--color-charcoal-light)' }}>Chargement des avis...</p>
+              <><span className="skl" style={{ display: 'block', height: '72px', borderRadius: '16px' }}></span><span className="skl" style={{ display: 'block', height: '72px', borderRadius: '16px' }}></span></>
             ) : reviews.length === 0 ? (
               <p style={{ textAlign: 'center', color: 'var(--color-charcoal-light)' }}>Aucun avis pour le moment.</p>
             ) : (

@@ -46,6 +46,21 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
   const [settingsForm, setSettingsForm] = useState<{ support_whatsapp: string; support_phone: string; welcome_text: string } | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
 
+  // A5/T2 — confirmations et notifications stylées (remplacent window.confirm / alert)
+  const [confirmBox, setConfirmBox] = useState<{ title: string; detail?: string; yesLabel?: string; onYes: () => void } | null>(null);
+  const [noticeBox, setNoticeBox] = useState<{ title: string; body: React.ReactNode } | null>(null);
+  const [promptBox, setPromptBox] = useState<{ title: string; placeholder?: string; onSubmit: (value: string) => void } | null>(null);
+  const [promptValue, setPromptValue] = useState('');
+  const [banner, setBanner] = useState<{ type: 'ok' | 'err' | 'warn'; msg: string } | null>(null);
+  const flash = (type: 'ok' | 'err' | 'warn', msg: string) => {
+    setBanner({ type, msg });
+    setTimeout(() => setBanner(b => (b && b.msg === msg ? null : b)), 4200);
+  };
+  // A3 — recherche globale
+  const [globalSearch, setGlobalSearch] = useState('');
+  // A4 — conversations dépliées
+  const [expandedConvo, setExpandedConvo] = useState<string | null>(null);
+
   // Charge le bilan de santé (comptes fantômes, paiements orphelins, dernières connexions)
   const loadHealth = React.useCallback(async () => {
     setLoadingHealth(true);
@@ -80,29 +95,51 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
   }, [activeTab, settingsForm, supabase]);
 
   // ===== Actions serveur (routes /api/admin/*) =====
-  const resetPin = async (userId: string, label: string) => {
-    if (!window.confirm(`Réinitialiser le code PIN de ${label} ?\nUn nouveau code à 4 chiffres sera généré à lui communiquer.`)) return;
-    setBusy(true);
-    try {
-      const res = await fetch('/api/admin/reset-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
-      const data = await res.json();
-      if (data.success) alert(`✅ Nouveau code PIN de ${label} :\n\n        ${data.pin}\n\nCommuniquez-le à la personne. Elle pourra le changer plus tard.`);
-      else alert('❌ ' + (data.error || 'Échec'));
-    } catch { alert('❌ Erreur de connexion.'); }
-    setBusy(false);
+  const resetPin = (userId: string, label: string) => {
+    setConfirmBox({
+      title: `Réinitialiser le code PIN de ${label} ?`,
+      detail: 'Un nouveau code à 4 chiffres sera généré, à lui communiquer par téléphone.',
+      yesLabel: 'Oui, réinitialiser',
+      onYes: async () => {
+        setBusy(true);
+        try {
+          const res = await fetch('/api/admin/reset-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
+          const data = await res.json();
+          if (data.success) {
+            setNoticeBox({
+              title: `Nouveau code PIN de ${label}`,
+              body: (
+                <>
+                  <div style={{ fontSize: '2.4rem', fontWeight: 900, letterSpacing: '8px', color: 'var(--color-primary-brown)', margin: '10px 0' }}>{data.pin}</div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Communiquez-le à la personne. Elle pourra le changer plus tard depuis son espace.</p>
+                </>
+              ),
+            });
+          } else flash('err', data.error || 'La réinitialisation a échoué.');
+        } catch { flash('err', 'Erreur de connexion au serveur.'); }
+        setBusy(false);
+      },
+    });
   };
 
-  const notifyUser = async (userId: string, label: string) => {
-    const message = window.prompt(`Message de notification à envoyer à ${label} :`);
-    if (!message || !message.trim()) return;
-    setBusy(true);
-    try {
-      const res = await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recipientId: userId, title: 'Message de l\'administration', message: message.trim() }) });
-      const data = await res.json();
-      if (data.success) alert(data.sent > 0 ? `✅ Notification envoyée (${data.sent} appareil).` : "⚠️ Cette personne n'a pas activé les notifications sur son téléphone.");
-      else alert('❌ ' + (data.error || 'Échec'));
-    } catch { alert('❌ Erreur de connexion.'); }
-    setBusy(false);
+  const notifyUser = (userId: string, label: string) => {
+    setPromptValue('');
+    setPromptBox({
+      title: `Notification à ${label}`,
+      placeholder: 'Ex : Votre dossier est incomplet, envoyez votre CNI depuis votre espace.',
+      onSubmit: async (message: string) => {
+        setBusy(true);
+        try {
+          const res = await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recipientId: userId, title: 'Message de l\'administration', message }) });
+          const data = await res.json();
+          if (data.success) {
+            if (data.sent > 0) flash('ok', `Notification envoyée à ${label}.`);
+            else flash('warn', "Cette personne n'a pas activé les notifications sur son téléphone.");
+          } else flash('err', data.error || "L'envoi a échoué.");
+        } catch { flash('err', 'Erreur de connexion au serveur.'); }
+        setBusy(false);
+      },
+    });
   };
 
   const saveDriverEdit = async () => {
@@ -115,15 +152,15 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
         applyDriverPatch(selectedDriver.id, data.driver);
         setSelectedDriver({ ...selectedDriver, ...data.driver });
         setEditForm(null);
-        alert('✅ Fiche mise à jour.');
-      } else alert('❌ ' + (data.error || 'Échec'));
-    } catch { alert('❌ Erreur de connexion.'); }
+        flash('ok', 'Fiche mise à jour.');
+      } else flash('err', data.error || 'La mise à jour a échoué.');
+    } catch { flash('err', 'Erreur de connexion au serveur.'); }
     setBusy(false);
   };
 
   const submitCreateDriver = async () => {
     if (!createForm.name.trim() || createForm.phone.replace(/\D/g, '').length < 8 || createForm.pin.length < 4) {
-      alert('Veuillez renseigner le nom, un numéro à 8 chiffres et un PIN d\'au moins 4 chiffres.');
+      flash('err', 'Renseignez le nom, un numéro à 8 chiffres et un PIN d\'au moins 4 chiffres.');
       return;
     }
     setBusy(true);
@@ -142,26 +179,42 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
       const data = await res.json();
       if (data.success) {
         addDriverLocal(data.driver);
-        alert(`✅ Livreur "${createForm.name}" créé.\nCode PIN : ${createForm.pin}`);
+        setNoticeBox({
+          title: `Livreur « ${createForm.name} » créé`,
+          body: (
+            <>
+              <p style={{ margin: '4px 0', fontSize: '0.9rem' }}>Son code PIN de connexion :</p>
+              <div style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '8px', color: 'var(--color-primary-brown)', margin: '6px 0' }}>{createForm.pin}</div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Il se connecte avec son numéro + ce code.</p>
+            </>
+          ),
+        });
         setCreateForm({ name: '', phone: '', pin: '', vehicle: 'Moto', city: 'ouaga', activate: true });
         setCreateFiles({});
         setActiveTab('drivers');
-      } else alert('❌ ' + (data.error || 'Échec'));
-    } catch { alert('❌ Erreur de connexion.'); }
+      } else flash('err', data.error || 'La création a échoué.');
+    } catch { flash('err', 'Erreur de connexion au serveur.'); }
     setBusy(false);
   };
 
-  const cleanupItem = async (type: 'ghost' | 'orphan_payment', id: string, label: string) => {
-    if (!window.confirm(`Supprimer définitivement ${label} ?`)) return;
-    setBusy(true);
-    try {
-      const res = await fetch('/api/admin/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, id }) });
-      const data = await res.json();
-      if (data.success) {
-        setHealth(prev => ({ ...prev, ghosts: prev.ghosts.filter(g => g.id !== id), orphanPayments: prev.orphanPayments.filter(p => p.id !== id) }));
-      } else alert('❌ ' + (data.error || 'Échec'));
-    } catch { alert('❌ Erreur de connexion.'); }
-    setBusy(false);
+  const cleanupItem = (type: 'ghost' | 'orphan_payment', id: string, label: string) => {
+    setConfirmBox({
+      title: `Supprimer définitivement ${label} ?`,
+      detail: 'Cette action est irréversible.',
+      yesLabel: 'Oui, supprimer',
+      onYes: async () => {
+        setBusy(true);
+        try {
+          const res = await fetch('/api/admin/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, id }) });
+          const data = await res.json();
+          if (data.success) {
+            setHealth(prev => ({ ...prev, ghosts: prev.ghosts.filter(g => g.id !== id), orphanPayments: prev.orphanPayments.filter(p => p.id !== id) }));
+            flash('ok', 'Supprimé.');
+          } else flash('err', data.error || 'La suppression a échoué.');
+        } catch { flash('err', 'Erreur de connexion au serveur.'); }
+        setBusy(false);
+      },
+    });
   };
 
   const saveSettings = async () => {
@@ -170,9 +223,9 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
     try {
       const rows = Object.entries(settingsForm).map(([key, value]) => ({ key, value, updated_at: new Date().toISOString() }));
       const { error } = await supabase.from('parametres_app').upsert(rows, { onConflict: 'key' });
-      if (error) alert('❌ ' + (error.message.includes('does not exist') || error.code === '42P01' ? 'La table des réglages n\'existe pas encore. Exécutez le script AJOUT_PARAMETRES_APP.sql dans Supabase.' : error.message));
-      else alert('✅ Réglages enregistrés. Ils s\'appliquent au prochain chargement de l\'app.');
-    } catch { alert('❌ Erreur de connexion.'); }
+      if (error) flash('err', error.message.includes('does not exist') || error.code === '42P01' ? 'La table des réglages n\'existe pas encore. Exécutez le script AJOUT_PARAMETRES_APP.sql dans Supabase.' : error.message);
+      else flash('ok', 'Réglages enregistrés. Ils s\'appliquent au prochain chargement de l\'app.');
+    } catch { flash('err', 'Erreur de connexion au serveur.'); }
     setSavingSettings(false);
   };
 
@@ -211,14 +264,14 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
       });
       const data = await res.json();
       if (data.success) {
-        alert(`Notification envoyée à ${data.sent} appareil(s) !`);
+        flash('ok', `Notification envoyée à ${data.sent} appareil(s).`);
         setBroadcastTitle('');
         setBroadcastMessage('');
       } else {
-        alert('Erreur lors de l\'envoi : ' + (data.error || 'Inconnu'));
+        flash('err', 'Envoi échoué : ' + (data.error || 'erreur inconnue'));
       }
     } catch {
-      alert('Erreur de connexion au serveur.');
+      flash('err', 'Erreur de connexion au serveur.');
     } finally {
       setSendingBroadcast(false);
     }
@@ -257,14 +310,89 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
           <div className={styles.mainContent}>
 
             {loading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-charcoal-muted)' }}>
-                <h3>Chargement des données en cours...</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '18px', padding: '10px' }}>
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} style={{ background: 'rgba(255,255,255,0.65)', borderRadius: '20px', padding: '24px', display: 'flex', alignItems: 'center', gap: '18px' }}>
+                    <span className="skl" style={{ width: '55px', height: '55px', borderRadius: '16px', flexShrink: 0 }}></span>
+                    <span style={{ flex: 1 }}>
+                      <span className="skl" style={{ display: 'block', height: '16px', width: '65%' }}></span>
+                      <span className="skl" style={{ display: 'block', height: '12px', width: '45%', marginTop: '9px' }}></span>
+                    </span>
+                  </div>
+                ))}
               </div>
             ) : (
               <>
                 {/* VUE GLOBALE */}
-                {activeTab === 'overview' && (
-                  <div className={styles.adminGrid}>
+                {activeTab === 'overview' && (() => {
+                  // A2 — chiffres du jour
+                  const todayStr = new Date().toISOString().split('T')[0];
+                  const visitsToday = (stats.allVisits || []).filter(v => v.created_at?.startsWith(todayStr)).length;
+                  const newToday = (stats.allDrivers || []).filter(d => d.created_at?.startsWith(todayStr)).length
+                    + (stats.allClients || []).filter(c => c.created_at?.startsWith(todayStr)).length;
+                  const openTickets = (stats.tickets || []).filter(t => t.statut === 'ouvert').length;
+                  const onlineDrivers = (stats.allDrivers || []).filter(d => d.status === 'actif' || d.status === 'approved').length;
+                  // A3 — recherche globale
+                  const q = globalSearch.trim().toLowerCase();
+                  const foundDrivers = q.length >= 2 ? stats.allDrivers.filter(d => `${d.name || ''} ${d.phone || ''}`.toLowerCase().includes(q)).slice(0, 5) : [];
+                  const foundClients = q.length >= 2 ? stats.allClients.filter(c => `${c.name || ''} ${c.phone || ''}`.toLowerCase().includes(q)).slice(0, 5) : [];
+                  return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                    {/* A3 — Recherche globale */}
+                    <div style={{ position: 'relative', maxWidth: '560px', width: '100%', margin: '0 auto' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'white', border: '1.5px solid rgba(141,85,55,0.35)', borderRadius: '14px', padding: '12px 16px', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-brown)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input
+                          type="text"
+                          value={globalSearch}
+                          onChange={e => setGlobalSearch(e.target.value)}
+                          placeholder="Rechercher un livreur ou un client (nom, numéro)..."
+                          style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.95rem', background: 'transparent', color: 'var(--color-charcoal)' }}
+                        />
+                        {globalSearch && <button onClick={() => setGlobalSearch('')} aria-label="Effacer" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-charcoal-muted)', fontSize: '1rem', padding: '4px 8px' }}>✕</button>}
+                      </div>
+                      {(foundDrivers.length > 0 || foundClients.length > 0) && (
+                        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, background: 'white', borderRadius: '14px', boxShadow: '0 14px 44px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.06)', zIndex: 50, overflow: 'hidden' }}>
+                          {foundDrivers.map(d => (
+                            <button key={d.id} onClick={() => { setGlobalSearch(''); setSelectedDriver(d); setActiveTab('drivers'); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 14px', background: 'none', border: 'none', borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer', textAlign: 'left', minHeight: '44px' }}>
+                              <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--color-primary-brown)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, overflow: 'hidden', flexShrink: 0 }}>{d.selfie ? <img src={d.selfie} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (d.name || 'L').charAt(0)}</span>
+                              <span style={{ flex: 1 }}><strong style={{ fontSize: '0.9rem' }}>{d.name}</strong><br /><span style={{ fontSize: '0.78rem', color: 'var(--color-charcoal-muted)' }}>{d.phone}</span></span>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '3px 9px', borderRadius: '10px', background: '#e6f4ea', color: '#1e8e3e' }}>Livreur</span>
+                            </button>
+                          ))}
+                          {foundClients.map(c => (
+                            <button key={c.id} onClick={() => { setGlobalSearch(''); setSearchClients(c.name || c.phone || ''); setActiveTab('clients'); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 14px', background: 'none', border: 'none', borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer', textAlign: 'left', minHeight: '44px' }}>
+                              <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#b8860b', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>{(c.name || 'C').charAt(0)}</span>
+                              <span style={{ flex: 1 }}><strong style={{ fontSize: '0.9rem' }}>{c.name}</strong><br /><span style={{ fontSize: '0.78rem', color: 'var(--color-charcoal-muted)' }}>{c.phone}</span></span>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '3px 9px', borderRadius: '10px', background: '#fdf3de', color: '#b8860b' }}>Client</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* A2 — Aujourd'hui */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', margin: '0 4px 10px' }}>
+                        <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--color-primary-brown)', fontWeight: 800 }}>Aujourd'hui</h3>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                      </div>
+                      <div className={styles.todayBar}>
+                        {[
+                          { n: visitsToday, l: 'Visites', alert: false },
+                          { n: newToday, l: 'Nouveaux inscrits', alert: false },
+                          { n: openTickets, l: 'Litiges ouverts', alert: openTickets > 0 },
+                          { n: onlineDrivers, l: 'Livreurs en ligne', alert: false },
+                        ].map(({ n, l, alert: al }) => (
+                          <div key={l} className={styles.todayTile}>
+                            <b style={{ color: al ? 'var(--color-primary-red)' : 'var(--color-primary-brown-dark)' }}>{n}</b>
+                            <span>{l}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                  <div className={styles.adminGrid} style={{ padding: 0 }}>
                     {[
                       { tab: 'chats', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>, color: '#9b59b6', label: 'Discussions en Cours', sub: `${stats.allChats?.length || 0} session(s)` },
                       { tab: 'drivers', icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>, color: '#2c3e50', label: 'Gestion des Livreurs', sub: `${stats.totalDrivers || 0} inscrit(s)` },
@@ -287,34 +415,60 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       </div>
                     ))}
                   </div>
-                )}
+                  </div>
+                  );
+                })()}
 
-                {/* DISCUSSIONS */}
-                {activeTab === 'chats' && (
+                {/* DISCUSSIONS — groupées par conversation client ↔ livreur */}
+                {activeTab === 'chats' && (() => {
+                  const groups = new Map<string, { clientName: string; riderName: string; msgs: any[] }>();
+                  for (const chat of stats.allChats || []) {
+                    const key = `${chat.client_id}|${chat.rider_id}`;
+                    if (!groups.has(key)) groups.set(key, { clientName: chat.clients_livraison?.name || 'Client', riderName: chat.livreurs?.name || 'Livreur', msgs: [] });
+                    groups.get(key)!.msgs.push(chat);
+                  }
+                  const convos = Array.from(groups.entries());
+                  return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Discussions en direct</h3>
-                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-                      {stats.allChats?.length === 0 ? (
-                        <div style={{ padding: '30px', textAlign: 'center', color: 'var(--color-charcoal-muted)' }}>Aucun message échangé pour l'instant.</div>
-                      ) : (
-                        stats.allChats?.map(chat => (
-                          <div key={chat.id} style={{ padding: '15px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <strong style={{ color: chat.sender === 'client' ? 'var(--color-primary-brown)' : 'var(--color-primary-green)' }}>
-                                {chat.sender === 'client' ? `Client : ${chat.clients_livraison?.name || '—'}` : `Livreur : ${chat.livreurs?.name || '—'}`}
-                              </strong>
-                              <small style={{ color: 'var(--color-charcoal-muted)' }}>{new Date(chat.created_at).toLocaleString('fr-FR')}</small>
-                            </div>
-                            <div style={{ color: 'var(--color-charcoal)', background: 'var(--color-bg-warm)', padding: '10px', borderRadius: '8px' }}>
-                              {chat.text}
-                              {chat.image_url && <img src={chat.image_url} alt="PJ" style={{ height: '50px', marginLeft: '10px', borderRadius: '4px' }} />}
-                            </div>
-                          </div>
-                        ))
+                    <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Discussions <span style={{ fontSize: '0.9rem', color: 'var(--color-charcoal-muted)', fontWeight: 500 }}>— {convos.length} conversation(s), 50 derniers messages</span></h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {convos.length === 0 && (
+                        <div style={{ background: 'white', borderRadius: '16px', padding: '30px', textAlign: 'center', color: 'var(--color-charcoal-muted)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>Aucun message échangé pour l'instant.</div>
                       )}
+                      {convos.map(([key, g]) => {
+                        const open = expandedConvo === key;
+                        const last = g.msgs[0];
+                        return (
+                          <div key={key} style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+                            <button
+                              onClick={() => setExpandedConvo(open ? null : key)}
+                              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '15px 20px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', minHeight: '44px' }}
+                            >
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <strong style={{ color: 'var(--color-charcoal)', fontSize: '0.95rem' }}>{g.clientName} <span style={{ color: 'var(--color-charcoal-muted)', fontWeight: 400 }}>↔</span> {g.riderName}</strong>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last?.text || '📎 Fichier'}</div>
+                              </div>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)', flexShrink: 0 }}>{g.msgs.length} msg · {last ? new Date(last.created_at).toLocaleDateString('fr-FR') : ''}</span>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-charcoal-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                            {open && (
+                              <div style={{ borderTop: '1px solid rgba(0,0,0,0.05)', padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--color-bg-warm)' }}>
+                                {[...g.msgs].reverse().map(m => (
+                                  <div key={m.id} style={{ alignSelf: m.sender === 'client' ? 'flex-start' : 'flex-end', maxWidth: '80%', background: m.sender === 'client' ? 'white' : 'var(--color-primary-brown)', color: m.sender === 'client' ? 'var(--color-charcoal)' : 'white', padding: '9px 13px', borderRadius: '14px', fontSize: '0.88rem' }}>
+                                    {m.text}
+                                    {m.image_url && <img src={m.image_url} alt="PJ" style={{ display: 'block', maxHeight: '90px', marginTop: '6px', borderRadius: '8px' }} />}
+                                    <div style={{ fontSize: '0.65rem', opacity: 0.7, textAlign: 'right', marginTop: '3px' }}>{new Date(m.created_at).toLocaleString('fr-FR')}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                )}
+                  );
+                })()}
 
                 {/* DRIVERS & PENDING */}
                 {(activeTab === 'drivers' || activeTab === 'pending') && (
@@ -459,7 +613,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                               <button onClick={() => { approveDriver(selectedDriver.id); setSelectedDriver({ ...selectedDriver, status: 'actif' }); }} style={{ flex: 1, background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', minWidth: '160px' }}>{selectedDriver.status === 'suspendu' ? 'Réactiver le compte' : 'Valider la candidature'}</button>
                             )}
                             {(selectedDriver.status === 'approved' || selectedDriver.status === 'actif' || selectedDriver.status === 'en pause') && (
-                              <button onClick={() => { if (window.confirm('Suspendre ce livreur ?')) { suspendDriver(selectedDriver.id); setSelectedDriver({ ...selectedDriver, status: 'suspendu' }); } }} style={{ flex: 1, background: '#f39c12', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', minWidth: '160px' }}>Suspendre temporairement</button>
+                              <button onClick={() => setConfirmBox({ title: `Suspendre ${selectedDriver.first_name || selectedDriver.name} ?`, detail: 'Le livreur disparaîtra de la carte jusqu\'à sa réactivation.', yesLabel: 'Oui, suspendre', onYes: () => { suspendDriver(selectedDriver.id); setSelectedDriver({ ...selectedDriver, status: 'suspendu' }); flash('ok', 'Livreur suspendu.'); } })} style={{ flex: 1, background: '#f39c12', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', minWidth: '160px' }}>Suspendre temporairement</button>
                             )}
                             {(selectedDriver.status === 'approved' || selectedDriver.status === 'actif' || selectedDriver.status === 'en pause') && !selectedDriver.is_verified && (
                               <button onClick={() => { verifyDriver(selectedDriver.id, true); setSelectedDriver({ ...selectedDriver, is_verified: true }); }} style={{ flex: 1, background: '#3498db', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', minWidth: '160px' }}>Décerner Badge Vérifié</button>
@@ -467,7 +621,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                             {selectedDriver.is_verified && (
                               <button onClick={() => { verifyDriver(selectedDriver.id, false); setSelectedDriver({ ...selectedDriver, is_verified: false }); }} style={{ flex: 1, background: '#bdc3c7', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', minWidth: '160px' }}>Retirer Badge Vérifié</button>
                             )}
-                            <button onClick={() => { if (window.confirm('Supprimer définitivement ce livreur ? Action irréversible.')) { deleteDriver(selectedDriver.id); setSelectedDriver(null); } }} style={{ flex: 1, background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', minWidth: '160px' }}>Supprimer définitivement</button>
+                            <button onClick={() => setConfirmBox({ title: `Supprimer définitivement ${selectedDriver.first_name || selectedDriver.name} ?`, detail: 'Son profil, sa position et ses documents disparaîtront. Cette action est irréversible.', yesLabel: 'Oui, supprimer', onYes: () => { deleteDriver(selectedDriver.id); setSelectedDriver(null); flash('ok', 'Livreur supprimé.'); } })} style={{ flex: 1, background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', minWidth: '160px' }}>Supprimer définitivement</button>
                           </div>
                         </div>
                       </div>
@@ -491,8 +645,8 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                         {activeTab === 'clients' && <button onClick={() => downloadCSV(stats.allClients, 'clients_export')} style={{ background: '#2980b9', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Exporter CSV</button>}
                       </div>
                     </div>
-                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                    <div className={styles.rTableWrap} style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
+                      <table className={styles.rTable} style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                           <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
                             <th style={{ padding: '12px 15px' }}>Nom</th>
@@ -504,32 +658,32 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                         <tbody>
                           {(filteredClients)?.map(client => (
                             <tr key={client.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                              <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>{client.name}</td>
-                              <td style={{ padding: '12px 15px' }}>{client.phone}</td>
-                              <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)' }}>{new Date(client.created_at).toLocaleDateString('fr-FR')}</td>
-                              <td style={{ padding: '12px 15px', textAlign: 'right' }}>
-                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                              <td data-label="Nom" style={{ padding: '12px 15px', fontWeight: 'bold' }}>{client.name}</td>
+                              <td data-label="Téléphone" style={{ padding: '12px 15px' }}><a href={`tel:${client.phone}`} style={{ color: 'var(--color-primary-brown)', textDecoration: 'none' }}>{client.phone}</a></td>
+                              <td data-label="Inscription" style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)' }}>{new Date(client.created_at).toLocaleDateString('fr-FR')}</td>
+                              <td data-label="" style={{ padding: '12px 15px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                                   <button
                                     onClick={() => resetPin(client.id, client.name)}
                                     disabled={busy}
                                     title="Réinitialiser le code PIN"
-                                    style={{ background: '#e67e22', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                    style={{ background: '#e67e22', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                   >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                                     PIN
                                   </button>
                                   <button
                                     onClick={() => notifyUser(client.id, client.name)}
                                     disabled={busy}
                                     title="Envoyer une notification"
-                                    style={{ background: '#8e44ad', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                    style={{ background: '#8e44ad', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                   >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                                     Notifier
                                   </button>
                                   <button
-                                    onClick={() => { if (window.confirm(`Supprimer le client ${client.name} ?`)) deleteClient(client.id); }}
-                                    style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}
+                                    onClick={() => setConfirmBox({ title: `Supprimer le client ${client.name} ?`, detail: 'Son compte et son historique disparaîtront définitivement.', yesLabel: 'Oui, supprimer', onYes: () => { deleteClient(client.id); flash('ok', 'Client supprimé.'); } })}
+                                    style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
                                   >
                                     Supprimer
                                   </button>
@@ -824,8 +978,8 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                         ))}
                       </div>
                     </div>
-                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '750px' }}>
+                    <div className={styles.rTableWrap} style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
+                      <table className={styles.rTable} style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                           <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
                             <th style={{ padding: '12px 15px' }}>Date</th>
@@ -839,26 +993,26 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                         <tbody>
                           {filteredTickets.map(ticket => (
                             <tr key={ticket.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                              <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)', fontSize: '0.85rem' }}>{new Date(ticket.created_at).toLocaleString('fr-FR')}</td>
-                              <td style={{ padding: '12px 15px' }}><strong>{ticket.clients_livraison?.name || '—'}</strong><br />{ticket.clients_livraison?.phone && <a href={`tel:${ticket.clients_livraison.phone}`} style={{ fontSize: '0.8rem', color: 'var(--color-primary-brown)' }}>{ticket.clients_livraison.phone}</a>}</td>
-                              <td style={{ padding: '12px 15px' }}><strong>{ticket.livreurs?.name || '—'}</strong><br />{ticket.livreurs?.phone && <a href={`tel:${ticket.livreurs.phone}`} style={{ fontSize: '0.8rem', color: 'var(--color-primary-brown)' }}>{ticket.livreurs.phone}</a>}</td>
-                              <td style={{ padding: '12px 15px', maxWidth: '300px', whiteSpace: 'pre-wrap' }}>{ticket.description}</td>
-                              <td style={{ padding: '12px 15px' }}>
+                              <td data-label="Date" style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)', fontSize: '0.85rem' }}>{new Date(ticket.created_at).toLocaleString('fr-FR')}</td>
+                              <td data-label="Client" style={{ padding: '12px 15px' }}><strong>{ticket.clients_livraison?.name || '—'}</strong><br />{ticket.clients_livraison?.phone && <a href={`tel:${ticket.clients_livraison.phone}`} style={{ fontSize: '0.8rem', color: 'var(--color-primary-brown)' }}>{ticket.clients_livraison.phone}</a>}</td>
+                              <td data-label="Livreur" style={{ padding: '12px 15px' }}><strong>{ticket.livreurs?.name || '—'}</strong><br />{ticket.livreurs?.phone && <a href={`tel:${ticket.livreurs.phone}`} style={{ fontSize: '0.8rem', color: 'var(--color-primary-brown)' }}>{ticket.livreurs.phone}</a>}</td>
+                              <td data-label="Description" style={{ padding: '12px 15px', maxWidth: '300px', whiteSpace: 'pre-wrap' }}>{ticket.description}</td>
+                              <td data-label="Statut" style={{ padding: '12px 15px' }}>
                                 <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', background: ticket.statut === 'resolu' ? '#e6f4ea' : '#fce8e6', color: ticket.statut === 'resolu' ? '#1e8e3e' : '#d93025' }}>
                                   {ticket.statut === 'resolu' ? 'Résolu' : 'Ouvert'}
                                 </span>
                               </td>
-                              <td style={{ padding: '12px 15px', textAlign: 'right' }}>
-                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                              <td data-label="" style={{ padding: '12px 15px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                                   {ticket.statut === 'ouvert' ? (
-                                    <button onClick={() => { if (window.confirm('Marquer comme résolu ?')) resolveTicket(ticket.id); }} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Résoudre</button>
+                                    <button onClick={() => resolveTicket(ticket.id).then(() => flash('ok', 'Signalement résolu.'))} style={{ background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Résoudre</button>
                                   ) : (
-                                    <button onClick={() => reopenTicket(ticket.id)} style={{ background: '#f39c12', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Rouvrir</button>
+                                    <button onClick={() => reopenTicket(ticket.id)} style={{ background: '#f39c12', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Rouvrir</button>
                                   )}
                                   {ticket.rider_id && (
-                                    <button onClick={() => { if (window.confirm(`Suspendre le livreur ${ticket.livreurs?.name || ''} suite à ce signalement ?`)) suspendDriver(ticket.rider_id); }} style={{ background: '#e67e22', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Suspendre livreur</button>
+                                    <button onClick={() => setConfirmBox({ title: `Suspendre le livreur ${ticket.livreurs?.name || ''} ?`, detail: 'Suite à ce signalement, il disparaîtra de la carte jusqu\'à réactivation.', yesLabel: 'Oui, suspendre', onYes: () => { suspendDriver(ticket.rider_id); flash('ok', 'Livreur suspendu.'); } })} style={{ background: '#e67e22', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Suspendre livreur</button>
                                   )}
-                                  <button onClick={() => { if (window.confirm('Supprimer définitivement ce signalement ?')) deleteTicket(ticket.id); }} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
+                                  <button onClick={() => setConfirmBox({ title: 'Supprimer ce signalement ?', detail: 'Cette action est irréversible.', yesLabel: 'Oui, supprimer', onYes: () => { deleteTicket(ticket.id); flash('ok', 'Signalement supprimé.'); } })} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
                                 </div>
                               </td>
                             </tr>
@@ -877,8 +1031,8 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                 {activeTab === 'avis' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <h3 style={{ margin: 0, color: 'var(--color-primary-brown)', fontSize: '1.4rem' }}>Gestion des Avis Clients</h3>
-                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+                    <div className={styles.rTableWrap} style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'auto' }}>
+                      <table className={styles.rTable} style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                           <tr style={{ background: 'var(--color-bg-warm)', textAlign: 'left', color: 'var(--color-charcoal-muted)' }}>
                             <th style={{ padding: '12px 15px' }}>Date</th>
@@ -892,13 +1046,13 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                         <tbody>
                           {stats.allAvis?.map(avis => (
                             <tr key={avis.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                              <td style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)', fontSize: '0.85rem' }}>{new Date(avis.created_at).toLocaleDateString('fr-FR')}</td>
-                              <td style={{ padding: '12px 15px' }}><strong>{avis.clients_livraison?.name || '—'}</strong></td>
-                              <td style={{ padding: '12px 15px' }}><strong>{avis.livreurs?.name || '—'}</strong></td>
-                              <td style={{ padding: '12px 15px', color: '#d4a017', whiteSpace: 'nowrap' }}>{'★'.repeat(Number(avis.stars) || 0)}{'☆'.repeat(Math.max(0, 5 - (Number(avis.stars) || 0)))}</td>
-                              <td style={{ padding: '12px 15px', maxWidth: '300px', whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>{avis.text || <em style={{ color: 'var(--color-charcoal-muted)' }}>Sans commentaire</em>}</td>
-                              <td style={{ padding: '12px 15px', textAlign: 'right' }}>
-                                <button onClick={() => { if (window.confirm('Supprimer cet avis ? Action irréversible.')) deleteAvis(avis.id); }} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
+                              <td data-label="Date" style={{ padding: '12px 15px', color: 'var(--color-charcoal-muted)', fontSize: '0.85rem' }}>{new Date(avis.created_at).toLocaleDateString('fr-FR')}</td>
+                              <td data-label="Client" style={{ padding: '12px 15px' }}><strong>{avis.clients_livraison?.name || '—'}</strong></td>
+                              <td data-label="Livreur" style={{ padding: '12px 15px' }}><strong>{avis.livreurs?.name || '—'}</strong></td>
+                              <td data-label="Note" style={{ padding: '12px 15px', color: '#d4a017', whiteSpace: 'nowrap' }}>{'★'.repeat(Number(avis.stars) || 0)}{'☆'.repeat(Math.max(0, 5 - (Number(avis.stars) || 0)))}</td>
+                              <td data-label="Commentaire" style={{ padding: '12px 15px', maxWidth: '300px', whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>{avis.text || <em style={{ color: 'var(--color-charcoal-muted)' }}>Sans commentaire</em>}</td>
+                              <td data-label="" style={{ padding: '12px 15px', textAlign: 'right' }}>
+                                <button onClick={() => setConfirmBox({ title: 'Supprimer cet avis ?', detail: 'La note moyenne du livreur sera recalculée. Cette action est irréversible.', yesLabel: 'Oui, supprimer', onYes: () => { deleteAvis(avis.id); flash('ok', 'Avis supprimé.'); } })} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
                               </td>
                             </tr>
                           ))}
@@ -985,7 +1139,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                             <strong style={{ fontSize: '0.9rem' }}>{g.name || g.email}</strong>
                             <div style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)' }}>{g.role} · {g.phone || g.email} · créé le {new Date(g.created_at).toLocaleDateString('fr-FR')} · {formatLastSeen(g.last_sign_in_at)}</div>
                           </div>
-                          <button onClick={() => cleanupItem('ghost', g.id, `le compte fantôme ${g.name || g.email}`)} disabled={busy} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 'bold' }}>Supprimer</button>
+                          <button onClick={() => cleanupItem('ghost', g.id, `le compte fantôme ${g.name || g.email}`)} disabled={busy} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
                         </div>
                       ))}
                     </div>
@@ -1008,8 +1162,8 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                               <div style={{ fontSize: '0.75rem', color: 'var(--color-charcoal-muted)' }}>{d.phone} · manque : {[!d.selfie && 'selfie', !d.cni_recto && 'CNI recto', !d.cni_verso && 'CNI verso'].filter(Boolean).join(', ')}</div>
                             </div>
                             <div style={{ display: 'flex', gap: '6px' }}>
-                              <button onClick={() => notifyUser(d.id, d.name)} disabled={busy} style={{ background: '#8e44ad', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 'bold' }}>Relancer</button>
-                              <button onClick={() => { setActiveTab('drivers'); setSelectedDriver(d); }} style={{ background: 'var(--color-primary-brown)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 'bold' }}>Ouvrir</button>
+                              <button onClick={() => notifyUser(d.id, d.name)} disabled={busy} style={{ background: '#8e44ad', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Relancer</button>
+                              <button onClick={() => { setActiveTab('drivers'); setSelectedDriver(d); }} style={{ background: 'var(--color-primary-brown)', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Ouvrir</button>
                             </div>
                           </div>
                         ));
@@ -1030,7 +1184,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       ) : health.orphanPayments.map(p => (
                         <div key={p.id} style={{ padding: '12px 18px', borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                           <div style={{ fontSize: '0.85rem' }}>{p.montant} F · {p.statut} · {new Date(p.created_at).toLocaleDateString('fr-FR')}</div>
-                          <button onClick={() => cleanupItem('orphan_payment', p.id, `ce paiement de ${p.montant} F`)} disabled={busy} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 'bold' }}>Supprimer</button>
+                          <button onClick={() => cleanupItem('orphan_payment', p.id, `ce paiement de ${p.montant} F`)} disabled={busy} style={{ background: 'var(--color-primary-red)', color: 'white', border: 'none', padding: '10px 14px', minHeight: '42px', borderRadius: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Supprimer</button>
                         </div>
                       ))}
                     </div>
@@ -1048,6 +1202,68 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
               <img src={activeReceiptUrl} alt="Reçu de Paiement" style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '12px', objectFit: 'contain', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }} />
               <button onClick={() => setActiveReceiptUrl(null)} style={{ background: 'var(--color-primary-brown)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>Fermer</button>
             </div>
+          </div>
+        )}
+
+        {/* A5 — Modale de confirmation stylée */}
+        {confirmBox && (
+          <div onClick={() => setConfirmBox(null)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(58,46,40,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4500, padding: '20px' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '20px', padding: '26px 24px', maxWidth: '420px', width: '100%', textAlign: 'center', boxShadow: '0 24px 70px rgba(0,0,0,0.3)' }}>
+              <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#fce8e6', color: 'var(--color-primary-red)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </div>
+              <h3 style={{ margin: '0 0 6px', fontSize: '1.1rem', color: 'var(--color-primary-brown-dark)' }}>{confirmBox.title}</h3>
+              {confirmBox.detail && <p style={{ margin: '0 0 18px', fontSize: '0.88rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.5 }}>{confirmBox.detail}</p>}
+              <div style={{ display: 'flex', gap: '10px', marginTop: confirmBox.detail ? 0 : '18px' }}>
+                <button onClick={() => setConfirmBox(null)} style={{ flex: 1, padding: '13px', minHeight: '44px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.15)', background: 'white', color: 'var(--color-charcoal)', fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
+                <button onClick={() => { const fn = confirmBox.onYes; setConfirmBox(null); fn(); }} style={{ flex: 1, padding: '13px', minHeight: '44px', borderRadius: '12px', border: 'none', background: 'var(--color-primary-red)', color: 'white', fontWeight: 700, cursor: 'pointer' }}>{confirmBox.yesLabel || 'Confirmer'}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notification importante (ex : nouveau PIN) */}
+        {noticeBox && (
+          <div onClick={() => setNoticeBox(null)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(58,46,40,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4500, padding: '20px' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '20px', padding: '26px 24px', maxWidth: '420px', width: '100%', textAlign: 'center', boxShadow: '0 24px 70px rgba(0,0,0,0.3)' }}>
+              <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#e6f4ea', color: '#1e8e3e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <h3 style={{ margin: '0 0 6px', fontSize: '1.1rem', color: 'var(--color-primary-brown-dark)' }}>{noticeBox.title}</h3>
+              <div>{noticeBox.body}</div>
+              <button onClick={() => setNoticeBox(null)} style={{ marginTop: '18px', width: '100%', padding: '13px', minHeight: '44px', borderRadius: '12px', border: 'none', background: 'var(--color-primary-brown)', color: 'white', fontWeight: 700, cursor: 'pointer' }}>Fermer</button>
+            </div>
+          </div>
+        )}
+
+        {/* Invite de saisie (notification ciblée) */}
+        {promptBox && (
+          <div onClick={() => setPromptBox(null)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(58,46,40,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4500, padding: '20px' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '20px', padding: '26px 24px', maxWidth: '440px', width: '100%', boxShadow: '0 24px 70px rgba(0,0,0,0.3)' }}>
+              <h3 style={{ margin: '0 0 12px', fontSize: '1.05rem', color: 'var(--color-primary-brown-dark)', textAlign: 'center' }}>{promptBox.title}</h3>
+              <textarea
+                autoFocus
+                value={promptValue}
+                onChange={e => setPromptValue(e.target.value)}
+                placeholder={promptBox.placeholder}
+                style={{ width: '100%', minHeight: '90px', padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.95rem', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
+              />
+              <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
+                <button onClick={() => setPromptBox(null)} style={{ flex: 1, padding: '13px', minHeight: '44px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.15)', background: 'white', color: 'var(--color-charcoal)', fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
+                <button
+                  disabled={!promptValue.trim()}
+                  onClick={() => { const fn = promptBox.onSubmit; const v = promptValue.trim(); setPromptBox(null); fn(v); }}
+                  style={{ flex: 1, padding: '13px', minHeight: '44px', borderRadius: '12px', border: 'none', background: promptValue.trim() ? 'var(--color-primary-green)' : '#bdc3c7', color: 'white', fontWeight: 700, cursor: promptValue.trim() ? 'pointer' : 'not-allowed' }}
+                >Envoyer</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* T2 — Bannière toast */}
+        {banner && (
+          <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 5000, maxWidth: 'min(92vw, 480px)', width: 'max-content', padding: '13px 22px', borderRadius: '14px', fontWeight: 700, fontSize: '0.9rem', textAlign: 'center', boxShadow: '0 10px 34px rgba(0,0,0,0.22)', background: banner.type === 'ok' ? '#e6f4ea' : banner.type === 'warn' ? '#fdf3de' : '#fce8e6', color: banner.type === 'ok' ? '#1e8e3e' : banner.type === 'warn' ? '#b8860b' : '#d93025' }}>
+            {banner.type === 'ok' ? '✓ ' : banner.type === 'warn' ? '⚠ ' : '✕ '}{banner.msg}
           </div>
         )}
       </div>

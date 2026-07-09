@@ -65,6 +65,44 @@
   font-weight: 600;
 }
 
+/* A2 — Bandeau « Aujourd'hui » */
+.todayBar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.todayTile {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 14px;
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+.todayTile b {
+  display: block;
+  font-size: 1.7rem;
+  font-weight: 900;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.todayTile span {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-charcoal-muted);
+}
+
+/* A1 — Tableaux : larges sur desktop, cartes empilées sur mobile */
+.rTable {
+  min-width: 600px;
+}
+
 @media (max-width: 768px) {
   .adminGrid {
     grid-template-columns: 1fr;
@@ -72,18 +110,64 @@
   .mainContent {
     padding: 12px;
   }
-  /* Les tableaux restent scrollables horizontalement mais avec des cellules
-     plus compactes pour rester lisibles sur téléphone. */
-  .mainContent table {
-    min-width: 0 !important;
-    width: 100%;
-    font-size: 0.8rem;
-  }
-  .mainContent table th,
-  .mainContent table td {
-    padding: 8px 8px !important;
-  }
   .mainContent h3 {
     font-size: 1.15rem !important;
+  }
+  .todayBar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* A1 — chaque ligne devient une carte verticale, actions en grand */
+  .rTableWrap {
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  .rTable {
+    min-width: 0 !important;
+    width: 100%;
+  }
+  .rTable thead {
+    display: none;
+  }
+  .rTable tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .rTable tr {
+    display: block;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-radius: 16px;
+    padding: 8px 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  }
+  .rTable td {
+    display: block;
+    padding: 7px 14px !important;
+    text-align: left !important;
+    max-width: none !important;
+    border: none !important;
+    font-size: 0.9rem;
+  }
+  .rTable td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-charcoal-muted);
+    margin-bottom: 2px;
+  }
+  .rTable td[data-label=""]::before {
+    display: none;
+  }
+  .rTable td[data-label=""] > div {
+    justify-content: flex-start !important;
+  }
+  .rTable td[data-label=""] button {
+    flex: 1;
   }
 }

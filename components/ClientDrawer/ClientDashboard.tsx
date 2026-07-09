@@ -26,6 +26,14 @@ const IconStar = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height
 const IconLock = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-brown)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>;
 const IconLogout = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>;
 
+// C2 — couleur d'avatar stable dérivée du nom (on distingue ses contacts d'un coup d'œil)
+const AVATAR_COLORS = ['#8D5537', '#2C7A9E', '#2C9E5E', '#B8860B', '#7D4F9E', '#C05B41'];
+const avatarColor = (name: string) => {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+};
+
 export default function ClientDashboard({ clientData, onLogout, onSearch, onChatRider }: ClientDashboardProps) {
   const { logout, user } = useSupabaseAuth();
   const supabase = createClient();
@@ -34,6 +42,8 @@ export default function ClientDashboard({ clientData, onLogout, onSearch, onChat
   const [loadingChats, setLoadingChats] = useState(true);
   const [tickets, setTickets] = useState<any[]>([]);
   const [myReviews, setMyReviews] = useState<any[]>([]);
+  const [onlineCount, setOnlineCount] = useState<number | null>(null);
+  const [expandedTickets, setExpandedTickets] = useState<Set<string>>(new Set());
   const [banner, setBanner] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
   const [showPinForm, setShowPinForm] = useState(false);
   const [newPin, setNewPin] = useState('');
@@ -53,11 +63,13 @@ export default function ClientDashboard({ clientData, onLogout, onSearch, onChat
     const load = async () => {
       // Conversations : messages du client, groupés par livreur
       setLoadingChats(true);
-      const [{ data: msgs }, { data: tk }, { data: av }] = await Promise.all([
+      const [{ data: msgs }, { data: tk }, { data: av }, { count: online }] = await Promise.all([
         supabase.from('chats_livraison').select('rider_id, text, time, created_at, sender').eq('client_id', user.id).order('created_at', { ascending: false }),
         supabase.from('tickets_support').select('id, description, statut, created_at, rider_id').eq('client_id', user.id).order('created_at', { ascending: false }),
         supabase.from('avis').select('id, stars, text, created_at, rider_id').eq('client_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('livreurs_view').select('id', { count: 'exact', head: true }).in('status', ['actif', 'approved']),
       ]);
+      setOnlineCount(online ?? null);
 
       // Le client ne peut PAS lire la table `livreurs` (RLS) : on récupère les noms
       // et photos des livreurs concernés via la vue publique `livreurs_view`.
@@ -134,12 +146,23 @@ export default function ClientDashboard({ clientData, onLogout, onSearch, onChat
       <div style={card}>
         {sectionTitle(<IconChat />, 'Mes discussions', unreadCount > 0 ? <span style={{ fontSize: '0.7rem', background: 'var(--color-primary-green)', color: 'white', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>{unreadCount} nouveau{unreadCount > 1 ? 'x' : ''}</span> : undefined)}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {loadingChats ? <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic', margin: 0 }}>Chargement...</p>
-            : conversations.length === 0 ? <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', fontStyle: 'italic', margin: 0 }}>Aucune discussion pour le moment. Trouvez un livreur pour commencer.</p>
+          {loadingChats ? <><span className="skl" style={{ display: 'block', height: '62px', borderRadius: '12px' }}></span><span className="skl" style={{ display: 'block', height: '62px', borderRadius: '12px' }}></span></>
+            : conversations.length === 0 ? (
+              <div style={{ textAlign: 'center', border: '1.5px dashed #d9b8a0', background: 'var(--color-primary-brown-light)', borderRadius: '14px', padding: '20px 16px' }}>
+                <div style={{ fontSize: '1.6rem', marginBottom: '4px' }}>🛵</div>
+                <div style={{ fontWeight: 800, color: 'var(--color-primary-brown-dark)', fontSize: '0.95rem' }}>Votre premier livreur vous attend</div>
+                <p style={{ margin: '6px 0 12px', fontSize: '0.8rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.5 }}>
+                  {onlineCount ? `${onlineCount} livreur${onlineCount > 1 ? 's sont' : ' est'} en ligne autour de vous en ce moment.` : 'Des livreurs sont en ligne autour de vous en ce moment.'}
+                </p>
+                <button type="button" onClick={onSearch} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 20px', minHeight: '44px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem', color: 'white', background: 'var(--color-primary-green)' }}>
+                  <IconSearch />Trouver un livreur
+                </button>
+              </div>
+            )
             : conversations.map(c => (
               <button key={c.riderId} type="button" onClick={() => onChatRider(c.riderId, c.riderName)}
                 style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px', background: c.unread ? 'rgba(39, 174, 96, 0.08)' : 'rgba(0,0,0,0.03)', border: c.unread ? '1.5px solid rgba(39, 174, 96, 0.3)' : '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
-                <div style={{ width: '42px', height: '42px', borderRadius: '50%', overflow: 'hidden', background: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', flexShrink: 0 }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '50%', overflow: 'hidden', background: avatarColor(c.riderName), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', flexShrink: 0 }}>
                   {c.selfie ? <img src={c.selfie} alt={c.riderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : c.riderName.charAt(0).toUpperCase()}
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -160,7 +183,10 @@ export default function ClientDashboard({ clientData, onLogout, onSearch, onChat
         <div style={card}>
           {sectionTitle(<IconAlert />, 'Mes signalements')}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {tickets.map(t => (
+            {tickets.map(t => {
+              const isLong = (t.description || '').length > 90;
+              const open = expandedTickets.has(t.id);
+              return (
               <div key={t.id} style={{ background: 'rgba(0,0,0,0.03)', borderRadius: '10px', padding: '11px 12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', gap: '8px' }}>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-charcoal)' }}>Livreur : {t.riderName || 'Livreur'}</span>
@@ -168,9 +194,18 @@ export default function ClientDashboard({ clientData, onLogout, onSearch, onChat
                     {t.statut === 'resolu' ? 'Résolu ✓' : 'En cours'}
                   </span>
                 </div>
-                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.4 }}>{t.description}</p>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.4 }}>
+                  {isLong && !open ? t.description.slice(0, 90).trimEnd() + '… ' : t.description}
+                  {isLong && (
+                    <button
+                      onClick={() => setExpandedTickets(prev => { const next = new Set(prev); if (open) next.delete(t.id); else next.add(t.id); return next; })}
+                      style={{ background: 'none', border: 'none', padding: 0, marginLeft: open ? '6px' : 0, color: 'var(--color-primary-brown)', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}
+                    >{open ? 'voir moins' : 'voir plus'}</button>
+                  )}
+                </p>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
