@@ -57,6 +57,18 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
   // L1 — pastille de statut épinglée quand la carte héro sort de l'écran
   const heroRef = React.useRef<HTMLDivElement | null>(null);
   const [heroVisible, setHeroVisible] = useState(true);
+  // F5 — suivi GPS automatique (activé par défaut, préférence mémorisée sur l'appareil)
+  const [gpsAuto, setGpsAuto] = useState(true);
+  useEffect(() => {
+    try { if (localStorage.getItem('lr_gps_auto') === '0') setGpsAuto(false); } catch { /* ignore */ }
+  }, []);
+  const toggleGpsAuto = () => {
+    setGpsAuto(prev => {
+      const next = !prev;
+      try { localStorage.setItem('lr_gps_auto', next ? '1' : '0'); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   const safeDriverData = driverData || { id: 'placeholder', name: 'Livreur', vehicle: 'Moto', status: 'en attente', contacts_count: 0, views_count: 0, rating: 5, created_at: new Date().toISOString() };
   const id = safeDriverData.id;
@@ -182,6 +194,14 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
     if (!isPlaceholder && isOnline) updateGPS(true);
   }, [driverData?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // F5 — suivi automatique : tant que l'app est ouverte, le livreur en ligne
+  // voit sa position actualisée toutes les 2 min 30 (silencieusement).
+  useEffect(() => {
+    if (isPlaceholder || !isOnline || !gpsAuto) return;
+    const interval = setInterval(() => updateGPS(true), 150000);
+    return () => clearInterval(interval);
+  }, [driverData?.id, isOnline, gpsAuto]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const uploadDoc = async (field: 'selfie' | 'cni_recto' | 'cni_verso', file: File) => {
     if (!file || isPlaceholder) return;
     setUploadingDoc(field);
@@ -300,17 +320,39 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
         );
       })()}
 
-      {/* L2 — GPS en une ligne, pensé conduite */}
+      {/* L2 + F5 — GPS : état en une ligne + suivi automatique */}
       {(isOnline || isPaused) && (
-        <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '14px 16px' }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', gap: '6px' }}><IconPin />Position</div>
-            <div style={{ fontSize: '0.78rem', color: gpsUpdatedAt ? '#1e8e3e' : 'var(--color-charcoal-muted)', marginTop: '2px', fontWeight: 600 }}>
-              {gpsBusy ? 'Recherche GPS…' : gpsUpdatedAt ? `🟢 Actualisée à ${gpsUpdatedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'À actualiser'}
+        <div style={{ ...card, padding: '14px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--color-primary-brown)', display: 'flex', alignItems: 'center', gap: '6px' }}><IconPin />Position</div>
+              <div style={{ fontSize: '0.78rem', color: gpsUpdatedAt ? '#1e8e3e' : 'var(--color-charcoal-muted)', marginTop: '2px', fontWeight: 600 }}>
+                {gpsBusy ? 'Recherche GPS…' : gpsUpdatedAt ? `🟢 Actualisée à ${gpsUpdatedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'À actualiser'}
+              </div>
             </div>
+            <button onClick={() => updateGPS(false)} disabled={gpsBusy} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '11px 16px', minHeight: '44px', borderRadius: '12px', fontWeight: 700, fontSize: '0.85rem', cursor: gpsBusy ? 'wait' : 'pointer' }}>
+              <IconPin />{gpsBusy ? '...' : 'Actualiser'}
+            </button>
           </div>
-          <button onClick={() => updateGPS(false)} disabled={gpsBusy} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-primary-green)', color: 'white', border: 'none', padding: '11px 16px', minHeight: '44px', borderRadius: '12px', fontWeight: 700, fontSize: '0.85rem', cursor: gpsBusy ? 'wait' : 'pointer' }}>
-            <IconPin />{gpsBusy ? '...' : 'Actualiser'}
+          {/* F5 / L-UI4 — interrupteur de suivi automatique */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={gpsAuto}
+            onClick={toggleGpsAuto}
+            style={{ width: '100%', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px', background: gpsAuto ? 'rgba(39,174,96,0.08)' : 'rgba(0,0,0,0.03)', border: gpsAuto ? '1px solid rgba(39,174,96,0.3)' : '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '10px 12px', minHeight: '48px', cursor: 'pointer', textAlign: 'left' }}
+          >
+            <span style={{ position: 'relative', width: '44px', height: '24px', borderRadius: '14px', background: gpsAuto ? 'var(--color-primary-green)' : '#c7bdb6', flexShrink: 0, transition: 'background 0.2s' }}>
+              <span style={{ position: 'absolute', top: '3px', left: gpsAuto ? '23px' : '3px', width: '18px', height: '18px', borderRadius: '50%', background: 'white', boxShadow: '0 1px 4px rgba(0,0,0,0.25)', transition: 'left 0.2s' }}></span>
+            </span>
+            <span style={{ flex: 1 }}>
+              <span style={{ display: 'block', fontWeight: 800, fontSize: '0.82rem', color: gpsAuto ? '#1e8e3e' : 'var(--color-charcoal)' }}>
+                Suivi automatique {gpsAuto ? 'activé' : 'désactivé'}
+              </span>
+              <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-charcoal-muted)', marginTop: '1px' }}>
+                {gpsAuto ? 'Votre position se met à jour toute seule pendant que l\'app est ouverte.' : 'Activez pour que les clients vous suivent en direct.'}
+              </span>
+            </span>
           </button>
         </div>
       )}

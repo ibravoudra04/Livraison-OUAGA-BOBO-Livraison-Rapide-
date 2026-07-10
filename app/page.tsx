@@ -153,28 +153,60 @@ export default function Home() {
     });
   };
 
+  // C-UI2 — localisation légère pour le calcul de distance depuis le volet livreur :
+  // n'enregistre que la position (pas de recentrage de carte, le volet reste en place).
+  const handleLocateForDistance = () => {
+    setIsLocating(true);
+    getUserPosition().then((r) => {
+      if (r.ok && r.lat != null && r.lng != null) {
+        setUserLocation({ lat: r.lat, lng: r.lng });
+      } else {
+        setToast({ message: r.message || "Localisation impossible.", type: "error" });
+      }
+      setIsLocating(false);
+    });
+  };
+
+  // C-UI2 — distance réelle entre le client et le livreur sélectionné
+  const selectedDistanceKm = React.useMemo(() => {
+    if (!selectedLivreur || selectedLivreur.lat == null || selectedLivreur.lng == null) return null;
+    if (!userLocation) return null;
+    return getDistance(userLocation.lat, userLocation.lng, selectedLivreur.lat, selectedLivreur.lng);
+  }, [selectedLivreur, userLocation]);
+
+  // F1 — filtres de la carte (véhicule + vérifiés)
+  const [vehicleFilter, setVehicleFilter] = useState<'tous' | 'moto' | 'tricycle' | 'voiture'>('tous');
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const filteredLivreurs = React.useMemo(() => {
+    return livreurs.filter((l: any) => {
+      if (verifiedOnly && !l.is_verified) return false;
+      if (vehicleFilter === 'tous') return true;
+      return (l.vehicle || l.transport_type || 'moto').toLowerCase().includes(vehicleFilter);
+    });
+  }, [livreurs, vehicleFilter, verifiedOnly]);
+
   const handleDetectDriver = () => {
-    if (livreurs.length === 0) {
-      setToast({ message: "Aucun livreur disponible pour le moment.", type: "warning" });
+    if (filteredLivreurs.length === 0) {
+      setToast({ message: vehicleFilter !== 'tous' || verifiedOnly ? "Aucun livreur ne correspond à vos filtres." : "Aucun livreur disponible pour le moment.", type: "warning" });
       return;
     }
-    
+
     // Position de référence : userLocation ou mapCenter ou le centre de la ville
     const refLat = userLocation?.lat || mapCenter?.lat || cityCenters[selectedCity as keyof typeof cityCenters].lat;
     const refLng = userLocation?.lng || mapCenter?.lng || cityCenters[selectedCity as keyof typeof cityCenters].lng;
-    
-    // Trouver le livreur le plus proche (parmi tous les livreurs connectés)
-    let closest = livreurs[0];
+
+    // Trouver le livreur le plus proche (parmi les livreurs filtrés)
+    let closest = filteredLivreurs[0];
     let minDist = getDistance(refLat, refLng, closest.lat, closest.lng);
-    
-    for(let i=1; i<livreurs.length; i++) {
-      const d = getDistance(refLat, refLng, livreurs[i].lat, livreurs[i].lng);
+
+    for(let i=1; i<filteredLivreurs.length; i++) {
+      const d = getDistance(refLat, refLng, filteredLivreurs[i].lat, filteredLivreurs[i].lng);
       if (d < minDist) {
         minDist = d;
-        closest = livreurs[i];
+        closest = filteredLivreurs[i];
       }
     }
-    
+
     // Rediriger la carte et ouvrir le profil
     setMapCenter({ lat: closest.lat, lng: closest.lng });
     setSelectedLivreur(closest);
@@ -325,7 +357,7 @@ export default function Home() {
         {!showWelcome && (
           <div className="map-info-badge" id="online-counter-badge">
             <div className="pulse-dot"></div>
-            <span id="online-counter-text">{livreurs?.length || 0} livreurs disponibles</span>
+            <span id="online-counter-text">{filteredLivreurs.length} livreur{filteredLivreurs.length !== 1 ? 's' : ''} disponible{filteredLivreurs.length !== 1 ? 's' : ''}</span>
           </div>
         )}
 
@@ -336,11 +368,37 @@ export default function Home() {
           </button>
         )}
 
-        {/* Bouton "Détecter un livreur" */}
+        {/* Filtres + bouton "Détecter un livreur" */}
         {(!showWelcome && !showLocationPortal && !isSheetOpen) && (
-          <div style={{ position: 'absolute', bottom: '110px', left: '0', right: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', zIndex: 1000, pointerEvents: 'none' }}>
-            
-            <button 
+          <div style={{ position: 'absolute', bottom: '110px', left: '0', right: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', zIndex: 1000, pointerEvents: 'none' }}>
+
+            {/* F1 — chips de filtre : véhicule + vérifiés */}
+            <div style={{ pointerEvents: 'auto', display: 'flex', gap: '7px', maxWidth: '94vw', overflowX: 'auto', padding: '4px 8px', WebkitOverflowScrolling: 'touch' }}>
+              {([
+                { key: 'tous', label: 'Tous' },
+                { key: 'moto', label: 'Moto', icon: '/icons/moto.png' },
+                { key: 'tricycle', label: 'Tricycle', icon: '/icons/tricycle.png' },
+                { key: 'voiture', label: 'Voiture', icon: '/icons/voiture.png' },
+              ] as const).map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => setVehicleFilter(f.key)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, padding: '9px 15px', minHeight: '40px', borderRadius: '30px', border: '1px solid rgba(0,0,0,0.06)', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', background: vehicleFilter === f.key ? 'var(--color-primary-brown)' : 'rgba(255,255,255,0.96)', color: vehicleFilter === f.key ? 'white' : 'var(--color-charcoal)', transition: 'all 0.15s' }}
+                >
+                  {'icon' in f && f.icon && <img src={f.icon} alt="" width="17" height="17" style={{ objectFit: 'contain', filter: vehicleFilter === f.key ? 'brightness(0) invert(1)' : 'none' }} />}
+                  {f.label}
+                </button>
+              ))}
+              <button
+                onClick={() => setVerifiedOnly(v => !v)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', flexShrink: 0, padding: '9px 15px', minHeight: '40px', borderRadius: '30px', border: '1px solid rgba(0,0,0,0.06)', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', background: verifiedOnly ? '#3498db' : 'rgba(255,255,255,0.96)', color: verifiedOnly ? 'white' : 'var(--color-charcoal)', transition: 'all 0.15s' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                Vérifiés
+              </button>
+            </div>
+
+            <button
               className="btn btn-primary pulse"
               onClick={handleDetectDriver}
               style={{ pointerEvents: 'auto', padding: '12px 24px', borderRadius: '30px', boxShadow: '0 8px 25px rgba(232, 92, 74, 0.4)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', background: 'var(--color-primary-red)' }}
@@ -348,16 +406,16 @@ export default function Home() {
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <span>Livreur le plus proche</span>
             </button>
-            
+
           </div>
         )}
 
         {!showWelcome && (
           <div style={{ width: '100%', height: '100%' }}>
-            <MapWrapper 
-              livreurs={livreurs} 
-              cityCenter={mapCenter || cityCenters[selectedCity as keyof typeof cityCenters] || cityCenters['Ouagadougou']} 
-              onMarkerClick={handleMarkerClick} 
+            <MapWrapper
+              livreurs={filteredLivreurs}
+              cityCenter={mapCenter || cityCenters[selectedCity as keyof typeof cityCenters] || cityCenters['Ouagadougou']}
+              onMarkerClick={handleMarkerClick}
             />
           </div>
         )}
@@ -412,9 +470,20 @@ export default function Home() {
             <div style={{ display: 'flex', gap: '10px' }}>
               <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Distance</div>
-                <div style={{ fontWeight: 'bold', color: 'var(--color-charcoal)', fontSize: '0.9rem' }}>
-                  {selectedLivreur.distanceToUser !== undefined ? `À ${selectedLivreur.distanceToUser.toFixed(1)} km` : 'À calculer...'}
-                </div>
+                {selectedDistanceKm != null ? (
+                  <div style={{ fontWeight: 'bold', color: 'var(--color-charcoal)', fontSize: '0.9rem' }}>
+                    {selectedDistanceKm < 1 ? `À ${Math.max(50, Math.round(selectedDistanceKm * 1000 / 50) * 50)} m` : `À ${selectedDistanceKm.toFixed(1)} km`}
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleLocateForDistance}
+                    disabled={isLocating}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'var(--color-primary-brown-light)', border: '1px solid rgba(141,85,55,0.3)', color: 'var(--color-primary-brown)', fontWeight: 700, fontSize: '0.78rem', padding: '6px 12px', borderRadius: '20px', cursor: isLocating ? 'wait' : 'pointer' }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    {isLocating ? 'Recherche…' : 'Calculer'}
+                  </button>
+                )}
               </div>
               <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <div style={{ fontSize: '0.65rem', color: 'var(--color-charcoal-muted)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Téléphone</div>
