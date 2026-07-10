@@ -244,7 +244,7 @@ export default function Home() {
 
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%', overflow: 'hidden' }}>
       
       {showWelcome && (
         <header className="main-header" style={{ position: 'relative', zIndex: 2000 }}>
