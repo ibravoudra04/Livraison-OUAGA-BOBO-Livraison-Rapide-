@@ -4,6 +4,12 @@ import SwUpdateHandler from '@/components/SwUpdateHandler/SwUpdateHandler';
 export const metadata = {
   title: 'Livraison Rapide - Ouaga & Bobo',
   description: 'Application de mise en relation de livreurs et clients en temps réel.',
+  openGraph: {
+    images: ['/icon.png'],
+  },
+  twitter: {
+    images: ['/icon.png'],
+  },
 };
 
 export default function RootLayout({
