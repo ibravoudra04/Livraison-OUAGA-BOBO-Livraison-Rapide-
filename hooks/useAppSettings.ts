@@ -13,7 +13,7 @@ export interface AppSettings {
 export const DEFAULT_SETTINGS: AppSettings = {
   support_whatsapp: '22667370909',
   support_phone: '+22667370909',
-  welcome_text: 'Visualisez les livreurs actifs autour de vous.',
+  welcome_text: 'Visualisez les livreurs actifs autour de vous sur la carte en temps réel et contactez-les en un clic.',
 };
 
 export function useAppSettings() {

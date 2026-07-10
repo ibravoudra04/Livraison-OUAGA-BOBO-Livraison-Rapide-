@@ -26,8 +26,8 @@ export default function WelcomePortal({ onStartSearch, onRegisterClick }: Welcom
             src="/hero_image.png" 
             alt="Illustration Livraison" 
             className="burkina-map-badge"
-            width={138}
-            height={138}
+            width={152}
+            height={152}
             priority
           />
           <h2>Livraison Rapide</h2>
