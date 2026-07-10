@@ -23,11 +23,11 @@ export default function WelcomePortal({ onStartSearch, onRegisterClick }: Welcom
       <div className="portal-card-container">
         <div className="portal-hero">
           <Image 
-            src="/monument_martyrs.png" 
-            alt="Monument des Martyrs" 
+            src="/hero_image.png" 
+            alt="Illustration Livraison" 
             className="burkina-map-badge"
-            width={120}
-            height={120}
+            width={138}
+            height={138}
             priority
           />
           <h2>Livraison Rapide</h2>
