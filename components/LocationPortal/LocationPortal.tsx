@@ -122,7 +122,7 @@ export default function LocationPortal({ onClose, onCitySelect, onAutoDetect }: 
             </div>
             
             <div className="loc-header" style={{ marginTop: 0 }}>
-              <img src="/burkina_map.png" alt="Carte du Burkina Faso" className="burkina-map-badge" />
+              <img src="/monument_martyrs.png" alt="Monument des Martyrs" className="burkina-map-badge" />
               <h3>Dans quelle ville êtes-vous ?</h3>
               <p>Choisissez votre ville pour localiser les livreurs disponibles autour de vous.</p>
             </div>
