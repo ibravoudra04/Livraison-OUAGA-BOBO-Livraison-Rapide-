@@ -30,7 +30,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
-            var version = '2026-07-10_v15';
+            var version = '2026-07-11_v16';
             if (typeof window !== 'undefined' && window.localStorage) {
               if (window.localStorage.getItem('last_forced_reload') !== version) {
                 window.localStorage.setItem('last_forced_reload', version);

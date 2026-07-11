@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import Header from '@/components/Header/Header';
 import MapWrapper from '@/components/Map/MapWrapper';
 import BottomSheet from '@/components/BottomSheet/BottomSheet';
-import LivreurCard from '@/components/LivreurCard/LivreurCard';
 import CustomToast, { ToastType } from '@/components/CustomToast/CustomToast';
 import WelcomePortal from '@/components/WelcomePortal/WelcomePortal';
 import LocationPortal from '@/components/LocationPortal/LocationPortal';
