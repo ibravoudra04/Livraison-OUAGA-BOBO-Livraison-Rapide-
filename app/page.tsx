@@ -416,6 +416,7 @@ export default function Home() {
               livreurs={filteredLivreurs}
               cityCenter={mapCenter || cityCenters[selectedCity as keyof typeof cityCenters] || cityCenters['Ouagadougou']}
               onMarkerClick={handleMarkerClick}
+              userLocation={userLocation}
             />
           </div>
         )}

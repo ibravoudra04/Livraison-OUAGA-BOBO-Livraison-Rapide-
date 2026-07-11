@@ -15,11 +15,12 @@ const markerThumb = (selfieUrl: string): string => {
   return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=72&h=72&fit=cover&a=top&output=webp&q=55`;
 };
 
-export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.3714, lng: -1.5197 }, onMarkerClick }: any) {
+export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.3714, lng: -1.5197 }, onMarkerClick, userLocation }: any) {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const markersMapRef = useRef<{ [id: string]: L.Marker }>({});
+  const userMarkerRef = useRef<L.Marker | null>(null);
 
   // On garde les dernières props dans des refs pour que le rendu des marqueurs
   // (déclenché aussi par le déplacement de la carte) utilise toujours les valeurs à jour.
@@ -170,6 +171,24 @@ export default function MapComponent({ livreurs = [], cityCenter = { lat: 12.371
   useEffect(() => {
     renderMarkers();
   }, [livreurs, renderMarkers]);
+
+  // Update user marker position if userLocation changes
+  useEffect(() => {
+    if (mapRef.current && userLocation) {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+      } else {
+        const iconHtml = `<div class="user-beacon-marker"></div>`;
+        const icon = L.divIcon({
+          className: 'custom-user-beacon-icon',
+          html: iconHtml,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        });
+        userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], { icon, zIndexOffset: 1000 }).addTo(mapRef.current);
+      }
+    }
+  }, [userLocation?.lat, userLocation?.lng]);
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
 }

@@ -1353,7 +1353,7 @@ footer {
 
 .burkina-map-badge {
     display: block;
-    width: 97px;
+    width: 116px;
     height: auto;
     margin: 0 auto 16px auto;
     filter: drop-shadow(0 6px 12px rgba(54, 42, 33, 0.16));
@@ -4356,4 +4356,35 @@ input, select, textarea, .form-input, .ussd-input { font-size: 16px !important; 
 }
 @media (prefers-reduced-motion: reduce) {
     .skl { animation: none; }
+}
+
+/* User Location Beacon */
+.custom-user-beacon-icon {
+    background: transparent;
+    border: none;
+}
+.user-beacon-marker {
+    width: 20px;
+    height: 20px;
+    background-color: #3498db;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.6);
+    position: relative;
+}
+.user-beacon-marker::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-color: rgba(52, 152, 219, 0.4);
+    border-radius: 50%;
+    animation: userBeaconPulse 2s infinite ease-out;
+    pointer-events: none;
+}
+@keyframes userBeaconPulse {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
 }
