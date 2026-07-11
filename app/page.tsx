@@ -1,25 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
-import dynamic from 'next/dynamic';
+import Header from '@/components/Header/Header';
 import MapWrapper from '@/components/Map/MapWrapper';
 import BottomSheet from '@/components/BottomSheet/BottomSheet';
+import LivreurCard from '@/components/LivreurCard/LivreurCard';
 import CustomToast, { ToastType } from '@/components/CustomToast/CustomToast';
 import WelcomePortal from '@/components/WelcomePortal/WelcomePortal';
+import LocationPortal from '@/components/LocationPortal/LocationPortal';
+import DriverDrawer from '@/components/DriverDrawer/DriverDrawer';
+import ClientDrawer from '@/components/ClientDrawer/ClientDrawer';
 
-// Modules chargés À LA DEMANDE : leur code n'est téléchargé que lorsque
-// l'utilisateur les ouvre (chat, inscriptions, avis, support, admin…).
-// Un visiteur qui consulte juste la carte ne télécharge donc pas tout ça.
-const LocationPortal = dynamic(() => import('@/components/LocationPortal/LocationPortal'), { ssr: false });
-const DriverDrawer = dynamic(() => import('@/components/DriverDrawer/DriverDrawer'), { ssr: false });
-const ClientDrawer = dynamic(() => import('@/components/ClientDrawer/ClientDrawer'), { ssr: false });
-const ChatDrawer = dynamic(() => import('@/components/ChatDrawer/ChatDrawer'), { ssr: false });
-const PwaInstallPrompt = dynamic(() => import('@/components/PwaInstallPrompt/PwaInstallPrompt'), { ssr: false });
-const ReviewsModal = dynamic(() => import('@/components/ReviewsModal/ReviewsModal'), { ssr: false });
-const ReportModal = dynamic(() => import('@/components/ReportModal/ReportModal'), { ssr: false });
+import ChatDrawer from '@/components/ChatDrawer/ChatDrawer';
+import PwaInstallPrompt from '@/components/PwaInstallPrompt/PwaInstallPrompt';
+import ReviewsModal from '@/components/ReviewsModal/ReviewsModal';
+import ReportModal from '@/components/ReportModal/ReportModal';
+import dynamic from 'next/dynamic';
 const AdminDashboard = dynamic(() => import('@/components/AdminDashboard/AdminDashboard'), { ssr: false });
-const AuthDrawer = dynamic(() => import('@/components/AuthDrawer/AuthDrawer'), { ssr: false });
-const SupportDrawer = dynamic(() => import('@/components/SupportDrawer/SupportDrawer'), { ssr: false });
+import AuthDrawer from '@/components/AuthDrawer/AuthDrawer';
+import SupportDrawer from '@/components/SupportDrawer/SupportDrawer';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useLivreursRealtime } from '@/hooks/useLivreursRealtime';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -65,19 +64,6 @@ export default function Home() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [isSupportDrawerOpen, setIsSupportDrawerOpen] = useState(false);
-
-  // Chargement à la demande : on ne MONTE (donc ne télécharge) chaque module
-  // qu'après sa première ouverture, puis on le garde monté (animations fluides ensuite).
-  const [driverMounted, setDriverMounted] = useState(false);
-  const [clientMounted, setClientMounted] = useState(false);
-  const [authMounted, setAuthMounted] = useState(false);
-  const [adminMounted, setAdminMounted] = useState(false);
-  const [supportMounted, setSupportMounted] = useState(false);
-  React.useEffect(() => { if (isDriverDrawerOpen) setDriverMounted(true); }, [isDriverDrawerOpen]);
-  React.useEffect(() => { if (isClientDrawerOpen) setClientMounted(true); }, [isClientDrawerOpen]);
-  React.useEffect(() => { if (isAuthDrawerOpen) setAuthMounted(true); }, [isAuthDrawerOpen]);
-  React.useEffect(() => { if (isAdminDashboardOpen) setAdminMounted(true); }, [isAdminDashboardOpen]);
-  React.useEffect(() => { if (isSupportDrawerOpen) setSupportMounted(true); }, [isSupportDrawerOpen]);
   
 
 
@@ -549,35 +535,32 @@ export default function Home() {
         )}
       </BottomSheet>
 
-      {driverMounted && (
-        <DriverDrawer
-          isOpen={isDriverDrawerOpen}
-          onClose={() => setIsDriverDrawerOpen(false)}
-          initialView={driverDrawerInitialView}
-          onChatClient={(clientId, clientName) => {
-            setChatPartner({ id: clientId, name: clientName, role: 'client' });
-            setIsChatDrawerOpen(true);
-          }}
-        />
-      )}
+      <DriverDrawer 
+        isOpen={isDriverDrawerOpen}
+        onClose={() => setIsDriverDrawerOpen(false)}
+        initialView={driverDrawerInitialView}
+        onChatClient={(clientId, clientName) => {
+          setChatPartner({ id: clientId, name: clientName, role: 'client' });
+          setIsChatDrawerOpen(true);
+        }}
+      />
 
-      {clientMounted && (
-        <ClientDrawer
-          isOpen={isClientDrawerOpen}
-          onClose={() => setIsClientDrawerOpen(false)}
-          initialView={clientDrawerInitialView}
-          onSearch={() => {
-            setIsClientDrawerOpen(false);
-            setShowWelcome(false);
-            setShowLocationPortal(true);
-          }}
-          onChatRider={(riderId, riderName) => {
-            setSelectedLivreur({ id: riderId, name: riderName });
-            setIsClientDrawerOpen(false);
-            setIsChatDrawerOpen(true);
-          }}
-        />
-      )}
+      <ClientDrawer
+        isOpen={isClientDrawerOpen}
+        onClose={() => setIsClientDrawerOpen(false)}
+        initialView={clientDrawerInitialView}
+
+        onSearch={() => {
+          setIsClientDrawerOpen(false);
+          setShowWelcome(false);
+          setShowLocationPortal(true);
+        }}
+        onChatRider={(riderId, riderName) => {
+          setSelectedLivreur({ id: riderId, name: riderName });
+          setIsClientDrawerOpen(false);
+          setIsChatDrawerOpen(true);
+        }}
+      />
       {showWelcome && (
         <footer style={{ flexShrink: 0, width: '100%', display: 'flex', justifyContent: 'center', zIndex: 1000, background: 'rgba(255,255,255,0.95)', borderTop: '1px solid rgba(0,0,0,0.05)', padding: '12px 0' }}>
           <div style={{ display: 'flex', gap: '20px' }}>
@@ -629,7 +612,7 @@ export default function Home() {
         );
       })()}
 
-      {selectedLivreur && isReviewsModalOpen && (
+      {selectedLivreur && (
         <ReviewsModal
           isOpen={isReviewsModalOpen}
           onClose={() => setIsReviewsModalOpen(false)}
@@ -640,7 +623,7 @@ export default function Home() {
         />
       )}
 
-      {selectedLivreur && isReportModalOpen && (
+      {selectedLivreur && (
         <ReportModal
           isOpen={isReportModalOpen}
           onClose={() => setIsReportModalOpen(false)}
@@ -650,41 +633,35 @@ export default function Home() {
         />
       )}
 
-      {adminMounted && (
-        <AdminDashboard
-          isOpen={isAdminDashboardOpen}
-          onClose={() => setIsAdminDashboardOpen(false)}
-          isAdmin={role === 'admin'}
-        />
-      )}
+      <AdminDashboard 
+        isOpen={isAdminDashboardOpen}
+        onClose={() => setIsAdminDashboardOpen(false)}
+        isAdmin={role === 'admin'}
+      />
 
-      {authMounted && (
-        <AuthDrawer
-          isOpen={isAuthDrawerOpen}
-          onClose={() => setIsAuthDrawerOpen(false)}
-          onRegisterClient={() => {
-            setClientDrawerInitialView('register');
-            setIsClientDrawerOpen(true);
-          }}
-          onLoginSuccess={(userId, loggedInRole) => {
-            setToast({ message: "Connexion réussie ! Bienvenue.", type: 'success' });
-            if (loggedInRole === 'rider') {
-               setIsDriverDrawerOpen(true);
-            } else if (loggedInRole === 'admin') {
-               setIsAdminDashboardOpen(true);
-            } else {
-               setIsClientDrawerOpen(true);
-            }
-          }}
-        />
-      )}
+      <AuthDrawer
+        isOpen={isAuthDrawerOpen}
+        onClose={() => setIsAuthDrawerOpen(false)}
+        onRegisterClient={() => {
+          setClientDrawerInitialView('register');
+          setIsClientDrawerOpen(true);
+        }}
+        onLoginSuccess={(userId, loggedInRole) => {
+          setToast({ message: "Connexion réussie ! Bienvenue.", type: 'success' });
+          if (loggedInRole === 'rider') {
+             setIsDriverDrawerOpen(true);
+          } else if (loggedInRole === 'admin') {
+             setIsAdminDashboardOpen(true);
+          } else {
+             setIsClientDrawerOpen(true);
+          }
+        }}
+      />
 
-      {supportMounted && (
-        <SupportDrawer
-          isOpen={isSupportDrawerOpen}
-          onClose={() => setIsSupportDrawerOpen(false)}
-        />
-      )}
+      <SupportDrawer 
+        isOpen={isSupportDrawerOpen}
+        onClose={() => setIsSupportDrawerOpen(false)}
+      />
 
 
       {toast && (
