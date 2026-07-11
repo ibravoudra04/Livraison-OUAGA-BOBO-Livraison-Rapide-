@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+/* Police Outfit auto-hébergée via next/font (voir app/layout.tsx) — plus aucune
+   requête bloquante vers Google Fonts au premier chargement. */
 
 :root {
     --color-primary-red: #E85C4A; /* Burkina flag red / Warm Terracotta Red */
@@ -23,7 +24,7 @@
     --color-green-soft: #27AE60;
     --color-green-light: #E8F7EE;
     --color-overlay: rgba(54, 42, 33, 0.5);
-    --font-sans: 'Outfit', sans-serif;
+    --font-sans: var(--font-outfit), 'Segoe UI', system-ui, sans-serif;
     --shadow-soft: 0 8px 30px rgba(54, 42, 33, 0.04);
     --shadow-medium: 0 12px 40px rgba(54, 42, 33, 0.08);
     --shadow-hard: 0 20px 50px rgba(54, 42, 33, 0.16);
