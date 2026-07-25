@@ -917,7 +917,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
                       <button
                         onClick={async () => {
                           const val = (document.getElementById('annonceText') as HTMLTextAreaElement).value;
-                          if (val) { await createAnnonce(val); alert('Annonce publiée !'); (document.getElementById('annonceText') as HTMLTextAreaElement).value = ''; }
+                          if (val) { await createAnnonce(val); flash('ok', 'Annonce publiée !'); (document.getElementById('annonceText') as HTMLTextAreaElement).value = ''; }
                         }}
                         style={{ background: '#8e44ad', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}
                       >
