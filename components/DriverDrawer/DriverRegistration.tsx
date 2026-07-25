@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDriverOnboarding } from '@/hooks/useDriverOnboarding';
+import { compressImage, compressSelfieForMap } from '@/utils/compressImage';
 
 const ouagaQuartiers = [
   { name: "Sélectionnez votre quartier...", lat: 0, lng: 0 },
@@ -47,11 +48,20 @@ export default function DriverRegistration({ onGoToLogin, onSuccess }: DriverReg
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'cniRecto' | 'cniVerso' | 'selfie') => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cniRecto' | 'cniVerso' | 'selfie') => {
     if (e.target.files && e.target.files.length > 0) {
-      setFiles({ ...files, [type]: e.target.files[0] });
+      const raw = e.target.files[0];
+      let processed: File;
+      if (type === 'selfie') {
+        processed = await compressSelfieForMap(raw);
+      } else {
+        const compressedBlob = await compressImage(raw, 1280, 0.75);
+        processed = compressedBlob instanceof File ? compressedBlob : new File([compressedBlob], raw.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
+      }
+      setFiles(prev => ({ ...prev, [type]: processed }));
     }
   };
+
 
   const handleGeolocation = () => {
     setGeoStatus('loading');

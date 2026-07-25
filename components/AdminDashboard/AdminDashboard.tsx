@@ -24,7 +24,15 @@ const formatLastSeen = (iso: string | null | undefined): string => {
 
 export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashboardProps) {
   const { stats, loading, approveDriver, suspendDriver, deleteDriver, verifyDriver, toggleClientPremium, deleteClient, createAnnonce, deactivateAnnonce, resolveTicket, reopenTicket, deleteTicket, deleteAvis, applyDriverPatch, addDriverLocal } = useAdminStats(isAdmin);
-  const { logout, supabase } = useSupabaseAuth();
+  const { logout, session, supabase } = useSupabaseAuth();
+
+  const getAuthHeaders = (json = true) => {
+    const headers: Record<string, string> = {};
+    if (json) headers['Content-Type'] = 'application/json';
+    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+    return headers;
+  };
+
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null);
   const [activeReceiptUrl, setActiveReceiptUrl] = useState<string | null>(null);
@@ -65,12 +73,13 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
   const loadHealth = React.useCallback(async () => {
     setLoadingHealth(true);
     try {
-      const res = await fetch('/api/admin/health');
+      const res = await fetch('/api/admin/health', { headers: getAuthHeaders(false) });
       const data = await res.json();
       if (data.success) setHealth({ ghosts: data.ghosts || [], orphanPayments: data.orphanPayments || [], lastSignIn: data.lastSignIn || {} });
     } catch { /* ignore */ }
     setLoadingHealth(false);
-  }, []);
+  }, [session?.access_token]);
+
 
   // Charge la santé une fois à l'ouverture (pour disposer des dernières connexions)
   useEffect(() => {
@@ -103,7 +112,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
       onYes: async () => {
         setBusy(true);
         try {
-          const res = await fetch('/api/admin/reset-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
+          const res = await fetch('/api/admin/reset-pin', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ userId }) });
           const data = await res.json();
           if (data.success) {
             setNoticeBox({
@@ -130,7 +139,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
       onSubmit: async (message: string) => {
         setBusy(true);
         try {
-          const res = await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recipientId: userId, title: 'Message de l\'administration', message }) });
+          const res = await fetch('/api/push', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ recipientId: userId, title: 'Message de l\'administration', message }) });
           const data = await res.json();
           if (data.success) {
             if (data.sent > 0) flash('ok', `Notification envoyée à ${label}.`);
@@ -142,11 +151,12 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
     });
   };
 
+
   const saveDriverEdit = async () => {
     if (!editForm || !selectedDriver) return;
     setBusy(true);
     try {
-      const res = await fetch('/api/admin/update-driver', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: selectedDriver.id, ...editForm }) });
+      const res = await fetch('/api/admin/update-driver', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ id: selectedDriver.id, ...editForm }) });
       const data = await res.json();
       if (data.success) {
         applyDriverPatch(selectedDriver.id, data.driver);
@@ -175,7 +185,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
       if (createFiles.selfie) fd.append('selfie', createFiles.selfie);
       if (createFiles.cniRecto) fd.append('cniRecto', createFiles.cniRecto);
       if (createFiles.cniVerso) fd.append('cniVerso', createFiles.cniVerso);
-      const res = await fetch('/api/admin/create-driver', { method: 'POST', body: fd });
+      const res = await fetch('/api/admin/create-driver', { method: 'POST', headers: getAuthHeaders(false), body: fd });
       const data = await res.json();
       if (data.success) {
         addDriverLocal(data.driver);
@@ -205,7 +215,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
       onYes: async () => {
         setBusy(true);
         try {
-          const res = await fetch('/api/admin/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, id }) });
+          const res = await fetch('/api/admin/cleanup', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ type, id }) });
           const data = await res.json();
           if (data.success) {
             setHealth(prev => ({ ...prev, ghosts: prev.ghosts.filter(g => g.id !== id), orphanPayments: prev.orphanPayments.filter(p => p.id !== id) }));
@@ -259,7 +269,7 @@ export default function AdminDashboard({ isOpen, onClose, isAdmin }: AdminDashbo
     try {
       const res = await fetch('/api/admin/broadcast', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ title: broadcastTitle.trim(), message: broadcastMessage.trim() }),
       });
       const data = await res.json();

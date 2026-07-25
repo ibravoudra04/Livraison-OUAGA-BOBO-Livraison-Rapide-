@@ -47,3 +47,13 @@ export async function compressImage(file: File, maxDim = 1280, quality = 0.75): 
     return file;
   }
 }
+
+// Compresse spécifiquement le selfie de profil d'un livreur pour la carte :
+// dimension max 300px, JPEG à 65% de qualité (~15-30 Ko max par photo).
+// Cela empêche la carte de consommer trop de mémoire et d'avoir des ralentissements.
+export async function compressSelfieForMap(file: File): Promise<File> {
+  const blob = await compressImage(file, 300, 0.65);
+  if (blob instanceof File) return blob;
+  return new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
+}
+

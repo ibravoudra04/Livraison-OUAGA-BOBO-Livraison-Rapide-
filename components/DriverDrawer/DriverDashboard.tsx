@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { createClient } from '@/utils/supabase/client';
-import { compressImage } from '@/utils/compressImage';
+import { compressImage, compressSelfieForMap } from '@/utils/compressImage';
 
 interface DriverDashboardProps {
   driverData: any;
@@ -206,8 +206,9 @@ export default function DriverDashboard({ driverData, onLogout, onChatClient }: 
     if (!file || isPlaceholder) return;
     setUploadingDoc(field);
     try {
-      const compressed = await compressImage(file);
+      const compressed = field === 'selfie' ? await compressSelfieForMap(file) : await compressImage(file);
       const path = `${id}/${field}_${Date.now()}`;
+
       const { error: upErr } = await supabase.storage.from('identities').upload(path, compressed, { contentType: 'image/jpeg' });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('identities').getPublicUrl(path);
