@@ -65,3 +65,7 @@ public/workbox-*.js
 public/fallback-*.js  
 public/sw.js.map  
 public/service-worker.js.map 
+
+# Scratch directory
+scratch/
+
