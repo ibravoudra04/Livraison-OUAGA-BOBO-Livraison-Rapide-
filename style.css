@@ -4388,3 +4388,9 @@ input, select, textarea, .form-input, .ussd-input { font-size: 16px !important; 
     0% { transform: scale(0.5); opacity: 1; }
     100% { transform: scale(1.5); opacity: 0; }
 }
+
+/* Carte épurée en nuances de gris (sans couleurs vives et 100% sans filigrane API) */
+.leaflet-container .leaflet-tile-pane {
+    filter: grayscale(100%) contrast(90%) brightness(104%);
+    -webkit-filter: grayscale(100%) contrast(90%) brightness(104%);
+}
